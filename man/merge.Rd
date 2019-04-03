@@ -19,7 +19,10 @@
  
 }
 \details{
-  Propagates through clonal compositions inferred for user-specified perspectives/specimens \eqn{P_1}...\eqn{P_n} and links them. Clone \eqn{SP_a} \eqn{\in} \eqn{P_i} is linked to clone \eqn{SP_b} \eqn{\in} \eqn{P_{i+1}} based on maximizing relatedness across all inter-perspective subpopulation pairs (see \code{\link{spRelatednessP}}). Thereby, the algorithm propagates subpopulation links across regions.
+  Let \eqn{S_i} be the set of subpopulations detected in sample i and  \eqn{S:= \bigcup S_i} – the set of clones detected across all biopsies of a given patient. Further let  \eqn{L} be the set of all non-private loci, in which an SNV is detected in at least two samples and \eqn{M_x \subset L} the set of loci mutated in \eqn{x \in S_i}.\cr\cr
+
+Next, subpopulations  \eqn{S} are grouped into categories by hierarchical cluster analysis of their SNV profiles  \eqn{M_S}, using a distance metric defined by the hypergeometric probability calculated above (agglomeration method: "single").  Subpopulations from distinct samples, falling within the same category (hypergeometric  \eqn{P \geq t}) are considered different perspectives on the same clone. 
+
 }
 
 \value{List with four fields:

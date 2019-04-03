@@ -7,7 +7,7 @@ package core.utils;
  *
  */
 public enum Perspectives {
-	GenomePerspective, TranscriptomePerspective, KaryotypePerspective, Identity
+	ExomePerspective, GenomePerspective, TranscriptomePerspective, KaryotypePerspective, Identity
 	//	@TODO: ensure these names the same as the subtypes of class Perspective
 	//@TODO: enumeration name isn't intuitive for Identity content
 }

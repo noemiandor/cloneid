@@ -125,7 +125,7 @@ public final class Helper {
 		return(asBytes);
 
 	}
-	
+
 	public static byte[] string2byte(String[] values) throws IOException {
 		ByteArrayOutputStream bout = new ByteArrayOutputStream();
 		DataOutputStream dout = new DataOutputStream(bout);
@@ -172,11 +172,13 @@ public final class Helper {
 	/**
 	 * Histogram
 	 * @param childrensSizes
+	 * @param precision 
 	 * @return
 	 */
-	public static Map<Double, Integer> count(double[] childrensSizes) {
+	public static Map<Double, Integer> count(float[] childrensSizes, double precision) {
 		Map<Double,Integer> spfreq =new HashMap<Double, Integer>();
-		for(double d : childrensSizes){
+		for(double d_ : childrensSizes){
+			double d=Math.round(d_/precision)*precision;
 			if(spfreq.containsKey(d)){
 				spfreq.put(d, spfreq.get(d)+1);
 			}else{
@@ -196,7 +198,7 @@ public final class Helper {
 		}
 		return out;
 	}
-	
+
 	public static String[] apply(String[][] lines, String fun,
 			int arg) {
 		String[] out=new String[lines.length];
@@ -240,5 +242,6 @@ public final class Helper {
 		}
 		return o;
 	}
+
 
 }

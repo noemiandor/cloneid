@@ -1,8 +1,8 @@
-\name{spRelatednessP}
-\alias{spRelatednessP}
+\name{hyper}
+\alias{hyper}
 \title{Subpopulation relatedness assessment}
 \description{Calculates probability that two subpopulations are related, modelling overlapping mutations as hypergeometric distribution.}
-\usage{spRelatednessP(p,r=NULL)}
+\usage{hyper(p,r=NULL)}
 \arguments{
   \item{p}{
      A numeric vector or matrix holding the mutation profile of one or multiple subpopulations (0 denotes absence; values >0 denote presence).

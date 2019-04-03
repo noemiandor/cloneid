@@ -6,6 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -13,6 +14,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import useri.utils.CloneColumnPrefix;
 import core.utils.Helper;
@@ -30,7 +32,7 @@ import database.SerializeProfile_MySQL;
  */
 public abstract class Clone {
 
-	private static final double PRECISION = 0.000001;
+	private static final double PRECISION = 0.00000005;
 
 	/**
 	 * The fraction of cells from the biosample that have been assigned to this clone (1 if this clone represents the metapopulation). 
@@ -75,6 +77,22 @@ public abstract class Clone {
 	 */
 	private double[] coordinates;
 
+	/**
+	 * True if the clone was already found in the database when trying to save it, false otherwise.
+	 */
+	private boolean redundant = false;
+	
+	
+	/**
+	 * The cell cycle state of the clone
+	 */
+	private String state;
+	
+	/**
+	 * Nickname of the clone
+	 */
+	private String alias;
+
 
 
 
@@ -86,9 +104,6 @@ public abstract class Clone {
 	public Clone(float size, String sampleName){
 		this.size=size;
 		this.sampleName=sampleName;
-		if(parent!=null && !sampleName.equals(parent.sampleName)){
-			throw new IllegalArgumentException();
-		}
 		children=new ArrayList<Clone>();
 	}
 
@@ -131,10 +146,18 @@ public abstract class Clone {
 			if(sI==metaI){
 				continue;
 			}
-			if(header[sI].matches(CloneColumnPrefix.getValue(whichPerspective)+"_\\d+.*")){
+			if(header[sI].matches(CloneColumnPrefix.getValue(whichPerspective)+"\\d*_\\d+.*")){
 				cloneI.add(sI);
-				float size=Float.parseFloat(header[sI].split("_")[1]); //@TODO: save "_" as part of EXPANDS/LIAYSON interface class
+				String[] hfeatures=header[sI].split("_");
+				float size=Float.parseFloat(hfeatures[1]); //@TODO: save "_" as part of EXPANDS/LIAYSON interface class
+//				size=(float) Math.min(1-PRECISION, size); //Size 1 should be exclusive to root
 				Clone p_=Clone.getInstance(size, sampleName,whichPerspective,loci);
+				if(hfeatures.length>2){
+					p_.state=hfeatures[2];	
+				}
+				if(hfeatures.length>3){
+					p_.alias=hfeatures[3];	
+				}
 				this.addChild(p_);
 			}
 		}
@@ -166,7 +189,7 @@ public abstract class Clone {
 	private void loadFromDB() throws Exception {
 		CLONEID db= new CLONEID();
 		db.connect();
-
+		//@TODO: there's a risk here of overlapping clone sizes and wrong assignment of clone members
 		String selstmt="SELECT cloneID,coordinates from "+CLONEID.getTableNameForClass(this.getClass().getSimpleName())+" where abs(size-"+size+")<"+PRECISION+" AND whichPerspective=\'"+this.getClass().getSimpleName()+"\' AND sampleName=\'"+sampleName+"\';";
 		ResultSet rs =db.getStatement().executeQuery(selstmt);
 		rs.next();
@@ -218,6 +241,8 @@ public abstract class Clone {
 		if(coordinates!=null){
 			map.put("coordinates", "\'"+coordinates[0]+","+coordinates[1]+"\'");
 		}
+		map.put("state", "\'"+state+"\'");
+		map.put("alias", "\'"+alias+"\'");
 		return(map);
 	}
 
@@ -245,7 +270,11 @@ public abstract class Clone {
 		if(!c.getClass().equals(this.getClass())){
 			throw new IncompatibleClassChangeError();
 		}
-		c.parent=this; //Counting on call-by-reference effect here to ensure every child has this clone as parent 
+//		//child can't be larger than parent
+//		if(c.size>=this.size){
+//			throw new IllegalArgumentException("Child clone has to be smaller than parent!");
+//		}
+		c.parent=this; //Counting on call-by-reference effect here to ensure every child has this clone as parent
 		children.add(c);
 	}
 
@@ -295,7 +324,7 @@ public abstract class Clone {
 			serp.writeProfile2DB(cloneid.getConnection(), profile);
 		}else{
 			this.cloneID=existingid;
-			System.out.println(this.toString()+" already exists in table "+tableName+". Skipped.");
+			this.redundant=true;
 		}
 
 		//IF this is a parent - update the children to reference the parent and vice versa
@@ -310,12 +339,16 @@ public abstract class Clone {
 		}
 
 		cloneid.close();
-
+		
+		//How many clones were not saved:
+		if(this.parent==null && countRedundant()>0){
+			System.out.println(countRedundant()+" clones already existed in database and were not saved again.");
+		}
 
 	}
 
 	private void informUser() {
-		Map<Double,Integer> spfreq=Helper.count(getChildrensSizes());
+		Map<Double,Integer> spfreq=Helper.count(getChildrensSizes(),0.001);
 		if(spfreq.size()>0){
 			System.out.println("Clones scheduled for saving to database:");
 			for(Entry<Double, Integer> e : spfreq.entrySet()){
@@ -328,7 +361,9 @@ public abstract class Clone {
 	 * Check if clone exists yet in DB. If so, return the clone's ID
 	 */
 	private Integer isInDB(String tableName, CLONEID db) throws Exception {
-		String selstmt="SELECT cloneID from "+tableName+" where profile_hash="+Arrays.deepHashCode(profile.getValues())+" AND whichPerspective=\'"+this.getClass().getSimpleName()+"\' AND sampleName=\'"+sampleName+"\';"; 
+		int hash = Arrays.deepHashCode(profile.getValues());
+		//@TODO: risk that clone is falsely classified as already existent even though it is not <=> hash is non-unique for long arrays
+		String selstmt="SELECT cloneID from "+tableName+" where abs(size-"+this.size+")<"+PRECISION+" and profile_hash="+hash+" AND whichPerspective=\'"+this.getClass().getSimpleName()+"\' AND sampleName=\'"+sampleName+"\';"; 
 		ResultSet rs =db.getStatement().executeQuery(selstmt);
 		if(rs.next()){
 			return rs.getInt(1);
@@ -356,6 +391,9 @@ public abstract class Clone {
 		}else if(which.equals(Perspectives.KaryotypePerspective)){
 			KaryotypePerspective gP = new KaryotypePerspective(size, sampleName, nMut);
 			return(gP);
+		}else if(which.equals(Perspectives.ExomePerspective)){
+			ExomePerspective gP = new ExomePerspective(size, sampleName, nMut);
+			return(gP);
 		}
 		return null;
 	}
@@ -373,6 +411,9 @@ public abstract class Clone {
 	}
 
 	public void setParent(Clone clone) {
+		if(!sampleName.equals(clone.sampleName)){
+			throw new IllegalArgumentException();
+		}
 		this.parent=clone;
 	}
 
@@ -394,8 +435,8 @@ public abstract class Clone {
 		return null;
 	}
 
-	public double[] getChildrensSizes(){
-		double[] s =new double[children.size()];
+	public float[] getChildrensSizes(){
+		float[] s =new float[children.size()];
 		for(int i =0; i<s.length; i++){
 			s[i]=children.get(i).size;
 		}
@@ -424,11 +465,32 @@ public abstract class Clone {
 	}
 
 
-	public void setCoordinates(double x,double y) {
+	public void setCoordinates(double x,double y) throws Exception {
 		this.coordinates = new double[]{x,y};
+		
+		CLONEID cloneid= new CLONEID();
+		cloneid.connect();
+		try{
+			cloneid.update(this, "coordinates", "\'"+x+","+y+"\'");
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+		cloneid.close();
+		
 		for(Clone c : children){
 			c.setCoordinates(x, y);
 		}
+	}
+
+	public int countRedundant(){
+		int cnt=0;
+		if(this.redundant){
+			cnt=1;
+		}
+		for(Clone c: children){
+			cnt=cnt+c.countRedundant();
+		}
+		return(cnt);		
 	}
 
 	public abstract Clone getPerspective(Perspectives whichP);

@@ -4,7 +4,8 @@ parseLOCUS<-function(loci){
   startend=sapply(strsplit(loci,":"),"[[",2)
   startp=as.numeric(sapply(strsplit(startend,"-"),"[[",1))
   endp=as.numeric(sapply(strsplit(startend,"-"),"[[",2))
-  dm=cbind(chr,startp,endp);
-  colnames(dm)=c("chr","startpos","endpos")
+  seglength=1+endp-startp
+  dm=cbind(chr,startp,endp,seglength);
+  colnames(dm)=c("chr","startpos","endpos","seglength")
   return(dm)
 }

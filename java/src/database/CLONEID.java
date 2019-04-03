@@ -6,6 +6,7 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -98,7 +99,8 @@ public final class CLONEID {
 	public Clone getClone(int cloneID, Perspectives which) throws Exception {
 		String attr="size,sampleName,whichPerspective,parent,children,coordinates";
 		if(which==Perspectives.Identity){
-			attr+=",KaryotypePerspective,GenomePerspective,TranscriptomePerspective";
+			attr+=","+Arrays.toString(Perspectives.values()).replace(", Identity", "").replace("[", "").replace("]", "");
+			
 		}
 		String selstmt="SELECT "+attr+" from "+CLONEID.getTableNameForClass(which.name())+" where cloneID="+cloneID+";";
 		ResultSet rs =stmt.executeQuery(selstmt);

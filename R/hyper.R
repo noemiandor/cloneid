@@ -1,4 +1,4 @@
-spRelatednessP<-function(p,r=NULL){
+hyper<-function(p,r=NULL){
   if (!is.matrix(p) && is.null(r)) 
     stop("supply both 'r' and 'p' or a matrix-like 'p'")
   
@@ -6,7 +6,7 @@ spRelatednessP<-function(p,r=NULL){
     x=matrix(NA,ncol(p),ncol(p))
     for(i in 1:ncol(p)){
       for(j in 1:ncol(p)){
-        x[i,j]=spRelatednessP(p[,i],p[,j])
+        x[i,j]=hyper(p[,i],p[,j])
       }
     }
   }else{

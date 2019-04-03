@@ -109,7 +109,7 @@ public class SerializeProfile_MySQL {
 		Profile p=null;
 		if(perspective.equals(Perspectives.Identity.name())){
 			p=new Profile(loci);
-		} else if(perspective.equals(Perspectives.GenomePerspective.name()) || perspective.equals(Perspectives.KaryotypePerspective.name())){
+		} else if(perspective.equals(Perspectives.GenomePerspective.name()) || perspective.equals(Perspectives.KaryotypePerspective.name()) || perspective.equals(Perspectives.ExomePerspective.name())){
 			p=new Genome(loci);
 		}else if(perspective.equals(Perspectives.TranscriptomePerspective.name())){
 			p=new Transcriptome(loci);

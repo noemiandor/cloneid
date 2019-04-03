@@ -115,4 +115,9 @@ public class Identity extends Clone {
 		//@TODO: how to deal with multiple perspectives of same type?
 		return(perspectives.get(p).iterator().next());
 	}
+	
+	public Set<Perspective> getPerspectives(Perspectives p) {
+		//@TODO: how to deal with multiple perspectives of same type?
+		return(perspectives.get(p));
+	}
 }

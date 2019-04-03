@@ -1,7 +1,7 @@
 Package: cloneid
 Type: Package
 Title: Clone Identity Inference Framework
-Version: 1.0.0
+Version: 1.0.1
 Date: 2017-03-03
 Author: Noemi Andor
 Maintainer: Noemi Andor <cloneid.r@gmail.com>
@@ -9,7 +9,7 @@ Description: Takes on a "Manager's" role, coordinating between perspectives, int
 License: GPL-2
 URL: https://github.com/noemiandor/cloneid
 Depends: R (>= 3.0)
-Imports: qualV, gplots(>= 3.0.1), gdata (>= 2.17.0), RColorBrewer, gtools, flexclust, Matrix, expands (>= 1.7.0), liayson (>= 1.0.0), rJava (>= 0.5-0), matlab (>= 1.0.2)
+Imports: RMySQL, qualV, gplots(>= 3.0.1), gdata (>= 2.17.0), RColorBrewer, gtools, flexclust, Matrix, expands, liayson (>= 1.0.0), rJava (>= 0.5-0), matlab (>= 1.0.2)
 Packaged: 2017-03-17 02:11:04 UTC; noemi
 NeedsCompilation: no
 Repository: CRAN

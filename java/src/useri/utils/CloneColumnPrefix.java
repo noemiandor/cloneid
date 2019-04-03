@@ -13,8 +13,8 @@ import core.utils.Perspectives;
  *
  */
 public final class CloneColumnPrefix {
-	private final static String[] VALUES=new String[] {"SP", "SP", "Clone","Clone"};
-	private final static Perspectives[] KEYS=new Perspectives[]{Perspectives.GenomePerspective,Perspectives.KaryotypePerspective,Perspectives.TranscriptomePerspective,Perspectives.Identity};
+	private final static String[] VALUES=new String[] {"SP", "SP", "SP", "Clone","Clone"};
+	private final static Perspectives[] KEYS=new Perspectives[]{Perspectives.ExomePerspective,Perspectives.GenomePerspective,Perspectives.KaryotypePerspective,Perspectives.TranscriptomePerspective,Perspectives.Identity};
 	
 	public static String getValue(Perspectives which) {
 		return(VALUES[Helper.firstIndexOf(which, KEYS)]);

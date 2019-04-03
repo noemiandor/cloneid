@@ -154,6 +154,7 @@
 }
 
 .plotCells<-function(coord,dat,grp1,loci,cloneNames,main){
+  dat[T]=dat[T]+rnorm(length(dat),0,1E-4)
   mypal <- rev(colorRampPalette(brewer.pal(11,"Spectral")[2:10])(256))
   par(mar=c(4.1, 3.9, 4.1, 2.1),bg="white",fg="black",col.axis="black",col.lab="black",col.main="black",col.sub="black")
   layout(matrix(1:2,ncol=2), widths = c(5,1),heights = c(1,1))
@@ -163,7 +164,7 @@
   points(coord,col=mycolors,pch=clonePch[grp1])
   legend("topright",cloneNames,pch=unique(clonePch[grp1]),cex=1.4,pt.cex=2.5,bg = "white")
   par(mar=c(6,1,6,3))
-  image(1,seq(round(min(dat),2),round(max(dat),2),len=256),matrix(1:256,nrow=1),col=mypal,axes=FALSE,xlab="",ylab="",main=loci)
+  image(1,seq(min(dat),max(dat),len=256),matrix(1:256,nrow=1),col=mypal,axes=FALSE,xlab="",ylab="",main=loci)
   axis(2)
 }
 
