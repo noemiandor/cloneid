@@ -6,7 +6,7 @@
   whichP_=gsub("Genome","",gsub("Transcriptome","",whichP))
   stmt=paste0("select ",attr," from ",whichP_," where whichPerspective='",whichP,"' AND cloneID=",cloneID)
   
-  mydb = dbConnect(MySQL(), user=Sys.info()["user"], password='lala', dbname='CLONEID',host='127.0.0.1')
+  mydb = dbConnect(MySQL(), user=Sys.info()["user"], password='lalalala', dbname='CLONEID',host='cloneredesign.cswgogbb5ufg.us-east-1.rds.amazonaws.com')
   rs = dbSendQuery(mydb, stmt)
   o = fetch(rs, n=-1)
   

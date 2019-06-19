@@ -6,7 +6,7 @@ deleteClones<-function(belowSize=0.02, aboveSize=NA, sName, whichP="Transcriptom
     return()
   }
   
-  mydb = dbConnect(MySQL(), user=Sys.info()["user"], password='lala', dbname='CLONEID',host='127.0.0.1')
+  mydb = dbConnect(MySQL(), user=Sys.info()["user"], password='lalalala', dbname='CLONEID',host='cloneredesign.cswgogbb5ufg.us-east-1.rds.amazonaws.com')
   tryCatch({
     if(!is.na(belowSize)){
       .doTheWork(mydb, belowSize=belowSize, aboveSize=NA, sName, whichP)
@@ -28,17 +28,14 @@ deleteClones<-function(belowSize=0.02, aboveSize=NA, sName, whichP="Transcriptom
 
 
 .doTheWork<-function(mydb, belowSize, aboveSize, sName, whichP){
-  # stmt = paste0("select cloneID,children from Perspective where sampleName='",sName,
-  #               "' AND whichPerspective='",whichP,
-  #               "' AND children IS NOT NULL AND parent IS NOT NULL");
   ##Direct children of root (i.e. first generation tumor clones)
-  stmt = paste0("select children from Perspective where sampleName='",sName,
+  stmt = paste0("select cloneID from Perspective where sampleName='",sName,
                 "' AND whichPerspective='",whichP,
                 "' AND parent IS NULL");
   ##Select what to delete:
   rs = dbSendQuery(mydb, stmt)
   o = fetch(rs, n = -1)
-  stmt = paste0("select cloneID,children from Perspective where cloneID in (",o$children,")");
+  stmt = paste0("select cloneID from Perspective where parent =",o$cloneID);
   
   if(!is.na(belowSize)){
     stmt = paste0(stmt," AND size<=",belowSize)

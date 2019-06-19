@@ -226,14 +226,16 @@ public abstract class Clone {
 		}
 
 		if(children.size()>0){
-			String kids="\'";
-			for (Clone kid: children){
-				kids+=kid.cloneID+",";
-			}
-			kids=Helper.replaceLast(kids, ",", "\'");
-			map.put( "children", kids);
+//			String kids="\'";
+//			for (Clone kid: children){
+//				kids+=kid.cloneID+",";
+//			}
+//			kids=Helper.replaceLast(kids, ",", "\'");
+//			map.put( "children", kids);
+			map.put( "hasChildren", "true");
 		}else{
-			map.put( "children", null);
+//			map.put( "children", null);
+			map.put( "hasChildren", "false");
 		}
 
 		map.put( "rootID", getRoot().cloneID+"");
@@ -334,7 +336,8 @@ public abstract class Clone {
 						+ this.cloneID+ ", rootID="+this.getRoot().cloneID+" WHERE cloneID=" + c.cloneID;
 				cloneid.getStatement().executeUpdate(updateSTmt);
 			}
-			String updateSTmt = "UPDATE " + tableName + " SET children="+ map.get("children")+" WHERE cloneID=" + cloneID;
+//			String updateSTmt = "UPDATE " + tableName + " SET children="+ map.get("children")+" WHERE cloneID=" + cloneID;
+			String updateSTmt = "UPDATE " + tableName + " SET hasChildren=true WHERE cloneID=" + cloneID;
 			cloneid.getStatement().executeUpdate(updateSTmt);
 		}
 

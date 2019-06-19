@@ -34,10 +34,10 @@ public final class CLONEID {
 	InstantiationException, IllegalAccessException,
 	ClassNotFoundException {
 		Class.forName("com.mysql.jdbc.Driver").newInstance();
-		String db_password = "lala";
-		String db_userid = Helper.getDBUserID();
+		String db_password = "lalalala";
+		String db_userid = System.getProperty("user.name");
 
-		String db_connect_string = "jdbc:mysql://localhost";
+		String db_connect_string = "jdbc:mysql://cloneredesign.cswgogbb5ufg.us-east-1.rds.amazonaws.com";
 		con = DriverManager.getConnection(db_connect_string, db_userid,
 				db_password);
 		stmt = con.createStatement();
@@ -97,29 +97,24 @@ public final class CLONEID {
 	 * @throws Exception
 	 */
 	public Clone getClone(int cloneID, Perspectives which) throws Exception {
-		String attr="size,sampleName,whichPerspective,parent,children,coordinates";
+		String attr="size,sampleName,whichPerspective,parent,coordinates";
 		if(which==Perspectives.Identity){
 			attr+=","+Arrays.toString(Perspectives.values()).replace(", Identity", "").replace("[", "").replace("]", "");
-			
-		}
+
+		}		
+		SerializeProfile_MySQL serp=new SerializeProfile_MySQL(cloneID,which.name());
+		Profile p=serp.readProfileFromDB(con);
 		String selstmt="SELECT "+attr+" from "+CLONEID.getTableNameForClass(which.name())+" where cloneID="+cloneID+";";
 		ResultSet rs =stmt.executeQuery(selstmt);
 		rs.next();
-		SerializeProfile_MySQL serp=new SerializeProfile_MySQL(cloneID,which.name());
-		Profile p=serp.readProfileFromDB(con);
-
 		Clone clone=Clone.getInstance(rs.getFloat(1), rs.getString(2), which, p.getLoci());
 		int parentID=rs.getInt("parent");
-		String tmp=rs.getString("children");
-		if(tmp!=null){
-			int[] childrenIDs=Helper.string2int(tmp.split(","));
-			clone.setChildrenIDs(childrenIDs);
-		}
-		tmp=rs.getString("coordinates");
+		String tmp=rs.getString("coordinates");
 		if(tmp!=null){
 			double[] coord=Helper.string2double(tmp.split(","));
 			clone.setCoordinates(coord[0],coord[1]);
 		}
+
 		clone.setProfile(p);
 		clone.setID(cloneID);
 		//Add perspectives if this is an Identity
@@ -135,6 +130,7 @@ public final class CLONEID {
 			}
 
 		}
+		clone.setChildrenIDs(getChildrenForParent(cloneID, which)); //Will open another result set and close this one -- must call last
 		//Call recursively
 		if(parentID>0){
 			clone.setParent(getClone(parentID, which));
@@ -146,6 +142,25 @@ public final class CLONEID {
 	}
 
 
+	public int[] getChildrenForParent(int cloneID, Perspectives which) throws SQLException{
+		String selstmt0="SELECT count(*) from "+CLONEID.getTableNameForClass(which.name())+" where parent="+cloneID+";";
+		ResultSet rs0 =stmt.executeQuery(selstmt0);
+		rs0.next();
+		int n = rs0.getInt("count(*)");
+
+		if(n>0){
+			int[] childrenIDs= new int[n];
+			String selstmt2="SELECT cloneID from "+CLONEID.getTableNameForClass(which.name())+" where parent="+cloneID+";";
+			ResultSet rs2 =stmt.executeQuery(selstmt2);
+			for(int i = 0; i<n; i++){
+				rs2.next();
+				childrenIDs[i]=Integer.parseInt(rs2.getString("cloneID"))	;
+			}
+			return(childrenIDs);
+		}		else{
+			return(null);
+		}
+	}
 
 	public void update(Clone child, String fieldname, String fieldvalue) throws SQLException {
 		String updateSTmt = "UPDATE " + getTableNameForClass(child.getClass().getSimpleName())+ " SET "+fieldname+"=" 

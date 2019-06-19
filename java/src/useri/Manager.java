@@ -20,7 +20,7 @@ import database.CLONEID;
 /**
  * Static class providing user-interface methods to query the database. 
  * @author noemi
- *@TODO: select only clone of max ID, not based on NOT NULL children
+ *@TODO: select only clone of max ID, not based on hasChildren=true
  */
 public final class Manager {
 
@@ -33,12 +33,11 @@ public final class Manager {
 		ResultSet rs =cloneid.getStatement().executeQuery(selstmt);
 		Map<String, Clone> cloneSizes=new HashMap<String, Clone>();
 		rs.next();
-		String tmp=rs.getString("children");
 		Clone parent= cloneid.getClone(rs.getInt("cloneID"), which);
-		if(tmp!=null){
-			String[] kids=tmp.split(",");
-			for(String kid:kids){
-				Clone clone=cloneid.getClone(Integer.parseInt(kid),which);
+		int[] kids = cloneid.getChildrenForParent(parent.getID(), which);
+		if(kids!=null){
+			for(int kid:kids){
+				Clone clone=cloneid.getClone(kid,which);
 //				if(Math.abs(clone.getParent().getSize()-parent.getSize())>0.0001){
 //					continue;//Don't cover multiple generations
 //				}
@@ -53,13 +52,13 @@ public final class Manager {
 
 	public static Map<String, Profile> profiles(String sampleName, Perspectives which, boolean includeRoot) throws Exception {
 		String tN = CLONEID.getTableNameForClass(which.name());
-		String selstmt="SELECT children,size,cloneID from "+tN+" where children IS NOT NULL AND sampleName=\'"+sampleName+"\' AND whichPerspective=\'"+which+"\' ORDER BY size DESC;"; 
+		String selstmt="SELECT size,cloneID from "+tN+" where hasChildren=true AND sampleName=\'"+sampleName+"\' AND whichPerspective=\'"+which+"\' ORDER BY size DESC;"; 
 		return(gatherProfiles(selstmt,which,includeRoot));
 	}
 
 	public static Map<String, Profile> profiles(int cloneID, Perspectives which, boolean includeRoot) throws Exception {
 		String tN = CLONEID.getTableNameForClass(which.name());
-		String selstmt="SELECT children,size,cloneID from "+tN+" where children IS NOT NULL AND cloneID="+cloneID+" AND whichPerspective=\'"+which+"\' ORDER BY size DESC;"; 
+		String selstmt="SELECT size,cloneID from "+tN+" where hasChildren=true AND cloneID="+cloneID+" AND whichPerspective=\'"+which+"\' ORDER BY size DESC;"; 
 		return(gatherProfiles(selstmt,which,includeRoot));
 	}
 
@@ -81,12 +80,12 @@ public final class Manager {
 
 		ResultSet rs =cloneid.getStatement().executeQuery(selstmt);
 		rs.next();
-		String[] kids=rs.getString("children").split(",");
 		Clone root=cloneid.getClone(rs.getInt("cloneID"),which);
+		
+		int[] kids = cloneid.getChildrenForParent(root.getID(), which);
 		Map<String,Profile> profiles=new HashMap<String,Profile>();
-		for(int i =0; i<kids.length; i++){
-			String kid=kids[i];
-			Clone clone=cloneid.getClone(Integer.parseInt(kid),which);
+		for(int kid:kids){
+			Clone clone=cloneid.getClone(kid,which);
 			profiles.put(clone.toString(), clone.getProfile());
 		}
 		cloneid.close();
@@ -102,7 +101,7 @@ public final class Manager {
 
 	public static Map<String, Clone> display(int cloneID, Perspectives which) throws Exception{
 		String tN = CLONEID.getTableNameForClass(which.name());
-		String selstmt="SELECT children,parent,cloneID,size from "+tN+" where cloneID="+cloneID+" AND whichPerspective=\'"+which+"\' ORDER BY size DESC;";
+		String selstmt="SELECT parent,cloneID,size from "+tN+" where cloneID="+cloneID+" AND whichPerspective=\'"+which+"\' ORDER BY size DESC;";
 		Map<String, Clone> cloneSizes=gatherForDisplay(selstmt,cloneID+"", which);
 		return(cloneSizes);
 	}
@@ -110,7 +109,7 @@ public final class Manager {
 
 	public static Map<String, Clone> display(String sampleName, Perspectives which) throws Exception{
 		String tN = CLONEID.getTableNameForClass(which.name());
-		String selstmt="SELECT children,cloneID,size from "+tN+" where parent IS NULL AND children IS NOT NULL AND sampleName=\'"+sampleName+"\' AND whichPerspective=\'"+which+"\' ORDER BY size DESC;";
+		String selstmt="SELECT cloneID,size from "+tN+" where parent IS NULL AND hasChildren=true AND sampleName=\'"+sampleName+"\' AND whichPerspective=\'"+which+"\' ORDER BY size DESC;";
 		Map<String, Clone> cloneSizes=gatherForDisplay(selstmt,sampleName, which);
 		return(cloneSizes);
 	}
@@ -173,10 +172,10 @@ public final class Manager {
 //			p_.save2DB();
 //			Perspective p =new ExomePerspective(new File(args[0]),"CN_Estimate");	
 //			Perspective p = new TranscriptomePerspective(new File("/Users/noemi/Projects/PMO/MeasuringGIperClone/data/GastricCancerCLs/scRNAseq/B07_180109_LIAYSON/SNU-16.0.07274.sps.cbs"),"Clone_0.07274");
-			profile( 790031, Perspectives.TranscriptomePerspective);	
-			Perspective p2 = new GenomePerspective(new File("/Users/noemi/Projects/PMO/MeasuringGIperClone/data/GastricCancerCLs/scDNAseq/C07_180108_clones/HGC-27.sps.cbs"),"CN_Estimate");
+			profile( 3456, Perspectives.GenomePerspective);	
+			Perspective p2 = new GenomePerspective(new File("/Users/noemi/Projects/PMO/MeasuringGIperClone/data/GastricCancerCLs/scDNAseq/E07_180831_clones/HGC-27.sps.cbs"),"CN_Estimate");
 			System.out.println(p2.getChildrensSizes());
-			p2.save2DB();
+//			p2.save2DB();
 			display("SNU-16", Perspectives.TranscriptomePerspective);
 
 		}  catch (Exception e) {

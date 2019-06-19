@@ -1,7 +1,7 @@
 deleteCloneWithID<-function(cloneid, whichTable, sName) {
-  mydb = dbConnect(MySQL(), user = Sys.info()["user"], password = "lala", 
-                   dbname = "CLONEID", host = "127.0.0.1")
-  stmt = paste0("select cloneID,children,whichPerspective from ",whichTable," where cloneID=",cloneid);
+  mydb = dbConnect(MySQL(), user = Sys.info()["user"], password = "lalalala", 
+                   dbname = "CLONEID", host = "cloneredesign.cswgogbb5ufg.us-east-1.rds.amazonaws.com")
+  stmt = paste0("select cloneID,whichPerspective from ",whichTable," where cloneID=",cloneid);
   
   tryCatch({
     rs = dbSendQuery(mydb, stmt)

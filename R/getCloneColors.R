@@ -2,14 +2,19 @@ getCloneColors<-function(sName, whichP = "TranscriptomePerspective",cmap=NULL){
   
   ##Get all clones associeted with this sample
   whichP_=gsub("Exome","",gsub("Genome","",gsub("Transcriptome","",whichP)))
-  stmt=paste0("select children from ",whichP_," where whichPerspective='",whichP,"' AND sampleName='",sName,"' AND parent IS NULL")
-  mydb = dbConnect(MySQL(), user=Sys.info()["user"], password='lala', dbname='CLONEID',host='127.0.0.1')
+  cloneID = getRootID(sName, whichP)
+  
+  stmt = paste0("select cloneID from ",whichP_," where parent =",cloneID);
+  # stmt=paste0("select children from ",whichP_," where whichPerspective='",whichP,"' AND sampleName='",sName,"' AND parent IS NULL")
+  mydb = dbConnect(MySQL(), user=Sys.info()["user"], password='lalalala', dbname='CLONEID',host='cloneredesign.cswgogbb5ufg.us-east-1.rds.amazonaws.com')
   rs = dbSendQuery(mydb, stmt)
-  kids = fetch(rs, n=-1)
-  kids= kids[!is.na(kids)]
-  kids =strsplit(kids,",")[[1]]
-  ids=as.numeric(kids)
-  ids=1+ids-min(ids)
+  # kids = fetch(rs, n=-1)
+  # kids= kids[!is.na(kids)]
+  # kids =strsplit(kids,",")[[1]]
+  # ids=as.numeric(kids)
+  # ids=1+ids-min(ids)
+  kids = fetch(rs, n=-1)[,"cloneID"]
+  ids=1+kids-min(kids)
   
   dbClearResult(dbListResults(mydb)[[1]])
   dbDisconnect(mydb)

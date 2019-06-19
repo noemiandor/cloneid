@@ -37,23 +37,6 @@ public final class Helper {
 		return -1;
 	}
 
-	public static String getDBUserID() {
-		String db_userid = "nandor";
-		try {
-			String hostName = InetAddress.getLocalHost().getHostName()
-					.toLowerCase();
-			if (hostName.contains("sorrento")
-					|| hostName.contains("onc-macair-na")
-					|| hostName.contains("sunet")) {
-				db_userid = "noemi";
-			}
-		} catch (UnknownHostException e) {
-			db_userid = "noemi";
-			e.printStackTrace();
-		}
-		return db_userid;
-	}
-
 
 	public static String replaceLast(String s, String p, String new_p){
 		s=s.substring(0, s.lastIndexOf(p))+s.substring(s.lastIndexOf(p), s.length()).replace(p, new_p);
