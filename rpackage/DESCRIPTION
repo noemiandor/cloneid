@@ -1,7 +1,7 @@
 Package: cloneid
 Type: Package
 Title: Clone Identity Inference Framework
-Version: 1.0.1
+Version: 1.1.0
 Date: 2017-03-03
 Author: Noemi Andor
 Maintainer: Noemi Andor <cloneid.r@gmail.com>
