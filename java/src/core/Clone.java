@@ -157,6 +157,7 @@ public abstract class Clone {
 				}
 				if(hfeatures.length>3){
 					p_.alias=hfeatures[3];	
+//					p_.origin = ; @TODO: automate assignment of Perspective.origin
 				}
 				this.addChild(p_);
 			}

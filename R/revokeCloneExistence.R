@@ -6,7 +6,7 @@
       stmt = paste0("select cloneID from Perspective where parent =",id);
       rs = dbSendQuery(mydb, stmt)
       o_ = fetch(rs, n = -1)
-      to_delete = paste(to_delete, o_[,"cloneID"])
+      to_delete = paste(c(to_delete, as.character(o_[,"cloneID"])),collapse = ",")
     }
     # if(any(!is.na(o[,"children"]))){
       # to_delete=paste0(to_delete,",",paste(o[!is.na(o[,"children"]),"children"],collapse = ","))

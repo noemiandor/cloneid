@@ -21,6 +21,7 @@ import database.CLONEID;
  * Static class providing user-interface methods to query the database. 
  * @author noemi
  *@TODO: select only clone of max ID, not based on hasChildren=true
+ *@TODO: implement more robust access to remote DB, in the form of multiple trials when failure occurs 
  */
 public final class Manager {
 
@@ -62,6 +63,13 @@ public final class Manager {
 		return(gatherProfiles(selstmt,which,includeRoot));
 	}
 
+	
+	public static Map<String, Profile> profile(int[] cloneIDs, Perspectives which) throws Exception {
+		return null;
+		//@TODO: implement and add in R getSubProfiles(...) -- more efficient than accessing DB each time
+	}
+	
+	
 	public static Map<String, Profile> profile(int cloneID, Perspectives which) throws Exception {
 		Map<String,Profile> profiles=new HashMap<String,Profile>();
 		CLONEID cloneid= new CLONEID();

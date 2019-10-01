@@ -37,11 +37,12 @@ public final class CLONEID {
 		String db_password = "lalalala";
 		String db_userid = System.getProperty("user.name");
 
-		String db_connect_string = "jdbc:mysql://cloneredesign.cswgogbb5ufg.us-east-1.rds.amazonaws.com";
+		String db_connect_string = "jdbc:mysql://cloneredesign.cswgogbb5ufg.us-east-1.rds.amazonaws.com/CLONEID";
+//		String db_connect_string = "jdbc:mysql://localhost/CLONEID";
 		con = DriverManager.getConnection(db_connect_string, db_userid,
 				db_password);
 		stmt = con.createStatement();
-		stmt.executeQuery("USE CLONEID");
+//		stmt.executeQuery("USE CLONEID");
 		return true;
 	}
 
