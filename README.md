@@ -77,7 +77,7 @@ Done.
 
 - In a shell prompt (or command line or terminal) change the current working directory to the location where you want the cloned directory to be made. Then, run this command:
 ```sh 
-$ git clone https://github.com/scottmrc/cloneid.git
+$ git clone https://github.com/noemiandor/cloneid.git
 ```
 - Your local CLONEID repo will be created.
 ```text
