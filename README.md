@@ -77,11 +77,11 @@ Done.
 
 - In a shell prompt (or command line or terminal) change the current working directory to the location where you want the cloned directory to be made. Then, run this command:
 ```sh 
-$ git clone https://github.com/scottmrc/cloneid2.git
+$ git clone https://github.com/scottmrc/cloneid.git
 ```
-- Your local CLONEID2 repo will be created.
+- Your local CLONEID repo will be created.
 ```text
-Cloning into 'cloneid2'...
+Cloning into 'cloneid'...
 remote: Enumerating objects: 9, done.
 remote: Counting objects: 100% (9/9), done.
 remote: Compressing objects: 100% (7/7), done.
@@ -101,7 +101,7 @@ $ R CMD build rpackage
 
 - In a shell prompt run this command after [building the R Package](#build-r-package): 
 ```sh 
-$ R CMD INSTALL cloneid_1.0.1.tar.gz
+$ R CMD INSTALL cloneid_1.1.0.tar.gz
 ```
 
 #### Install R package Method 2
