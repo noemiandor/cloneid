@@ -1,6 +1,7 @@
 deleteCloneWithID<-function(cloneid, whichTable, sName) {
-  mydb = dbConnect(MySQL(), user = Sys.info()["user"], password = "lalalala", 
-                   dbname = "CLONEID", host = "cloneredesign.cswgogbb5ufg.us-east-1.rds.amazonaws.com")
+  
+  yml = read_yaml(paste0(system.file(package='cloneid'), '/config/config.yaml'))
+  mydb = dbConnect(MySQL(), user=yml$mysqlConnection$user, password=yml$mysqlConnection$password, dbname=yml$mysqlConnection$database,host=yml$mysqlConnection$host, port=as.integer(yml$mysqlConnection$port))
   stmt = paste0("select cloneID,whichPerspective from ",whichTable," where cloneID=",cloneid);
   
   tryCatch({

@@ -8,7 +8,7 @@ getSubclones<-function(cloneID_or_sampleName,whichP="GenomePerspective"){
   }else{
     x=as.integer(cloneID_or_sampleName)
   }
-  cs<-.jcall("useri.Manager",returnSig ="Ljava/util/Map;",method="display",x,whichP,
+  cs<-.jcall("cloneid.Manager",returnSig ="Ljava/util/Map;",method="display",x,whichP,
              use.true.class=T) 
   # convert Hashmap to R list
   keySet<-.jrcall(cs,"keySet")

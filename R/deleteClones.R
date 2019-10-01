@@ -6,7 +6,9 @@ deleteClones<-function(belowSize=0.02, aboveSize=NA, sName, whichP="Transcriptom
     return()
   }
   
-  mydb = dbConnect(MySQL(), user=Sys.info()["user"], password='lalalala', dbname='CLONEID',host='cloneredesign.cswgogbb5ufg.us-east-1.rds.amazonaws.com')
+  yml = read_yaml(paste0(system.file(package='cloneid'), '/config/config.yaml'))
+  mydb = dbConnect(MySQL(), user=yml$mysqlConnection$user, password=yml$mysqlConnection$password, dbname=yml$mysqlConnection$database,host=yml$mysqlConnection$host, port=as.integer(yml$mysqlConnection$port))
+  
   tryCatch({
     if(!is.na(belowSize)){
       .doTheWork(mydb, belowSize=belowSize, aboveSize=NA, sName, whichP)
