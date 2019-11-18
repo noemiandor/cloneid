@@ -153,7 +153,6 @@ public final class Manager {
 				display("Rand1_NCI-N87NCI-N87", Perspectives.Identity);
 				System.out.println("tmp");
 			} catch (Exception e2) {
-				// TODO Auto-generated catch block
 				e2.printStackTrace();
 			}
 			try {
@@ -165,14 +164,12 @@ public final class Manager {
 				System.out.println(gp.getCoordinates()[0]);;
 				System.out.println(gp.toString());
 			} catch (Exception e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 
 				try {
 					Map<String, Profile> ip=profiles("KATOIII", Perspectives.TranscriptomePerspective,false);
 				} catch (Exception e1) {
-					// TODO Auto-generated catch block
 					e1.printStackTrace();
 				}
 
@@ -180,7 +177,6 @@ public final class Manager {
 			try {
 				compare(3, Perspectives.GenomePerspective, 4, Perspectives.GenomePerspective);
 			} catch (Exception e1) {
-				// TODO Auto-generated catch block
 				e1.printStackTrace();
 			}
 		*/
@@ -214,7 +210,6 @@ public final class Manager {
 					display("SNU-16", Perspectives.TranscriptomePerspective);
 
 				} catch (Exception e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 
