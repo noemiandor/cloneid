@@ -109,13 +109,15 @@ public final class CLONEID {
 		clone.setProfile(p);
 		clone.setID(cloneID);
 		//Add perspectives if this is an Identity
-		Map<Perspectives, Integer> pmap=new HashMap<Perspectives, Integer>();
+		Map<Integer, Perspectives> pmap=new HashMap<Integer, Perspectives>();
 		if(which==Perspectives.Identity){
 			for(Perspectives persp : Perspectives.values()){
 				if(Perspectives.Identity!=persp){
-					int pID=rs.getInt(persp.name());
-					if(pID>0){
-						pmap.put(persp, pID);
+					String pIDs=rs.getString(persp.name());
+					if(pIDs != null){
+						for(String pID: pIDs.split(",")) {
+							pmap.put(Integer.parseInt(pID), persp);
+						}
 					}
 				}
 			}
@@ -126,8 +128,8 @@ public final class CLONEID {
 		if(parentID>0){
 			clone.setParent(getClone(parentID, which));
 		}
-		for(Entry<Perspectives, Integer> e :pmap.entrySet()){
-			((Identity)clone).addPerspective((Perspective)getClone(e.getValue(), e.getKey()));
+		for(Entry<Integer, Perspectives> e :pmap.entrySet()){
+			((Identity)clone).addPerspective((Perspective)getClone(e.getKey(), e.getValue()));
 		}
 		return(clone);
 	}

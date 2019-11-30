@@ -191,30 +191,28 @@ public final class Manager {
 				if (arg.equals("-f") || arg.equals("--force-create-schema")) { forceCreateSchema = true; }
 				createSchema(yamlReader, forceCreateSchema);
 
-			} else {
+			} 
 
-				try {
-					/*
-						Map<String, Clone> tmp = display("SNU-16", Perspectives.Identity);
-						tmp.values().iterator().next().getPerspective(Perspectives.TranscriptomePerspective);
-						Identity p =new Identity(new File("/Users/noemi/Projects/PMO/InferringMultiSamplePhylo/data/Kyoto-LGG/SNParray/LGG174/A06_170603_expands/LGG174T.identity.sps"),"CN_Estimate",new File("/Users/noemi/Projects/PMO/InferringMultiSamplePhylo/data/Kyoto-LGG/SNParray/LGG174/A06_170603_expands/LGG174T.identity.source"));
-						Perspective p_ = new TranscriptomePerspective(new File("/Users/noemi/Projects/PMO/MeasuringGIperClone/data/GastricCancerCLs/scRNAseq/B07_180109_LIAYSON/NCI-N87.sps.cbs"),"CN_Estimate");
-						p_.save2DB();
-						Perspective p =new ExomePerspective(new File(args[0]),"CN_Estimate");
-						Perspective p = new TranscriptomePerspective(new File("/Users/noemi/Projects/PMO/MeasuringGIperClone/data/GastricCancerCLs/scRNAseq/B07_180109_LIAYSON/SNU-16.0.07274.sps.cbs"),"Clone_0.07274");
-					*/
-					profile(3456, Perspectives.GenomePerspective);
-					Perspective p2 = new GenomePerspective(new File("/Users/noemi/Projects/PMO/MeasuringGIperClone/data/GastricCancerCLs/scDNAseq/E07_180831_clones/HGC-27.sps.cbs"), "CN_Estimate");
-					System.out.println(p2.getChildrensSizes());
-					//			p2.save2DB();
-					display("SNU-16", Perspectives.TranscriptomePerspective);
+		}
+		
+		try {
+			/*
+				Map<String, Clone> tmp = display("SNU-16", Perspectives.Identity);
+				tmp.values().iterator().next().getPerspective(Perspectives.TranscriptomePerspective);
+				Identity p =new Identity(new File("/Users/noemi/Projects/PMO/InferringMultiSamplePhylo/data/Kyoto-LGG/SNParray/LGG174/A06_170603_expands/LGG174T.identity.sps"),"CN_Estimate",new File("/Users/noemi/Projects/PMO/InferringMultiSamplePhylo/data/Kyoto-LGG/SNParray/LGG174/A06_170603_expands/LGG174T.identity.source"));
+				Perspective p_ = new TranscriptomePerspective(new File("/Users/noemi/Projects/PMO/MeasuringGIperClone/data/GastricCancerCLs/scRNAseq/B07_180109_LIAYSON/NCI-N87.sps.cbs"),"CN_Estimate");
+				p_.save2DB();
+				Perspective p =new ExomePerspective(new File(args[0]),"CN_Estimate");
+				Perspective p = new TranscriptomePerspective(new File("/Users/noemi/Projects/PMO/MeasuringGIperClone/data/GastricCancerCLs/scRNAseq/B07_180109_LIAYSON/SNU-16.0.07274.sps.cbs"),"Clone_0.07274");
+			*/
+//			profile(3456, Perspectives.GenomePerspective);
+//			Perspective p2 = new GenomePerspective(new File("/Users/noemi/Projects/PMO/MeasuringGIperClone/data/GastricCancerCLs/scDNAseq/E07_180831_clones/HGC-27.sps.cbs"), "CN_Estimate");
+//			System.out.println(p2.getChildrensSizes());
+			//			p2.save2DB();
+			display("LGG4T", Perspectives.Identity);
 
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-
-			}
-
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 
 	}
