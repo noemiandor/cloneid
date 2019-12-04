@@ -269,8 +269,12 @@ mergePerspectives<-function(perspectives, specimens, simM="euclidean",t=4){
   ###################################
   ####Calculate consensus genome ####
   ##@TODO: the specifics of building the consensus should depend on the perspective
-  sp2clone=cbind(sp2clone,matrix(NA,nrow(sp2clone),1)); colnames(sp2clone)[ncol(sp2clone)]="Identity"
-  consdat=matrix(0,length(allMut),1+nrow(sp2clone)); rownames(consdat)=allMut
+  sp2clone=cbind(sp2clone,matrix(NA,nrow(sp2clone),1)); 
+  colnames(sp2clone)[ncol(sp2clone)]="Identity"
+  
+  consdat=matrix(0,length(allMut),1+nrow(sp2clone)); 
+  rownames(consdat)=allMut
+  
   for(i in 1:nrow(sp2clone)){
     ##Consensus SP size: @TODO --> unexpected behaviour when two identities have exact same size <=> only one mapped to perspective 
     sI=which(!is.na(sp2clone[i,1:(ncol(sp2clone)-1)]))
@@ -293,10 +297,11 @@ mergePerspectives<-function(perspectives, specimens, simM="euclidean",t=4){
     }
     consdat[,i]=consdat[,i]/length(sI)
   }
-  iSize=round(as.numeric(sp2clone[,"Identity"])/sum(as.numeric(sp2clone[,"Identity"])),4)
-  ##@TODO: this should not be necessary - identities should not be retrieved by their size
-  iSize=iSize+(sample(1E5,length(iSize))-5E4)/1E7;##Slight jitter of identity size to avoid identical sizes
-  warning("Random noise added to clone size to avoid duplicate sizes amongst coexisting Identities")
+  iSize=as.numeric(sp2clone[,"Identity"])
+  # iSize=round(iSize)/sum(iSize)),4)
+  # ##@TODO: this should not be necessary - identities should not be retrieved by their size
+  # iSize=iSize+(sample(1E5,length(iSize))-5E4)/1E7;##Slight jitter of identity size to avoid identical sizes
+  # warning("Random noise added to clone size to avoid duplicate sizes amongst coexisting Identities")
   sp2clone[,"Identity"]=paste("Clone_",iSize,sep="")
   colnames(consdat)=c(sp2clone[,"Identity"],"CN_Estimate");
   consdat[,"CN_Estimate"]=apply(consdat[,sp2clone[,"Identity"],drop=F],1,mean)
