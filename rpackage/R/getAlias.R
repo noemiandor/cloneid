@@ -1,3 +1,3 @@
 getAlias<-function (cloneID, whichP = "TranscriptomePerspective") {
-  return(.getAttribute(cloneID, whichP, attr="alias"))
+  return(getAttribute(cloneID, whichP, attr="alias"))
 }

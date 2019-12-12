@@ -1,3 +1,3 @@
 getState<-function (cloneID,whichP = "TranscriptomePerspective") {
-  return(.getAttribute(cloneID, whichP, attr="state"))
+  return(getAttribute(cloneID, whichP, attr="state"))
 }

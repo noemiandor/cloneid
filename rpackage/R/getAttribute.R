@@ -1,4 +1,4 @@
-.getAttribute<-function (cloneID, whichP, attr){
+getAttribute<-function (cloneID, whichP, attr){
   library(RMySQL)
   if(!isempty(grep("_ID",cloneID))){
     cloneID=strsplit(cloneID,"_ID")[[1]][2]
