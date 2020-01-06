@@ -209,7 +209,7 @@ public final class Manager {
 //			Perspective p2 = new GenomePerspective(new File("/Users/noemi/Projects/PMO/MeasuringGIperClone/data/GastricCancerCLs/scDNAseq/E07_180831_clones/HGC-27.sps.cbs"), "CN_Estimate");
 //			System.out.println(p2.getChildrensSizes());
 			//			p2.save2DB();
-			display("LGG4T", Perspectives.Identity);
+			profiles(119963, Perspectives.TranscriptomePerspective, false);
 
 		} catch (Exception e) {
 			e.printStackTrace();
