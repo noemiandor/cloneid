@@ -14,7 +14,7 @@
 ### Requirements 
 CLONEID requires the followwing software and versions. 
 1. [Java](https://www.java.com/) version 8, 9, 10, 11, 12, or 13 
-1. [MySQL Server version 8](https://www.mysql.com/)
+1. [MySQL Server version 8](https://dev.mysql.com/doc/workbench/en/wb-installing-mac.html)
 1. [XQuartz](https://www.xquartz.org/) (may be needed. OSX only)
 1. [R version 3.6+](https://www.r-project.org/). Additionally, make sure that the following R packages are installed.
 
