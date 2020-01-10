@@ -1,4 +1,4 @@
-editCloneidConfig = function(host=NA, port=NA, user=NA, password=NA, database=NA, schemaScript=NA) {
+editCloneidConfig = function(host = 'localhost', port = '3306', user = NA, password = NA, database="CLONEID", schemaScript = "CLONEID_schema.sql"){
     
     yaml_dir = paste0(system.file(package='cloneid'), '/config/config.yaml')
     yml = read_yaml(yaml_dir)

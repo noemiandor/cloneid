@@ -8,7 +8,7 @@ Edit CloneID Configuration Yaml
 Function to take user input to set CloneID's MySQL connection: host, port, user, password, database and schema build script location
 }
 \usage{
-editCloneidConfig(host = 'HOST', port = 'PORT', user = 'USER', password = 'PASSWORD', database = 'DATABASE', schemaScript = 'SchemaScript')
+editCloneidConfig(host = 'localhost', port = '3306', user = NA, password = NA, database="CLONEID", schemaScript = "CLONEID_schema.sql")
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
