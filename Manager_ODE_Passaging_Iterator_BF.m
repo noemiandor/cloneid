@@ -1,4 +1,3 @@
-
 % Iterate through the in vitro passaging of cells
 % Determine change in clonal compositions following 10 passages given
 %           -Confluence at which passaging occurs
@@ -50,7 +49,7 @@ for i = 1:numPassages
 %     end
 %     
     % calculate cell growth over time by using ODE with parameter input
-    [T, Y] = ode45(@ODE_densityDependent_BF, tspan, cloneMatrix(1,:)');
+    [T, Y] = ode45(@ODE_densityDependent, tspan, cloneMatrix(1,:)');
     
     % iterate through cell growth
     for j = 1:length(Y(:, 1))

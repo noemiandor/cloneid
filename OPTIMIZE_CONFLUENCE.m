@@ -84,4 +84,3 @@ xlabel("confluence")
 ylabel("change in clonal composition")
 axis square
 hold off
-
