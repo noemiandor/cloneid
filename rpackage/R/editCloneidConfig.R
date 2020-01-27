@@ -21,7 +21,6 @@ editCloneidConfig = function(host = 'localhost', port = '3306', user = NA, passw
     if (is.na(schemaScript)) { schemaScript = yml$mysqlConnection$schemaScript }
     else { yml$mysqlConnection$schemaScript = schemaScript }
     
-    print(yml)
     write_yaml(yml, yaml_dir)
-    
+    return(yml)    
 }
