@@ -31,9 +31,9 @@
 
 \examples{
     #par(mfrow=c(3,1))
-    #display(cloneID_or_sampleName = "KATOIII",whichP = "GenomePerspective")
-    #display(cloneID_or_sampleName = "KATOIII",whichP = "TranscriptomePerspective")
-    #compare(4,1,perspective1 = "GenomePerspective",perspective2 = "TranscriptomePerspective")
+    #display(cloneID_or_sampleName = "KATOIII",whichP = "GenomePerspective", colorBy = NULL, deep = F, save = F)
+    #display(cloneID_or_sampleName = "KATOIII",whichP = "TranscriptomePerspective", colorBy = NULL, deep = F, save = F)
+    #compare(4,1,perspective1 = "GenomePerspective",perspective2 = "TranscriptomePerspective", col = NULL, plotType = "scatter")
 }
 
 
