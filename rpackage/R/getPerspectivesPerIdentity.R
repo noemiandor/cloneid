@@ -23,7 +23,7 @@ getPerspectivesPerIdentity <- function(sName, whichP="GenomePerspective"){
   
   
   ##Complement missing
-  missingIDs = sapply(i$GenomePerspective, function(x) setdiff(unlist(strsplit(x,",")), o$PerspectiveID))
+  missingIDs = lapply(i$GenomePerspective, function(x) setdiff(unlist(strsplit(x,",")), o$PerspectiveID))
   names(missingIDs) = i$cloneID
   missingIDs = missingIDs[!sapply(  missingIDs, isempty)]
   for(id in names(missingIDs)){
