@@ -23,7 +23,7 @@
 \author{Noemi Andor}
 
 \examples{
-  pm=getSubProfiles(cloneID_or_sampleName = "LGG2T1",whichP = "GenomePerspective")
+  pm=getSubProfiles(cloneID_or_sampleName = "LGG2T1",whichP = "GenomePerspective", includeRoot = FALSE)
 }
 
 
