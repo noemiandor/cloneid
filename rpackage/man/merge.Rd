@@ -48,9 +48,9 @@ Next, subpopulations  \eqn{S} are grouped into categories by hierarchical cluste
 
 \examples{
   #par(mfrow=c(4,1))
-  #display(cloneID_or_sampleName = "KATOIII",whichP = "GenomePerspective")
-  #display(cloneID_or_sampleName = "KATOIII",whichP = "TranscriptomePerspective")
-  #merge(perspectives=c("GenomePerspective", "TranscriptomePerspective"), specimens="KATOIII")
+  #display(cloneID_or_sampleName = "KATOIII",whichP = "GenomePerspective")display(cloneID_or_sampleName,whichP="GenomePerspective", colorBy = NULL, deep = F, save = F)
+  #display(cloneID_or_sampleName,whichP="TranscriptomePerspective", colorBy = NULL, deep = F, save = F)
+  #merge(perspectives=c("GenomePerspective", "TranscriptomePerspective"), specimens="KATOIII", simM = "euclidean", t=-Inf)
   ##compare(4,1,perspective1 = "GenomePerspective",perspective2 = "Identity")
 }
 

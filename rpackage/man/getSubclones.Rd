@@ -18,3 +18,5 @@
 }
 
 \author{Noemi Andor}
+
+\examples{}

@@ -17,7 +17,7 @@ createCloneidSchema(forceCreateSchema = FALSE)
 
 \examples{
 # Create the CLONEID MySQL Schema (safe)
-createCloneidSchema()
+createCloneidSchema(forceCreateSchema = FALSE)
 
 # Create the CLONEID MySQL Schema AND drop CLONEID database if exists
 createCloneidSchema(forceCreateSchema = TRUE)
