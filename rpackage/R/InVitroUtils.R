@@ -7,6 +7,7 @@ harvest <- function(id, from, cellCount, tx = Sys.time(), dishSurfaceArea_cm2 = 
 }
 
 .seed_or_harvest <- function(event, id, from, cellCount, tx, dishSurfaceArea_cm2, PIXEL2CM){
+  library(RMySQL)
   QUPATH_DIR="~/QuPath/output/"; ##TODO: should be set under settings, not here
   EVENTTYPES = c("seeding","harvest")
   otherevent = EVENTTYPES[EVENTTYPES!=event]
@@ -74,6 +75,7 @@ harvest <- function(id, from, cellCount, tx = Sys.time(), dishSurfaceArea_cm2 = 
 }
 
 readGrowthRate <- function(cellLine){
+  library(RMySQL)
   cmd = paste0("select P2.*, P1.cellCount, P2.cellCount, DATEDIFF(P2.date, P1.date), POWER(P2.cellCount / P1.cellCount, 1 / DATEDIFF(P2.date, P1.date)) as GR_per_day",
          " FROM Passaging P1 JOIN Passaging P2",
          " ON P1.id = P2.passaged_from_id1",
