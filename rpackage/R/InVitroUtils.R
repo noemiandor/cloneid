@@ -32,7 +32,7 @@ plotCellLineHistory<-function(){
   tmp = suppressWarnings(try(lapply( dbListConnections( dbDriver( drv = "MySQL")), dbDisconnect)))
   yml = yaml::read_yaml(paste0(system.file(package='cloneid'), '/config/config.yaml'))
   mydb = dbConnect(MySQL(), user=yml$mysqlConnection$user, password=yml$mysqlConnection$password, dbname=yml$mysqlConnection$database,host=yml$mysqlConnection$host, port=as.integer(yml$mysqlConnection$port))
-  rs = dbSendQuery(mydb, "select name, year_of_first_report from CellLines where year_of_first_report >0;")
+  rs = dbSendQuery(mydb, "select name, year_of_first_report from CellLinesAndBiopsies where year_of_first_report >0;")
   kids = fetch(rs, n=-1)
   
   kids = kids[sort(kids$year_of_first_report, index.return=T)$ix,]
@@ -87,8 +87,13 @@ plotCellLineHistory<-function(){
   
   ## Read automated image analysis output
   dm = read.table(f,sep="\t", check.names = F, stringsAsFactors = F, header = T)
+  margins = apply(dm[,c("Centroid X px","Centroid Y px")],2,quantile,c(0,1), na.rm=T)
+  plot(dm$`Centroid X px`,dm$`Centroid Y px`)
+  rect(margins[1,1], margins[1,2], margins[2,1], margins[2,2], col=NULL, border = "red")
+  width_height = margins[2,]- margins[1,]
   areaCount = sum(dm$Name=="PathCellObject")
-  area2dish = dishSurfaceArea_cm2 / (dm$Area.px.2[dm$Name=="PathAnnotationObject"] * PIXEL2CM^2)
+  area_PIXEL = width_height[1] * width_height[2]; #dm$Area.px.2[dm$Name=="PathAnnotationObject"]
+  area2dish = dishSurfaceArea_cm2 / (area_PIXEL * PIXEL2CM^2)
   dishCount = round(areaCount * area2dish)
   ##@TODO: deal with PIXEL2CM conversion automatcially
   
