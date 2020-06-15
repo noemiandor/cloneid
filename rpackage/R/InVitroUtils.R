@@ -1,9 +1,9 @@
-seed <- function(id, from, cellCount, tx = Sys.time(), dishSurfaceArea_cm2 = 25, PIXEL2CM = 1E-4){
-  .seed_or_harvest(event = "seeding", id=id, from = from, cellCount = cellCount, tx = tx, dishSurfaceArea_cm2 = dishSurfaceArea_cm2, PIXEL2CM = PIXEL2CM)
+seed <- function(id, from, cellCount, tx = Sys.time(), dishSurfaceArea_cm2 = 25){
+  .seed_or_harvest(event = "seeding", id=id, from = from, cellCount = cellCount, tx = tx, dishSurfaceArea_cm2 = dishSurfaceArea_cm2)
 }
 
-harvest <- function(id, from, cellCount, tx = Sys.time(), dishSurfaceArea_cm2 = 25, PIXEL2CM = 1E-4){
-  .seed_or_harvest(event = "harvest", id=id, from=from, cellCount = cellCount, tx = tx, dishSurfaceArea_cm2 = dishSurfaceArea_cm2, PIXEL2CM = PIXEL2CM)
+harvest <- function(id, from, cellCount, tx = Sys.time(), dishSurfaceArea_cm2 = 25){
+  .seed_or_harvest(event = "harvest", id=id, from=from, cellCount = cellCount, tx = tx, dishSurfaceArea_cm2 = dishSurfaceArea_cm2)
 }
 
 
@@ -48,8 +48,9 @@ plotCellLineHistory<-function(){
   dbDisconnect(mydb)
 }
 
-.seed_or_harvest <- function(event, id, from, cellCount, tx, dishSurfaceArea_cm2, PIXEL2CM){
+.seed_or_harvest <- function(event, id, from, cellCount, tx, dishSurfaceArea_cm2){
   library(RMySQL)
+  UM2CM = 1e-4
   QUPATH_DIR="~/QuPath/output/"; ##TODO: should be set under settings, not here
   EVENTTYPES = c("seeding","harvest")
   otherevent = EVENTTYPES[EVENTTYPES!=event]
@@ -87,15 +88,14 @@ plotCellLineHistory<-function(){
   
   ## Read automated image analysis output
   dm = read.table(f,sep="\t", check.names = F, stringsAsFactors = F, header = T)
-  margins = apply(dm[,c("Centroid X px","Centroid Y px")],2,quantile,c(0,1), na.rm=T)
-  plot(dm$`Centroid X px`,dm$`Centroid Y px`)
-  rect(margins[1,1], margins[1,2], margins[2,1], margins[2,2], col=NULL, border = "red")
+  margins = apply(dm[,c("Centroid X µm","Centroid Y µm")],2,quantile,c(0,1), na.rm=T)
+  plot(dm$`Centroid X µm`,-dm$`Centroid Y µm`)
+  rect(margins[1,1], -margins[1,2], margins[2,1], -margins[2,2], col=NULL, border = "red")
   width_height = margins[2,]- margins[1,]
-  areaCount = sum(dm$Name=="PathCellObject")
-  area_PIXEL = width_height[1] * width_height[2]; #dm$Area.px.2[dm$Name=="PathAnnotationObject"]
-  area2dish = dishSurfaceArea_cm2 / (area_PIXEL * PIXEL2CM^2)
+  areaCount = nrow(dm)
+  area_um = width_height[1] * width_height[2]; #dm$Area.px.2[dm$Name=="PathAnnotationObject"]
+  area2dish = dishSurfaceArea_cm2 / (area_um * UM2CM^2)
   dishCount = round(areaCount * area2dish)
-  ##@TODO: deal with PIXEL2CM conversion automatcially
   
   ### Insert
   ## @TODO: event cannot be NULL!
