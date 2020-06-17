@@ -4,8 +4,10 @@
 
 1. [Requirements](#requirements)
 1. [Clone GIT Repository](#clone-git-repository)
+1. [Linux and OSX Setup](#linux-and-osx-setup)
 1. [Set Java Version for R](#set-java-version-for-r)
 1. [Build R Package](#build-r-package)
+1. [Windows Setup](#windows-setup)
 1. [Running the Package in R](#running-the-package-in-r)
 1. [MySQL Database Setup](#mysql-database-setup)
 1. [Build CloneID Jar](#build-cloneid-jar)
@@ -42,6 +44,8 @@ In an **R terminal** run the following commands:
 > BiocManager::install("biomaRt")
 > install.packages(c('rJava', 'qualV', 'RColorBrewer', 'gtools', 'gplots', 'ape', 'gdata', 'RMySQL', 'flexclust', 'Matrix', 'liayson', 'expands', 'matlab', 'yaml'))
 ```
+## Linux and OSX Setup
+
 ### Set Java variables for R 
 
 - In a shell prompt (or command line or terminal), run this command:
@@ -109,9 +113,34 @@ $ R CMD INSTALL cloneid_1.1.0.tar.gz
 - In an R terminal:
 ```r 
 > install.packages('rpackage', repos=NULL, type='source')
-```
+```  
 
-### Running the package in R 
+## Windows Setup  
+
+### Install Java for Windows  
+
+1. Install newest version of Java (Java 14 at time of this writing)
+
+### Clone GIT Repository  
+
+- [Reference above](#clone-git-repository)
+
+### Build R Package 
+
+- Add R to PATH, this is not automatically down on Windows R installations
+- Install RTools for Windows [download page](https://cran.r-project.org/bin/windows/Rtools/)
+- Continue here: [Reference above](#build-r-package)
+
+#### Install R Package Method 1  
+
+- [Reference above](#install-r-package-method-1)
+
+#### Install R Package Method 2  
+
+- [Reference above](#install-r-package-method-2)
+
+
+## Running the package in R 
 
 - To test the installation, in an R terminal run this command:
 ```r 
@@ -142,7 +171,7 @@ $mysqlConnection$schemaScript
 [1] "CLONEID_schema.sql"
 ```
 
-### MySQL Database Setup
+## MySQL Database Setup
 
 - Run this command, in an R terminal, to see the current yaml configuration settings for the CloneID Schema:
 ```r 
@@ -169,7 +198,7 @@ $mysqlConnection$schemaScript
 ** CLONEID Schema created successfully ** 
 ```
 
-### Build CloneID JAR
+## Build CloneID JAR
 
 - The git repository comes with the executable jar.  If you would like to rebuild it use this command in the repository's root directory:
 ```sh 
@@ -187,7 +216,7 @@ build/libs/cloneid.jar
 rpackage/inst/java/
 ```
 
-### Troubleshooting 
+## Troubleshooting 
 
 #### OSX
 
@@ -201,3 +230,13 @@ rpackage/inst/java/
 	```sh 
 	$ R CMD javareconf
 	```
+
+#### Windows
+
+- When installing rJava on Windows, if you receive any errors from rJava when importing it in R that look like the message below, you may need to make sure a 32-bit **and** 64-bit version of Java are installed.  This seems to only be the case with older Java versions (i.e. Java 8).  Newer versions of Java only require the 64-bit version:
+```text 
+Error : .onLoad failed in loadNamespace() for 'rJava', details:   call: inDL(x, as.logical(local), as.logical(now), ...)   
+error: unable to load shared object 'C:/Users/USER/Documents/R/win-library/VERSION/rJava/libs/x64/rJava.dll':   
+LoadLibrary failure:  The specified module could not be found.  
+Error: package or namespace load failed for ‘rJava’
+```
