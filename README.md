@@ -119,7 +119,7 @@ $ R CMD INSTALL cloneid_1.1.0.tar.gz
 
 ### Install Java for Windows  
 
-1. Install newest version of Java (Java 14 at time of this writing)
+1. Install newest version of [Java](https://www.oracle.com/java/technologies/javase-downloads.html) (Java 14 at time of this writing)
 
 ### Clone GIT Repository  
 
