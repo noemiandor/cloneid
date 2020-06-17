@@ -240,3 +240,5 @@ error: unable to load shared object 'C:/Users/USER/Documents/R/win-library/VERSI
 LoadLibrary failure:  The specified module could not be found.  
 Error: package or namespace load failed for ‘rJava’
 ```
+- Java 8 downloads can be found [here](https://www.oracle.com/java/technologies/javase-jre8-downloads.html)
+
