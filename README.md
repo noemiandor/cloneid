@@ -1,5 +1,7 @@
 # CloneID
 
+CLONEID is a framework that integrates measurements obtained from different technologies, or from multi-spatial or longitudinal biopsies, into a comprehensive approximation of the identities of coexisting tumor clones. The framework comes with a SQL database that keeps track of clones over multiple spatially or temporally connected sequencing experiments. The database also links these high-throughput measurements to the growth conditions of cells from which they were obtained. A main goal of CLONEID is to facilitate tracking the pedigree of evolving cell lines over decades along with potentially changing cell culture habits. This can reveal long-term trends in the clonal evolution of cell lines, that would have remained elusive at smaller time-scales.
+
 ### Contents 
 
 1. [Requirements](#requirements)
