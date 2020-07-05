@@ -7,6 +7,90 @@ harvest <- function(id, from, cellCount, tx = Sys.time(), dishSurfaceArea_cm2 = 
 }
 
 
+getPedegreeTree <- function(cellLine){
+  library(RMySQL)
+  library(ape)
+
+  mydb = .connect2DB()
+  stmt = paste0("select * from Passaging where cellLine = '",cellLine,"'");
+  rs = suppressWarnings(dbSendQuery(mydb, stmt))
+  kids = fetch(rs, n=-1)
+  kids= kids[sort(kids$passage, index.return=T)$ix,,drop=F]
+  
+  ## Recursive function to assemble tree
+  .gatherDescendands<-function(kids, x){
+    ii = which(kids$passaged_from_id1==x)
+    if(isempty(ii)){
+      return("")
+    }
+    TREE_ = "("
+    for(i in ii){
+      y = gatherDescendands(kids, kids$id[i])
+      if(nchar(y)>0){
+        y = paste0(y,":1,")
+      }
+      dx = kids$passage[i]
+      TREE_ =paste0(TREE_ , y, kids$id[i],":", dx, ",")
+    } 
+    TREE_ = gsub(",$",")", TREE_)
+    return(TREE_)
+  }
+  
+  ## Assemble tree
+  x = kids$id[1]
+  TREE_ = .gatherDescendands(kids, x)
+  TREE = paste0("(",TREE_, ":1,",x,":1);");
+
+  ## Build tree
+  tr <- read.tree(text = TREE)
+  str(tr)
+  plot(tr, underscore = T, cex=0.9)
+  
+  dbClearResult(dbListResults(mydb)[[1]])
+  dbDisconnect(mydb)
+  return(tr)
+}
+
+
+
+findAllDescendandsOf <-function(ids){
+  library(RMySQL)
+  
+  mydb = .connect2DB()
+  stmt = paste0("select * from Passaging where id IN ",paste0("('",paste0(ids, collapse = "', '"),"')"));
+  rs = suppressWarnings(dbSendQuery(mydb, stmt))
+  parents = fetch(rs, n=-1)
+  
+  ## Recursive function to trace descendands
+  .traceDescendands<-function(x){
+    stmt = paste0("select * from Passaging where passaged_from_id1 = '",x,"'");
+    rs = suppressWarnings(dbSendQuery(mydb, stmt))
+    kids = fetch(rs, n=-1)
+    out = kids$id
+    for(id in kids$id){
+      out = c(out, .traceDescendands(id))
+    }
+    return(out)
+  }
+  
+  ## Select statements, appending Ancestor
+  out = list();
+  for(id in parents$id){
+    d = c(id, .traceDescendands(id))
+    d = paste0("('",paste0(d, collapse = "', '"),"')")
+    out[[id]] = paste0("select *, '",id,"' as Ancestor from Passaging where id IN ",d);
+  }
+  
+  ## Union
+  stmt = out[[1]]
+  for(id in setdiff(names(out),names(out)[1])){
+    stmt = paste0(stmt, " UNION (", out[[id]],")")
+  }
+  print(stmt, quote=F)
+}
+
+
+
 readGrowthRate <- function(cellLine){
   library(RMySQL)
   cmd = paste0("select P2.*, P1.cellCount, P2.cellCount, DATEDIFF(P2.date, P1.date), POWER(P2.cellCount / P1.cellCount, 1 / DATEDIFF(P2.date, P1.date)) as GR_per_day",
@@ -15,9 +99,7 @@ readGrowthRate <- function(cellLine){
                " WHERE P2.event='harvest' and P1.cellLine='",cellLine,"'") 
   print(cmd, quote = F)
   
-  tmp = suppressWarnings(try(lapply( dbListConnections( dbDriver( drv = "MySQL")), dbDisconnect)))
-  yml = yaml::read_yaml(paste0(system.file(package='cloneid'), '/config/config.yaml'))
-  mydb = dbConnect(MySQL(), user=yml$mysqlConnection$user, password=yml$mysqlConnection$password, dbname=yml$mysqlConnection$database,host=yml$mysqlConnection$host, port=as.integer(yml$mysqlConnection$port))
+  mydb = .connect2DB()
   
   rs = dbSendQuery(mydb, cmd)
   kids = fetch(rs, n=-1)
@@ -27,11 +109,27 @@ readGrowthRate <- function(cellLine){
 }
 
 
+populateLiquidNitrogenRacks <-function(rackID){
+  library(RMySQL)
+  mydb = .connect2DB()
+  for(box in 1:13){
+    for (br in c('A','B','C','D','E','F','G','H','I')){
+      for (bc in 1:9){
+        cmd="INSERT INTO LiquidNitrogen (`Rack`, `Row`, `BoxRow`, `BoxColumn`)"
+        cmd=paste0(cmd, " VALUES (",rackID,", ",box,", '",br,"', ",bc,");");
+        print(cmd,quote = F)
+        rs = dbSendQuery(mydb, cmd)
+      }
+    }
+  }
+  dbClearResult(dbListResults(mydb)[[1]])
+  dbDisconnect(mydb)
+}
+
+
 plotCellLineHistory<-function(){
   library(RMySQL)
-  tmp = suppressWarnings(try(lapply( dbListConnections( dbDriver( drv = "MySQL")), dbDisconnect)))
-  yml = yaml::read_yaml(paste0(system.file(package='cloneid'), '/config/config.yaml'))
-  mydb = dbConnect(MySQL(), user=yml$mysqlConnection$user, password=yml$mysqlConnection$password, dbname=yml$mysqlConnection$database,host=yml$mysqlConnection$host, port=as.integer(yml$mysqlConnection$port))
+  mydb = .connect2DB()
   rs = dbSendQuery(mydb, "select name, year_of_first_report from CellLinesAndBiopsies where year_of_first_report >0;")
   kids = fetch(rs, n=-1)
   
@@ -55,9 +153,7 @@ plotCellLineHistory<-function(){
   EVENTTYPES = c("seeding","harvest")
   otherevent = EVENTTYPES[EVENTTYPES!=event]
   
-  tmp = suppressWarnings(try(lapply( dbListConnections( dbDriver( drv = "MySQL")), dbDisconnect)))
-  yml = yaml::read_yaml(paste0(system.file(package='cloneid'), '/config/config.yaml'))
-  mydb = dbConnect(MySQL(), user=yml$mysqlConnection$user, password=yml$mysqlConnection$password, dbname=yml$mysqlConnection$database,host=yml$mysqlConnection$host, port=as.integer(yml$mysqlConnection$port))
+  mydb = .connect2DB()
   
   stmt = paste0("select * from Passaging where id = '",from,"'");
   rs = suppressWarnings(dbSendQuery(mydb, stmt))
@@ -112,4 +208,11 @@ plotCellLineHistory<-function(){
   
   dbClearResult(dbListResults(mydb)[[1]])
   dbDisconnect(mydb)
+}
+
+.connect2DB <-function(){
+  tmp = suppressWarnings(try(lapply( dbListConnections( dbDriver( drv = "MySQL")), dbDisconnect)))
+  yml = yaml::read_yaml(paste0(system.file(package='cloneid'), '/config/config.yaml'))
+  mydb = dbConnect(MySQL(), user=yml$mysqlConnection$user, password=yml$mysqlConnection$password, dbname=yml$mysqlConnection$database,host=yml$mysqlConnection$host, port=as.integer(yml$mysqlConnection$port))
+  return(mydb)
 }
