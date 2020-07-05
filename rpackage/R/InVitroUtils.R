@@ -53,7 +53,7 @@ getPedegreeTree <- function(cellLine){
 
 
 
-findAllDescendandsOf <-function(ids){
+findAllDescendandsOf <-function(ids, includeGR=F){
   library(RMySQL)
   
   mydb = .connect2DB()
@@ -78,7 +78,12 @@ findAllDescendandsOf <-function(ids){
   for(id in parents$id){
     d = c(id, .traceDescendands(id))
     d = paste0("('",paste0(d, collapse = "', '"),"')")
-    out[[id]] = paste0("select *, '",id,"' as Ancestor from Passaging where id IN ",d);
+    if(includeGR){
+      out[[id]] = paste0("select P2.*, '",id,"' as Ancestor, DATEDIFF(P2.date, P1.date), POWER(P2.cellCount / P1.cellCount, 1 / DATEDIFF(P2.date, P1.date)) as GR_per_day ", 
+                         "FROM Passaging P1 JOIN Passaging P2 ON P1.id = P2.passaged_from_id1 WHERE P2.id IN ",d)
+    }else{
+      out[[id]] = paste0("select *, '",id,"' as Ancestor from Passaging where id IN ",d);
+    }
   }
   
   ## Union
