@@ -25,7 +25,7 @@ getPedegreeTree <- function(cellLine){
     }
     TREE_ = "("
     for(i in ii){
-      y = gatherDescendands(kids, kids$id[i])
+      y = .gatherDescendands(kids, kids$id[i])
       if(nchar(y)>0){
         y = paste0(y,":1,")
       }
