@@ -105,6 +105,7 @@ $ R CMD build rpackage
 
 #### Install R Package Method 1
 
+- **NOTE**: This method requires RTools
 - In a shell prompt run this command after [building the R Package](#build-r-package): 
 ```sh 
 $ R CMD INSTALL cloneid_1.1.0.tar.gz
@@ -129,8 +130,8 @@ $ R CMD INSTALL cloneid_1.1.0.tar.gz
 
 ### Build R Package 
 
-- Add R to PATH, this is not automatically down on Windows R installations
-- Install RTools for Windows [download page](https://cran.r-project.org/bin/windows/Rtools/)
+- Add R to PATH, this is not automatically done on Windows R installations
+- Install RTools for Windows [download page](https://cran.r-project.org/bin/windows/Rtools/) (Optional)
 - Continue here: [Reference above](#build-r-package)
 
 #### Install R Package Method 1  
@@ -242,5 +243,5 @@ error: unable to load shared object 'C:/Users/USER/Documents/R/win-library/VERSI
 LoadLibrary failure:  The specified module could not be found.  
 Error: package or namespace load failed for ‘rJava’
 ```
-- Java 8 downloads can be found [here](https://www.oracle.com/java/technologies/javase-jre8-downloads.html)
+- Java 8 downloads can be found [here](https://www.oracle.com/java/technologies/javase/javase-jdk8-downloads.html)
 
