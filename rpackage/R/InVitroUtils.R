@@ -47,7 +47,7 @@ getPedegreeTree <- function(cellLine){
   str(tr)
   col = c("blue","red")
   names(col) = c("seeding","harvest")
-  plot(tr, underscore = T, cex=0.9, tip.color = col[kids[la$tip.label,]$event])
+  plot(tr, underscore = T, cex=0.9, tip.color = col[kids[tr$tip.label,]$event])
   legend("topright",names(col),fill=col)
   
   dbClearResult(dbListResults(mydb)[[1]])
