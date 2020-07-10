@@ -16,6 +16,7 @@ getPedegreeTree <- function(cellLine){
   rs = suppressWarnings(dbSendQuery(mydb, stmt))
   kids = fetch(rs, n=-1)
   kids= kids[sort(kids$passage, index.return=T)$ix,,drop=F]
+  rownames(kids) = kids$id
   
   ## Recursive function to assemble tree
   .gatherDescendands<-function(kids, x){
@@ -44,7 +45,10 @@ getPedegreeTree <- function(cellLine){
   ## Build tree
   tr <- read.tree(text = TREE)
   str(tr)
-  plot(tr, underscore = T, cex=0.9)
+  col = c("blue","red")
+  names(col) = c("seeding","harvest")
+  plot(tr, underscore = T, cex=0.9, tip.color = col[kids[la$tip.label,]$event])
+  legend("topright",names(col),fill=col)
   
   dbClearResult(dbListResults(mydb)[[1]])
   dbDisconnect(mydb)
