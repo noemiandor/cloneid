@@ -17,7 +17,7 @@ CLONEID is a framework that integrates measurements obtained from different tech
 
 ### Requirements 
 CLONEID requires the followwing software and versions. 
-1. [Java](https://www.java.com/) version 8, 9, 10, 11, 12, or 13 
+1. [Java](https://www.java.com/) version 8, 9, 10, 11, 12, 13 or 14 
 1. [MySQL Server version 8](https://dev.mysql.com/downloads/mysql/8.0.html#macosx-dmg)
 1. [XQuartz](https://www.xquartz.org/) (may be needed. OSX only)
 1. [R version 3.6+](https://www.r-project.org/). Additionally, make sure that the following R packages are installed.
@@ -122,7 +122,7 @@ $ R CMD INSTALL cloneid_1.1.0.tar.gz
 
 ### Install Java for Windows  
 
-1. Install newest version of [Java](https://www.oracle.com/java/technologies/javase-downloads.html) (Java 14 at time of this writing)
+1. Install newest version of [Java](https://www.oracle.com/java/technologies/javase-jdk14-downloads.html) (Java 14 at time of this writing)
 
 ### Clone GIT Repository  
 
@@ -203,7 +203,7 @@ $mysqlConnection$schemaScript
 
 ## Build CloneID JAR
 
-- The git repository comes with the executable jar.  If you would like to rebuild it use this command in the repository's root directory:
+- The git repository comes with the executable jar compiled under Java 14. If you would like to rebuild it under a different Java version use this command in the repository's root directory:
 ```sh 
 $ ./gradlew uberJar
 ```
@@ -245,3 +245,6 @@ Error: package or namespace load failed for ‘rJava’
 ```
 - Java 8 downloads can be found [here](https://www.oracle.com/java/technologies/javase/javase-jdk8-downloads.html)
 
+#### CloneID JAR 
+
+- The CloneID JAR that is in this repository was compiled with Java 14.  If Java throws version errors while running the JAR file, it may be necessary to recompile the JAR and replace the current version in the rpackage before proceeding.  Please refer to this [section](#build-cloneid-jar)
