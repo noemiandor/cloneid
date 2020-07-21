@@ -155,6 +155,41 @@ plotCellLineHistory<-function(){
   dbDisconnect(mydb)
 }
 
+updateLiquidNitrogen <- function(id, cellCount, rack, row, boxRow, boxColumn){
+  library(RMySQL)
+  mydb = .connect2DB()
+  cmd=paste0("UPDATE LiquidNitrogen SET ",
+                "id = '",id,"',",
+                "cellCount = ",cellCount," WHERE ",
+                "Rack = '",rack,"' AND ",
+                "Row = '",row,"' AND ",
+                "BoxRow = '",boxRow,"' AND ",
+                "BoxColumn = '",boxColumn,"'");
+  print(cmd)
+  rs = dbSendQuery(mydb, cmd);
+  
+  dbClearResult(dbListResults(mydb)[[1]])
+  dbDisconnect(mydb)
+  
+}
+
+removeFromLiquidNitrogen <- function(rack, row, boxRow, boxColumn){
+  library(RMySQL)
+  mydb = .connect2DB()
+  cmd=paste0("UPDATE LiquidNitrogen SET ",
+             "id = NULL,",
+             "cellCount = 0 WHERE ",
+             "Rack = '",rack,"' AND ",
+             "Row = '",row,"' AND ",
+             "BoxRow = '",boxRow,"' AND ",
+             "BoxColumn = '",boxColumn,"'");
+  print(cmd)
+  rs = dbSendQuery(mydb, cmd);
+  
+  dbClearResult(dbListResults(mydb)[[1]])
+  dbDisconnect(mydb)
+}
+
 .seed_or_harvest <- function(event, id, from, cellCount, tx, dishSurfaceArea_cm2){
   library(RMySQL)
   UM2CM = 1e-4
