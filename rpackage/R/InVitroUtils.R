@@ -1,9 +1,12 @@
-seed <- function(id, from, cellCount, tx = Sys.time(), dishSurfaceArea_cm2 = 25){
+seed <- function(id, from, cellCount, dishSurfaceArea_cm2, tx = Sys.time()){
+  ## Typical values for dishSurfaceArea_cm2 are: 
+  ## a) 75 cm^2 = 11.43 cm * 7.62 cm --> @TODO -- doesn't match!
+  ## b) 25 cm^2 = 6.35 cm * 2.54 cm --> @TODO -- doesn't match!
   .seed_or_harvest(event = "seeding", id=id, from = from, cellCount = cellCount, tx = tx, dishSurfaceArea_cm2 = dishSurfaceArea_cm2)
 }
 
-harvest <- function(id, from, cellCount, tx = Sys.time(), dishSurfaceArea_cm2 = 25){
-  .seed_or_harvest(event = "harvest", id=id, from=from, cellCount = cellCount, tx = tx, dishSurfaceArea_cm2 = dishSurfaceArea_cm2)
+harvest <- function(id, from, cellCount, tx = Sys.time()){
+  .seed_or_harvest(event = "harvest", id=id, from=from, cellCount = cellCount, tx = tx, dishSurfaceArea_cm2 = NULL)
 }
 
 
@@ -218,6 +221,11 @@ removeFromLiquidNitrogen <- function(rack, row, boxRow, boxColumn){
   }
   ## TODO: What if from is too far in the past
   
+  ## dishSurfaceArea_cm2 cannot have changed if this is a harvest event: 
+  if(event=="harvest"){
+    dishSurfaceArea_cm2 = kids$dishSurfaceArea_cm2
+  }
+  
   ## Wait and look for imaging analysis output
   print(paste0("Waiting for ",id,".txt to appear under ",QUPATH_DIR," ..."), quote = F)
   f = paste0(QUPATH_DIR,id,".txt")
@@ -238,7 +246,6 @@ removeFromLiquidNitrogen <- function(rack, row, boxRow, boxColumn){
   dishCount = round(areaCount * area2dish)
   
   ### Insert
-  ## @TODO: event cannot be NULL!
   passage = kids$passage
   if(event=="seeding"){
     passage = passage+1
