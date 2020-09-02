@@ -1,7 +1,7 @@
-seed <- function(id, from, cellCount, dishSurfaceArea_cm2, tx = Sys.time()){
+seed <- function(id, from, cellCount, dishSurfaceArea_cm2, tx = Sys.time()){ 
   ## Typical values for dishSurfaceArea_cm2 are: 
-  ## a) 75 cm^2 = 11.43 cm * 7.62 cm --> @TODO -- doesn't match!
-  ## b) 25 cm^2 = 6.35 cm * 2.54 cm --> @TODO -- doesn't match!
+  ## a) 75 cm^2 = 10.1 cm x 7.30 cm  
+  ## b) 25 cm^2 = 5.08 cm x 5.08 cm
   .seed_or_harvest(event = "seeding", id=id, from = from, cellCount = cellCount, tx = tx, dishSurfaceArea_cm2 = dishSurfaceArea_cm2)
 }
 
@@ -239,10 +239,10 @@ removeFromLiquidNitrogen <- function(rack, row, boxRow, boxColumn){
   margins = apply(dm[,c("Centroid X µm","Centroid Y µm")],2,quantile,c(0,1), na.rm=T)
   plot(dm$`Centroid X µm`,-dm$`Centroid Y µm`)
   rect(margins[1,1], -margins[1,2], margins[2,1], -margins[2,2], col=NULL, border = "red")
-  width_height = margins[2,]- margins[1,]
+  width_height = (margins[2,]- margins[1,])*UM2CM
   areaCount = nrow(dm)
-  area_um = width_height[1] * width_height[2]; #dm$Area.px.2[dm$Name=="PathAnnotationObject"]
-  area2dish = dishSurfaceArea_cm2 / (area_um * UM2CM^2)
+  area_cm2 = width_height[1] * width_height[2]; #dm$Area.px.2[dm$Name=="PathAnnotationObject"]
+  area2dish = dishSurfaceArea_cm2 / area_cm2
   dishCount = round(areaCount * area2dish)
   
   ### Insert
@@ -250,8 +250,8 @@ removeFromLiquidNitrogen <- function(rack, row, boxRow, boxColumn){
   if(event=="seeding"){
     passage = passage+1
   }
-  stmt = paste0("INSERT INTO Passaging (id, passaged_from_id1, event, date, cellCount, passage) ",
-                "VALUES ('",id ,"', '",from,"', '",event,"', '",tx,"', ",dishCount,", ", passage, ");") 
+  stmt = paste0("INSERT INTO Passaging (id, passaged_from_id1, event, date, cellCount, passage, dishSurfaceArea_cm2) ",
+                "VALUES ('",id ,"', '",from,"', '",event,"', '",tx,"', ",dishCount,", ", passage, dishSurfaceArea_cm2, ");") 
   rs = dbSendQuery(mydb, stmt)
   if(dishCount/cellCount > 2 || dishCount/cellCount <0.5){
     warning(paste0("Automated image analysis deviates from input cell count by more than a factor of 2. CellCount set to the former (",dishCount," cells)"))
