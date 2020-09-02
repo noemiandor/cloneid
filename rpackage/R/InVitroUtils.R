@@ -251,7 +251,7 @@ removeFromLiquidNitrogen <- function(rack, row, boxRow, boxColumn){
     passage = passage+1
   }
   stmt = paste0("INSERT INTO Passaging (id, passaged_from_id1, event, date, cellCount, passage, dishSurfaceArea_cm2) ",
-                "VALUES ('",id ,"', '",from,"', '",event,"', '",tx,"', ",dishCount,", ", passage, dishSurfaceArea_cm2, ");") 
+                "VALUES ('",id ,"', '",from,"', '",event,"', '",tx,"', ",dishCount,", ", passage,", ",dishSurfaceArea_cm2, ");") 
   rs = dbSendQuery(mydb, stmt)
   if(dishCount/cellCount > 2 || dishCount/cellCount <0.5){
     warning(paste0("Automated image analysis deviates from input cell count by more than a factor of 2. CellCount set to the former (",dishCount," cells)"))
