@@ -5,8 +5,41 @@ seed <- function(id, from, cellCount, dishSurfaceArea_cm2, tx = Sys.time()){
   .seed_or_harvest(event = "seeding", id=id, from = from, cellCount = cellCount, tx = tx, dishSurfaceArea_cm2 = dishSurfaceArea_cm2)
 }
 
+
 harvest <- function(id, from, cellCount, tx = Sys.time()){
   .seed_or_harvest(event = "harvest", id=id, from=from, cellCount = cellCount, tx = tx, dishSurfaceArea_cm2 = NULL)
+}
+
+
+feed <- function(id, tx=Sys.time()){
+  library(RMySQL)
+  mydb = .connect2DB()
+  
+  stmt = paste0("select * from Passaging where id = '",id,"'");
+  rs = suppressWarnings(dbSendQuery(mydb, stmt))
+  kids = fetch(rs, n=-1)
+  
+  ### Checks
+  if (kids$event=="harvest"){
+    print("Cannot feed cells that have already been harvested.", quote = F); 
+    return();
+  }
+  
+  priorfeedings = kids[grep("feeding",names(kids),value=T)]
+  ## Next un-occupied feeding index
+  nextI = sum(!is.na(priorfeedings))+1
+  if(nextI>length(priorfeedings)){
+    print(paste0("Cannot record more than ",length(priorfeedings)," feedings. Add additional feeding column first."), quote = F); 
+    return()
+  }
+    
+  ### Insert
+  stmt = paste0("UPDATE Passaging SET ",names(priorfeedings)[nextI]," = '",tx,"' where id = '",id ,"'") 
+  rs = dbSendQuery(mydb, stmt)
+  print(paste("Feeding for",id,"recorded at",tx), quote = F);
+  
+  dbClearResult(dbListResults(mydb)[[1]])
+  dbDisconnect(mydb)
 }
 
 
