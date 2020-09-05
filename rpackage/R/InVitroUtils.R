@@ -27,7 +27,7 @@ feed <- function(id, tx=Sys.time()){
   
   priorfeedings = kids[grep("feeding",names(kids),value=T)]
   ## Next un-occupied feeding index
-  nextI = sum(!is.na(priorfeedings))+1
+  nextI = apply(!is.na(priorfeedings),1,sum)+1
   if(nextI>length(priorfeedings)){
     print(paste0("Cannot record more than ",length(priorfeedings)," feedings. Add additional feeding column first."), quote = F); 
     return()
