@@ -1,13 +1,13 @@
-seed <- function(id, from, cellCount, dishSurfaceArea_cm2, tx = Sys.time()){ 
+seed <- function(id, from, cellCount, dishSurfaceArea_cm2, tx = Sys.time(), media=NULL){ 
   ## Typical values for dishSurfaceArea_cm2 are: 
   ## a) 75 cm^2 = 10.1 cm x 7.30 cm  
   ## b) 25 cm^2 = 5.08 cm x 5.08 cm
-  .seed_or_harvest(event = "seeding", id=id, from = from, cellCount = cellCount, tx = tx, dishSurfaceArea_cm2 = dishSurfaceArea_cm2)
+  .seed_or_harvest(event = "seeding", id=id, from = from, cellCount = cellCount, tx = tx, dishSurfaceArea_cm2 = dishSurfaceArea_cm2, media = media)
 }
 
 
-harvest <- function(id, from, cellCount, tx = Sys.time()){
-  .seed_or_harvest(event = "harvest", id=id, from=from, cellCount = cellCount, tx = tx, dishSurfaceArea_cm2 = NULL)
+harvest <- function(id, from, cellCount, tx = Sys.time(), media=NULL){
+  .seed_or_harvest(event = "harvest", id=id, from=from, cellCount = cellCount, tx = tx, dishSurfaceArea_cm2 = NULL, media = media)
 }
 
 
@@ -226,7 +226,7 @@ removeFromLiquidNitrogen <- function(rack, row, boxRow, boxColumn){
   dbDisconnect(mydb)
 }
 
-.seed_or_harvest <- function(event, id, from, cellCount, tx, dishSurfaceArea_cm2){
+.seed_or_harvest <- function(event, id, from, cellCount, tx, dishSurfaceArea_cm2, media){
   library(RMySQL)
   UM2CM = 1e-4
   QUPATH_DIR="~/QuPath/output/"; ##TODO: should be set under settings, not here
@@ -251,6 +251,16 @@ removeFromLiquidNitrogen <- function(rack, row, boxRow, boxColumn){
   if(event=="seeding" && !is.na(kids$cellCount) && cellCount>kids$cellCount){
     print("You cannot seed more than is available from harvest!", quote = F)
     return()
+  }
+  if(is.na(kids$media)){
+    if(is.null(media)){
+      print("Please enter media information", quote = F)
+      return()
+    }else{
+      kids$media = media
+    }
+  }else{
+    warning(paste("Copying media information from parent: media set to",kids$media))
   }
   ## TODO: What if from is too far in the past
   
@@ -283,8 +293,8 @@ removeFromLiquidNitrogen <- function(rack, row, boxRow, boxColumn){
   if(event=="seeding"){
     passage = passage+1
   }
-  stmt = paste0("INSERT INTO Passaging (id, passaged_from_id1, event, date, cellCount, passage, dishSurfaceArea_cm2) ",
-                "VALUES ('",id ,"', '",from,"', '",event,"', '",tx,"', ",dishCount,", ", passage,", ",dishSurfaceArea_cm2, ");") 
+  stmt = paste0("INSERT INTO Passaging (id, passaged_from_id1, event, date, cellCount, passage, dishSurfaceArea_cm2, media) ",
+                "VALUES ('",id ,"', '",from,"', '",event,"', '",tx,"', ",dishCount,", ", passage,", ",dishSurfaceArea_cm2,", ", kids$media, ");") 
   rs = dbSendQuery(mydb, stmt)
   if(dishCount/cellCount > 2 || dishCount/cellCount <0.5){
     warning(paste0("Automated image analysis deviates from input cell count by more than a factor of 2. CellCount set to the former (",dishCount," cells)"))
