@@ -175,7 +175,7 @@ populateLiquidNitrogenRacks <-function(rackID){
 plotCellLineHistory<-function(){
   library(RMySQL)
   mydb = .connect2DB()
-  rs = dbSendQuery(mydb, "select name, year_of_first_report from CellLinesAndBiopsies where year_of_first_report >0;")
+  rs = dbSendQuery(mydb, "select name, year_of_first_report, doublingTime_hours from CellLinesAndBiopsies where year_of_first_report >0;")
   kids = fetch(rs, n=-1)
   
   kids = kids[sort(kids$year_of_first_report, index.return=T)$ix,]
@@ -189,6 +189,7 @@ plotCellLineHistory<-function(){
   
   dbClearResult(dbListResults(mydb)[[1]])
   dbDisconnect(mydb)
+  return(kids)
 }
 
 updateLiquidNitrogen <- function(id, cellCount, rack, row, boxRow, boxColumn){
