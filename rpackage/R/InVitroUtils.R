@@ -2,6 +2,7 @@ seed <- function(id, from, cellCount, dishSurfaceArea_cm2, tx = Sys.time(), medi
   ## Typical values for dishSurfaceArea_cm2 are: 
   ## a) 75 cm^2 = 10.1 cm x 7.30 cm  
   ## b) 25 cm^2 = 5.08 cm x 5.08 cm
+  ## c) well from 96-plate = 0.32 cm^2
   .seed_or_harvest(event = "seeding", id=id, from = from, cellCount = cellCount, tx = tx, dishSurfaceArea_cm2 = dishSurfaceArea_cm2, media = media)
 }
 
@@ -97,7 +98,7 @@ findAllDescendandsOf <-function(ids, includeGR=F){
   library(RMySQL)
   
   mydb = .connect2DB()
-  stmt = paste0("select * from Passaging where id IN ",paste0("('",paste0(ids, collapse = "', '"),"')"));
+  stmt = paste0("select * from Passaging where id IN ",paste0("('",paste0(ids, collapse = "', '"),"')  order by date DESC"));
   rs = suppressWarnings(dbSendQuery(mydb, stmt))
   parents = fetch(rs, n=-1)
   
@@ -114,9 +115,12 @@ findAllDescendandsOf <-function(ids, includeGR=F){
   }
   
   ## Select statements, appending Ancestor
+  alllineages = c()
   out = list();
   for(id in parents$id){
     d = c(id, .traceDescendands(id))
+    d = setdiff(d, alllineages); ## exclude descendands with more recent parent (i.e. seedings)
+    alllineages = c(alllineages, d)
     d = paste0("('",paste0(d, collapse = "', '"),"')")
     if(includeGR){
       out[[id]] = paste0("select P2.*, '",id,"' as Ancestor, DATEDIFF(P2.date, P1.date), POWER(P2.cellCount / P1.cellCount, 1 / DATEDIFF(P2.date, P1.date)) as GR_per_day ", 
