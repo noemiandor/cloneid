@@ -285,6 +285,10 @@ removeFromLiquidNitrogen <- function(rack, row, boxRow, boxColumn){
   ## Read automated image analysis output
   dm = read.table(f,sep="\t", check.names = F, stringsAsFactors = F, header = T)
   margins = apply(dm[,c("Centroid X µm","Centroid Y µm")],2,quantile,c(0,1), na.rm=T)
+  ## Adjust by cell radius:
+  cellRad = median(dm$`Cell: Perimeter`)/(2*pi) 
+  margins[2,] = margins[2,] + cellRad;
+  margins[1,] = margins[1,] - cellRad
   plot(dm$`Centroid X µm`,-dm$`Centroid Y µm`)
   rect(margins[1,1], -margins[1,2], margins[2,1], -margins[2,2], col=NULL, border = "red")
   width_height = (margins[2,]- margins[1,])*UM2CM
