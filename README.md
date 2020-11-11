@@ -17,7 +17,7 @@ CLONEID is a framework that integrates measurements obtained from different tech
 
 ### Requirements 
 CLONEID requires the followwing software and versions. 
-1. [Java](https://www.java.com/) version 8, 9, 10, 11, 12, 13 or 14 
+1. [Java](https://www.oracle.com/java/technologies/javase-jdk15-downloads.html) version 8, 9, 10, 11, 12, 13 or 14 
 1. [MySQL Server version 8](https://dev.mysql.com/downloads/mysql/8.0.html#macosx-dmg)
 1. [XQuartz](https://www.xquartz.org/) (may be needed. OSX only)
 1. [R version 3.6+](https://www.r-project.org/). Additionally, make sure that the following R packages are installed.
@@ -42,9 +42,9 @@ CLONEID requires the followwing software and versions.
 In an **R terminal** run the following commands:
 ```r 
 # R v3.6
-> if (!requireNamespace("BiocManager", quietly = TRUE)) { install.packages("BiocManager") }
-> BiocManager::install("biomaRt")
-> install.packages(c('rJava', 'qualV', 'RColorBrewer', 'gtools', 'gplots', 'ape', 'gdata', 'RMySQL', 'flexclust', 'Matrix', 'liayson', 'expands', 'matlab', 'yaml'))
+if (!requireNamespace("BiocManager", quietly = TRUE)) { install.packages("BiocManager") }
+BiocManager::install("biomaRt")
+install.packages(c('rJava', 'qualV', 'RColorBrewer', 'gtools', 'gplots', 'ape', 'gdata', 'RMySQL', 'flexclust', 'Matrix', 'liayson', 'expands', 'matlab', 'yaml'))
 ```
 ## Linux and OSX Setup
 
