@@ -295,11 +295,12 @@ removeFromLiquidNitrogen <- function(rack, row, boxRow, boxColumn){
   ## Wait and look for imaging analysis output
   print(paste0("Waiting for ",id,".txt to appear under ",QUPATH_DIR," ..."), quote = F)
   ##OK @TODO: replace Downloads/qpresults with QUPATH_DIR (also in groovy script)
-  f = list.files(paste0(QUPATH_DIR,"DetectionResults"), pattern = paste0(id,"_10x_ph_"), full.names = T)
-  f_a = list.files(paste0(QUPATH_DIR,"Annotations"), pattern = paste0(id,"_10x_ph_"), full.names = T)
+  f = c()
   while(length(f)<length(f_i)){
     Sys.sleep(3)
+    f = list.files(paste0(QUPATH_DIR,"DetectionResults"), pattern = paste0(id,"_10x_ph_"), full.names = T)
   }
+  f_a = list.files(paste0(QUPATH_DIR,"Annotations"), pattern = paste0(id,"_10x_ph_"), full.names = T)
   print(paste0("QPath output found for ",fileparts(f[1])$name," and ",(length(f)-1)," other image files."), quote = F)
   
   ## Read automated image analysis output
@@ -335,8 +336,10 @@ removeFromLiquidNitrogen <- function(rack, row, boxRow, boxColumn){
   if(event=="seeding"){
     passage = passage+1
   }
+  ## @TODO: switch back
+  # stmt = paste0("update Passaging set cellCount = ",dishCount," where id='",id,"';")
   stmt = paste0("INSERT INTO Passaging (id, passaged_from_id1, event, date, cellCount, passage, dishSurfaceArea_cm2, media) ",
-                "VALUES ('",id ,"', '",from,"', '",event,"', '",tx,"', ",dishCount,", ", passage,", ",dishSurfaceArea_cm2,", ", kids$media, ");") 
+                "VALUES ('",id ,"', '",from,"', '",event,"', '",tx,"', ",dishCount,", ", passage,", ",dishSurfaceArea_cm2,", ", kids$media, ");")
   rs = dbSendQuery(mydb, stmt)
   if(dishCount/cellCount > 2 || dishCount/cellCount <0.5){
     warning(paste0("Automated image analysis deviates from input cell count by more than a factor of 2. CellCount set to the former (",dishCount," cells)"))
