@@ -353,7 +353,8 @@ removeFromLiquidNitrogen <- function(rack, row, boxRow, boxColumn){
   return(mydb)
 }
 
-QuPathScript<-function(qpdir = normalizePath("~/QuPath/output")){
+QuPathScript<-function(qpdir){
+  qpdir = normalizePath(qpdir)
   paste("import static qupath.lib.gui.scripting.QPEx.*",
         "import qupath.lib.gui.tools.MeasurementExporter",
         "import qupath.lib.objects.PathCellObject",
