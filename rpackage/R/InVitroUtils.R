@@ -33,7 +33,7 @@ feed <- function(id, tx=Sys.time()){
     print(paste0("Cannot record more than ",length(priorfeedings)," feedings. Add additional feeding column first."), quote = F); 
     return()
   }
-    
+  
   ### Insert
   stmt = paste0("UPDATE Passaging SET ",names(priorfeedings)[nextI]," = '",tx,"' where id = '",id ,"'") 
   rs = dbSendQuery(mydb, stmt)
@@ -47,7 +47,7 @@ feed <- function(id, tx=Sys.time()){
 getPedegreeTree <- function(cellLine){
   library(RMySQL)
   library(ape)
-
+  
   mydb = .connect2DB()
   stmt = paste0("select * from Passaging where cellLine = '",cellLine,"'");
   rs = suppressWarnings(dbSendQuery(mydb, stmt))
@@ -78,7 +78,7 @@ getPedegreeTree <- function(cellLine){
   x = kids$id[1]
   TREE_ = .gatherDescendands(kids, x)
   TREE = paste0("(",TREE_, ":1,",x,":1);");
-
+  
   ## Build tree
   tr <- read.tree(text = TREE)
   str(tr)
@@ -200,12 +200,12 @@ updateLiquidNitrogen <- function(id, cellCount, rack, row, boxRow, boxColumn){
   library(RMySQL)
   mydb = .connect2DB()
   cmd=paste0("UPDATE LiquidNitrogen SET ",
-                "id = '",id,"',",
-                "cellCount = ",cellCount," WHERE ",
-                "Rack = '",rack,"' AND ",
-                "Row = '",row,"' AND ",
-                "BoxRow = '",boxRow,"' AND ",
-                "BoxColumn = '",boxColumn,"'");
+             "id = '",id,"',",
+             "cellCount = ",cellCount," WHERE ",
+             "Rack = '",rack,"' AND ",
+             "Row = '",row,"' AND ",
+             "BoxRow = '",boxRow,"' AND ",
+             "BoxColumn = '",boxColumn,"'");
   print(cmd)
   rs = dbSendQuery(mydb, cmd);
   
@@ -233,8 +233,14 @@ removeFromLiquidNitrogen <- function(rack, row, boxRow, boxColumn){
 
 .seed_or_harvest <- function(event, id, from, cellCount, tx, dishSurfaceArea_cm2, media){
   library(RMySQL)
+  library(matlab)
   UM2CM = 1e-4
-  QUPATH_DIR="~/QuPath/output/"; ##TODO: should be set under settings, not here
+  ## QuPath Settings; TODO: should be set under settings, not here
+  QUPATH_DIR="~/QuPath/output/"; 
+  dir.create("~/Downloads/qpscript")
+  write(QuPathScript(qpdir = QUPATH_DIR), file="~/Downloads/qpscript/runDetectionROI.groovy")
+  qpversion = gsub(".app","", strsplit(list.files("/Applications", pattern = "QuPath")[1],"-")[[1]][2])
+  
   EVENTTYPES = c("seeding","harvest")
   otherevent = EVENTTYPES[EVENTTYPES!=event]
   
@@ -274,28 +280,55 @@ removeFromLiquidNitrogen <- function(rack, row, boxRow, boxColumn){
     dishSurfaceArea_cm2 = kids$dishSurfaceArea_cm2
   }
   
+  ##OK @TODO: ask Martina to create separate folder qpdata and move all qpdata files there
+  ##OK @TODO: ask Martina to copy 10xph images for latest SNU-16 to ~/QuPath to replace old ones (4x)
+  ##OK @TODO: replace Downloads/qptest with ~/QuPath
+  f_i = list.files("~/QuPath", pattern = paste0(id,"_10x_ph_"), full.names = T)
+  ##OK @TODO: copy images into temp directory
+  unlink("~/Downloads/tmp",recursive=T)
+  dir.create("~/Downloads/tmp")
+  file.copy(f_i, "~/Downloads/tmp/")
+  ## @TODO: call QuPath, then remove image-copies
+  cmd = paste0("java -jar /Applications/QuPath-",qpversion,".app/Contents/app/qupath-",qpversion,".jar -image ~/Downloads/qptest script ~/Downloads/runCellDetectionROI.groovy")
+  
+  
   ## Wait and look for imaging analysis output
   print(paste0("Waiting for ",id,".txt to appear under ",QUPATH_DIR," ..."), quote = F)
-  f = paste0(QUPATH_DIR,id,".txt")
-  while(!file.exists(f)){
+  ##OK @TODO: replace Downloads/qpresults with QUPATH_DIR (also in groovy script)
+  f = list.files(paste0(QUPATH_DIR,"DetectionResults"), pattern = paste0(id,"_10x_ph_"), full.names = T)
+  f_a = list.files(paste0(QUPATH_DIR,"Annotations"), pattern = paste0(id,"_10x_ph_"), full.names = T)
+  while(length(f)<length(f_i)){
     Sys.sleep(3)
   }
-  print(paste0(QUPATH_DIR,id,".txt found!"), quote = F)
+  print(paste0("QPath output found for ",fileparts(f[1])$name," and ",(length(f)-1)," other image files."), quote = F)
   
   ## Read automated image analysis output
-  dm = read.table(f,sep="\t", check.names = F, stringsAsFactors = F, header = T)
-  margins = apply(dm[,c("Centroid X µm","Centroid Y µm")],2,quantile,c(0,1), na.rm=T)
-  ## Adjust by cell radius:
-  cellRad = median(dm$`Cell: Perimeter`)/(2*pi) 
-  margins[2,] = margins[2,] + cellRad;
-  margins[1,] = margins[1,] - cellRad
-  plot(dm$`Centroid X µm`,-dm$`Centroid Y µm`)
-  rect(margins[1,1], -margins[1,2], margins[2,1], -margins[2,2], col=NULL, border = "red")
-  width_height = (margins[2,]- margins[1,])*UM2CM
-  areaCount = nrow(dm)
-  area_cm2 = width_height[1] * width_height[2]; #dm$Area.px.2[dm$Name=="PathAnnotationObject"]
-  area2dish = dishSurfaceArea_cm2 / area_cm2
-  dishCount = round(areaCount * area2dish)
+  par(mfrow=c(2,2))
+  cellCounts = matrix(NA,length(f),2);
+  colnames(cellCounts) = c("areaCount","area_cm2")
+  rownames(cellCounts) = sapply(f, function(x) fileparts(x)$name)
+  for(i in 1:length(f)){
+    dm = read.table(f[i],sep="\t", check.names = F, stringsAsFactors = F, header = T)
+    anno = read.table(f_a[i],sep="\t", check.names = F, stringsAsFactors = F, header = T)
+    margins = apply(dm[,c("Centroid X µm","Centroid Y µm")],2,quantile,c(0,1), na.rm=T)
+    ## Adjust by cell radius:
+    cellRad = median(dm$`Cell: Perimeter`)/(2*pi) 
+    margins[2,] = margins[2,] + cellRad;
+    margins[1,] = margins[1,] - cellRad
+    width_height = (margins[2,]- margins[1,])*UM2CM
+    areaCount = nrow(dm)
+    # area_cm2 = width_height[1] * width_height[2]; 
+    area_cm2 = anno$`Area µm^2`[1]*UM2CM^2
+    cellCounts[fileparts(f[i])$name,] = c(areaCount, area_cm2)
+    ## Visualize
+    la=tiff::readTIFF(f_i[i])
+    plot(0,0, xlim=margins[,1], ylim=sort(-margins[,2]),type="n",ann=FALSE,axes=FALSE, main = fileparts(f_i[i])$name)
+    rasterImage(la,margins[1,1],-margins[2,2],margins[2,1],-margins[1,2],)
+    points(dm$`Centroid X µm`,-dm$`Centroid Y µm`, col="red", cex=0.1)
+    rect(margins[1,1], -margins[2,2], margins[2,1], -margins[1,2], col=NULL, border = "red")
+  }
+  area2dish = dishSurfaceArea_cm2 / sum(cellCounts[,"area_cm2"])
+  dishCount = round(sum(cellCounts[,"areaCount"]) * area2dish)
   
   ### Insert
   passage = kids$passage
@@ -318,4 +351,68 @@ removeFromLiquidNitrogen <- function(rack, row, boxRow, boxColumn){
   yml = yaml::read_yaml(paste0(system.file(package='cloneid'), '/config/config.yaml'))
   mydb = dbConnect(MySQL(), user=yml$mysqlConnection$user, password=yml$mysqlConnection$password, dbname=yml$mysqlConnection$database,host=yml$mysqlConnection$host, port=as.integer(yml$mysqlConnection$port))
   return(mydb)
+}
+
+QuPathScript<-function(qpdir = normalizePath("~/QuPath/output")){
+  paste("import static qupath.lib.gui.scripting.QPEx.*",
+        "import qupath.lib.gui.tools.MeasurementExporter",
+        "import qupath.lib.objects.PathCellObject",
+        "import qupath.lib.objects.PathDetectionObject",
+        "",
+        "",
+        "//  User enter these information for every project.",
+        "//*************************************************",
+        "def PixelWidth_new = 1.000;",
+        "def PixelHeight_new = 1.000;",
+        "def x_left = 100;",
+        "def y_left = 100;",
+        "def w_ROI =  1100;",
+        "def h_ROI = 1100;",
+        "//*************************************************",
+        "",
+        "",
+        "def project = getProject()",
+        "def entry = getProjectEntry()",
+        "def imageData = entry.readImageData()",
+        "def CurrentImageData = getCurrentImageData()",
+        "def hierarchy = imageData.getHierarchy()",
+        "def annotations = hierarchy.getAnnotationObjects()",
+        "",
+        "def server = CurrentImageData.getServer()",
+        "def path = server.getPath()",
+        "def cal = server.getPixelCalibration();",
+        "double pixelWidth = cal.getPixelWidthMicrons();",
+        "double pixelHeight = cal.getPixelHeightMicrons();",
+        "",
+        "print(pixelWidth);",
+        "print(pixelHeight);",
+        "if(pixelWidth == Double.NaN){",
+        "    setPixelSizeMicrons(PixelWidth_new, PixelWidth_new);",
+        " ",
+        "}",
+        "",
+        "",
+        "setImageType('BRIGHTFIELD_H_E');",
+        "setColorDeconvolutionStains('{\"Name\" : \"H&E default\", \"Stain 1\" : \"Hematoxylin\", \"Values 1\" : \"0.65111 0.70119 0.29049 \", \"Stain 2\" : \"Eosin\", \"Values 2\" : \"0.2159 0.8012 0.5581 \", \"Background\" : \" 255 255 255 \"}');",
+        "def plane = ImagePlane.getPlane(0,0);",
+        "def rectangle = ROIs.createRectangleROI(x_left,y_left,w_ROI,h_ROI,plane);",
+        "def rectangleAnnotation = PathObjects.createAnnotationObject(rectangle);",
+        "QPEx.addObjects(rectangleAnnotation);",
+        "println \"Success\";",
+        "//createSelectAllObject(true);",
+        "selectAnnotations();",
+        "runPlugin('qupath.imagej.detect.cells.WatershedCellDetection', '{\"detectionImage\": \"Red\",  \"backgroundRadius\": 15.0,  \"medianRadius\": 0.0,  \"sigma\": 3.0,  \"minArea\": 10.0,  \"maxArea\": 1000.0,  \"threshold\":0.09,  \"watershedPostProcess\": true,  \"cellExpansion\": 5.0,  \"includeNuclei\": true,  \"smoothBoundaries\": false,  \"makeMeasurements\": true}');",
+        "",
+        "",
+        "",
+        "def filename = entry.getImageName() + '.csv'",
+        "selectDetections()",
+        paste0("def pathDetection = buildFilePath('",qpdir,"/DetectionResults');"),
+        paste0("def pathAnnotation = buildFilePath('",qpdir,"/Annotations')"),
+        "mkdirs(pathDetection);",
+        "mkdirs(pathAnnotation);",
+        "pathDetection = buildFilePath(pathDetection, filename);",
+        "pathAnnotation = buildFilePath(pathAnnotation, filename);",
+        "saveDetectionMeasurements(pathDetection);",
+        "saveAnnotationMeasurements(pathAnnotation)", sep="\n" )
 }
