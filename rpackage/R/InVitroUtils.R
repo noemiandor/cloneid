@@ -263,7 +263,7 @@ removeFromLiquidNitrogen <- function(rack, row, boxRow, boxColumn){
     print("You cannot seed more than is available from harvest!", quote = F)
     return()
   }
-  if(is.na(kids$media)){
+  if(is.na(kids$media) || !is.null(media)){
     if(is.null(media)){
       print("Please enter media information", quote = F)
       return()
@@ -336,7 +336,7 @@ removeFromLiquidNitrogen <- function(rack, row, boxRow, boxColumn){
   if(event=="seeding"){
     passage = passage+1
   }
-  ## @TODO: switch back
+  ## @TODO: remove
   # stmt = paste0("update Passaging set cellCount = ",dishCount," where id='",id,"';")
   stmt = paste0("INSERT INTO Passaging (id, passaged_from_id1, event, date, cellCount, passage, dishSurfaceArea_cm2, media) ",
                 "VALUES ('",id ,"', '",from,"', '",event,"', '",tx,"', ",dishCount,", ", passage,", ",dishSurfaceArea_cm2,", ", kids$media, ");")
