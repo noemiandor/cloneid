@@ -236,10 +236,15 @@ removeFromLiquidNitrogen <- function(rack, row, boxRow, boxColumn){
   library(matlab)
   UM2CM = 1e-4
   ## QuPath Settings; TODO: should be set under settings, not here
+  TMP_DIR = "~/Downloads/tmp";
   QUPATH_DIR="~/QuPath/output/"; 
+  QUPATH_PRJ = "~/Downloads/qproject/project.qpproj"
+  QSCRIPT = "~/Downloads/qpscript/runDetectionROI.groovy"
   dir.create("~/Downloads/qpscript")
-  write(QuPathScript(qpdir = QUPATH_DIR), file="~/Downloads/qpscript/runDetectionROI.groovy")
-  qpversion = gsub(".app","", strsplit(list.files("/Applications", pattern = "QuPath")[1],"-")[[1]][2])
+  dir.create(fileparts(QUPATH_PRJ)$pathstr)
+  write(QuPathScript(qpdir = QUPATH_DIR), file=QSCRIPT)
+  qpversion = list.files("/Applications", pattern = "QuPath")
+  qpversion = gsub(".app","", strsplit(qpversion[length(qpversion)],"-")[[1]][2])
   
   EVENTTYPES = c("seeding","harvest")
   otherevent = EVENTTYPES[EVENTTYPES!=event]
@@ -285,11 +290,13 @@ removeFromLiquidNitrogen <- function(rack, row, boxRow, boxColumn){
   ##OK @TODO: replace Downloads/qptest with ~/QuPath
   f_i = list.files("~/QuPath", pattern = paste0(id,"_10x_ph_"), full.names = T)
   ##OK @TODO: copy images into temp directory
-  unlink("~/Downloads/tmp",recursive=T)
-  dir.create("~/Downloads/tmp")
-  file.copy(f_i, "~/Downloads/tmp/")
-  ## @TODO: call QuPath, then remove image-copies
-  cmd = paste0("java -jar /Applications/QuPath-",qpversion,".app/Contents/app/qupath-",qpversion,".jar -image ~/Downloads/qptest script ~/Downloads/runCellDetectionROI.groovy")
+  unlink(TMP_DIR,recursive=T)
+  dir.create(TMP_DIR)
+  file.copy(f_i, TMP_DIR)
+  ##OK @TODO: call QuPath
+  write(SaveProject(paste0(TMP_DIR,filesep,sapply(f_i, function(x) fileparts(x)$name),".tif")), file=QUPATH_PRJ)
+  cmd = paste0("/Applications/QuPath-",qpversion,".app/Contents/MacOS/QuPath-",qpversion," script ", QSCRIPT, " -p ", QUPATH_PRJ)
+  system(cmd)
   
   
   ## Wait and look for imaging analysis output
@@ -356,7 +363,7 @@ removeFromLiquidNitrogen <- function(rack, row, boxRow, boxColumn){
   return(mydb)
 }
 
-QuPathScript<-function(qpdir){
+QuPathScript <- function(qpdir){
   qpdir = normalizePath(qpdir)
   paste("import static qupath.lib.gui.scripting.QPEx.*",
         "import qupath.lib.gui.tools.MeasurementExporter",
@@ -419,4 +426,89 @@ QuPathScript<-function(qpdir){
         "pathAnnotation = buildFilePath(pathAnnotation, filename);",
         "saveDetectionMeasurements(pathDetection);",
         "saveAnnotationMeasurements(pathAnnotation)", sep="\n" )
+}
+
+
+
+SaveProject <- function(imgFiles){
+  prj = paste("{",
+              "  \"version\": \"0.2.3\",",
+              "  \"createTimestamp\": 1606857053400,",
+              "  \"modifyTimestamp\": 1606857053400,",
+              "  \"uri\": \"file:/Users/4470246/Downloads/lala/project.qpproj\",",
+              "  \"lastID\": 4,",
+              "  \"images\": [", sep="\n" )
+  for(imgFile in imgFiles){
+    imgFile = normalizePath(imgFile)
+    prj = paste(prj,
+                "    {",
+                "      \"serverBuilder\": {",
+                "        \"builderType\": \"uri\",",
+                "        \"providerClassName\": \"qupath.lib.images.servers.bioformats.BioFormatsServerBuilder\",",
+                paste0("        \"uri\": \"file:",imgFile,"\","),
+                "        \"args\": [",
+                "          \"--series\",",
+                "          \"0\"",
+                "        ],",
+                "        \"metadata\": {",
+                paste0("          \"name\": \"",fileparts(imgFile)$name,fileparts(imgFile)$ext,"\","),
+                "          \"width\": 2048,",
+                "          \"height\": 1536,",
+                "          \"sizeZ\": 1,",
+                "          \"sizeT\": 1,",
+                "          \"channelType\": \"DEFAULT\",",
+                "          \"isRGB\": true,",
+                "          \"pixelType\": \"UINT8\",",
+                "          \"levels\": [",
+                "            {",
+                "              \"downsample\": 1.0,",
+                "              \"width\": 2048,",
+                "              \"height\": 1536",
+                "            }",
+                "          ],",
+                "          \"channels\": [",
+                "            {",
+                "              \"name\": \"Red\",",
+                "              \"color\": -65536",
+                "            },",
+                "            {",
+                "              \"name\": \"Green\",",
+                "              \"color\": -16711936",
+                "            },",
+                "            {",
+                "              \"name\": \"Blue\",",
+                "              \"color\": -16776961",
+                "            }",
+                "          ],",
+                "          \"pixelCalibration\": {",
+                "            \"pixelWidth\": {",
+                "              \"value\": 1.0,",
+                "              \"unit\": \"µm\"",
+                "            },",
+                "            \"pixelHeight\": {",
+                "              \"value\": 1.0,",
+                "              \"unit\": \"µm\"",
+                "            },",
+                "            \"zSpacing\": {",
+                "              \"value\": 1.0,",
+                "              \"unit\": \"z-slice\"",
+                "            },",
+                "            \"timeUnit\": \"SECONDS\",",
+                "            \"timepoints\": []",
+                "          },",
+                "          \"preferredTileWidth\": 2048,",
+                "          \"preferredTileHeight\": 170",
+                "        }",
+                "      },",
+                "      \"entryID\": 1,",
+                "      \"randomizedName\": \"d2f15668-2b0e-4f4e-b953-9794d9047a0b\",",
+                paste0("      \"imageName\": \"",fileparts(imgFile)$name,fileparts(imgFile)$ext,"\","),
+                "      \"metadata\": {}",
+                "    },", sep="\n" );
+  }
+  prj = gsub(",$","",prj)
+  prj = paste(prj,
+              "  ]",
+              "}", sep="\n" )
+  return(prj)
 }
