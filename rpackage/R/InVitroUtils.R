@@ -288,19 +288,20 @@ removeFromLiquidNitrogen <- function(rack, row, boxRow, boxColumn){
   ##OK @TODO: ask Martina to create separate folder qpdata and move all qpdata files there
   ##OK @TODO: ask Martina to copy 10xph images for latest SNU-16 to ~/QuPath to replace old ones (4x)
   ##OK @TODO: replace Downloads/qptest with ~/QuPath
-  f_i = list.files("~/QuPath", pattern = paste0(id,"_10x_ph_"), full.names = T)
+  f_i = fliplr(list.files("~/QuPath", pattern = paste0(id,"_10x_ph_"), full.names = T))
   ##OK @TODO: copy images into temp directory
   unlink(TMP_DIR,recursive=T)
   dir.create(TMP_DIR)
   file.copy(f_i, TMP_DIR)
   ##OK @TODO: call QuPath
-  write(SaveProject(paste0(TMP_DIR,filesep,sapply(f_i, function(x) fileparts(x)$name),".tif")), file=QUPATH_PRJ)
+  write(SaveProject(QUPATH_PRJ, paste0(TMP_DIR,filesep,sapply(f_i, function(x) fileparts(x)$name),".tif")), file=QUPATH_PRJ)
   cmd = paste0("/Applications/QuPath-",qpversion,".app/Contents/MacOS/QuPath-",qpversion," script ", QSCRIPT, " -p ", QUPATH_PRJ)
+  print(cmd, quote = F)
   system(cmd)
   
   
   ## Wait and look for imaging analysis output
-  print(paste0("Waiting for ",id,".txt to appear under ",QUPATH_DIR," ..."), quote = F)
+  print(paste0("Waiting for ",id," to appear under ",QUPATH_DIR," ..."), quote = F)
   ##OK @TODO: replace Downloads/qpresults with QUPATH_DIR (also in groovy script)
   f = c()
   while(length(f)<length(f_i)){
@@ -430,16 +431,16 @@ QuPathScript <- function(qpdir){
 
 
 
-SaveProject <- function(imgFiles){
+SaveProject <- function(QUPATH_PRJ, imgFiles){
   prj = paste("{",
               "  \"version\": \"0.2.3\",",
               "  \"createTimestamp\": 1606857053400,",
               "  \"modifyTimestamp\": 1606857053400,",
-              "  \"uri\": \"file:/Users/4470246/Downloads/lala/project.qpproj\",",
-              "  \"lastID\": 4,",
+              paste0("  \"uri\": \"file:", normalizePath(QUPATH_PRJ), "\","),
+              paste0("  \"lastID\": ", length(imgFiles), ","),
               "  \"images\": [", sep="\n" )
-  for(imgFile in imgFiles){
-    imgFile = normalizePath(imgFile)
+  for(i in 1:length(imgFiles)){
+    imgFile = normalizePath(imgFiles[i])
     prj = paste(prj,
                 "    {",
                 "      \"serverBuilder\": {",
@@ -500,8 +501,8 @@ SaveProject <- function(imgFiles){
                 "          \"preferredTileHeight\": 170",
                 "        }",
                 "      },",
-                "      \"entryID\": 1,",
-                "      \"randomizedName\": \"d2f15668-2b0e-4f4e-b953-9794d9047a0b\",",
+                paste0("      \"entryID\": ",i,","),
+                paste0("      \"randomizedName\": \"d",i,"f15668-2b0e-",i,"f",i,"e-b953-9794d9047a",i,"b\","),
                 paste0("      \"imageName\": \"",fileparts(imgFile)$name,fileparts(imgFile)$ext,"\","),
                 "      \"metadata\": {}",
                 "    },", sep="\n" );
