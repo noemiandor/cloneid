@@ -235,14 +235,14 @@ removeFromLiquidNitrogen <- function(rack, row, boxRow, boxColumn){
   library(RMySQL)
   library(matlab)
   UM2CM = 1e-4
-  ## QuPath Settings; TODO: should be set under settings, not here
+  ## QuPath Settings; @TODO: should be set under settings, not here
   TMP_DIR = "~/Downloads/tmp";
   QUPATH_DIR="~/QuPath/output/"; 
   QUPATH_PRJ = "~/Downloads/qproject/project.qpproj"
   QSCRIPT = "~/Downloads/qpscript/runDetectionROI.groovy"
   dir.create("~/Downloads/qpscript")
   dir.create(fileparts(QUPATH_PRJ)$pathstr)
-  write(QuPathScript(qpdir = QUPATH_DIR), file=QSCRIPT)
+  write(.QuPathScript(qpdir = QUPATH_DIR), file=QSCRIPT)
   qpversion = list.files("/Applications", pattern = "QuPath")
   qpversion = gsub(".app","", strsplit(qpversion[length(qpversion)],"-")[[1]][2])
   
@@ -285,16 +285,11 @@ removeFromLiquidNitrogen <- function(rack, row, boxRow, boxColumn){
     dishSurfaceArea_cm2 = kids$dishSurfaceArea_cm2
   }
   
-  ##OK @TODO: ask Martina to create separate folder qpdata and move all qpdata files there
-  ##OK @TODO: ask Martina to copy 10xph images for latest SNU-16 to ~/QuPath to replace old ones (4x)
-  ##OK @TODO: replace Downloads/qptest with ~/QuPath
-  f_i = fliplr(list.files("~/QuPath", pattern = paste0(id,"_10x_ph_"), full.names = T))
-  ##OK @TODO: copy images into temp directory
+  f_i = list.files("~/QuPath", pattern = paste0(id,"_10x_ph_"), full.names = T)
   unlink(TMP_DIR,recursive=T)
   dir.create(TMP_DIR)
   file.copy(f_i, TMP_DIR)
-  ##OK @TODO: call QuPath
-  write(SaveProject(QUPATH_PRJ, paste0(TMP_DIR,filesep,sapply(f_i, function(x) fileparts(x)$name),".tif")), file=QUPATH_PRJ)
+  write(.SaveProject(QUPATH_PRJ, paste0(TMP_DIR,filesep,sapply(f_i, function(x) fileparts(x)$name),".tif")), file=QUPATH_PRJ)
   cmd = paste0("/Applications/QuPath-",qpversion,".app/Contents/MacOS/QuPath-",qpversion," script ", QSCRIPT, " -p ", QUPATH_PRJ)
   print(cmd, quote = F)
   system(cmd)
@@ -302,7 +297,6 @@ removeFromLiquidNitrogen <- function(rack, row, boxRow, boxColumn){
   
   ## Wait and look for imaging analysis output
   print(paste0("Waiting for ",id," to appear under ",QUPATH_DIR," ..."), quote = F)
-  ##OK @TODO: replace Downloads/qpresults with QUPATH_DIR (also in groovy script)
   f = c()
   while(length(f)<length(f_i)){
     Sys.sleep(3)
@@ -330,11 +324,13 @@ removeFromLiquidNitrogen <- function(rack, row, boxRow, boxColumn){
     area_cm2 = anno$`Area µm^2`[1]*UM2CM^2
     cellCounts[fileparts(f[i])$name,] = c(areaCount, area_cm2)
     ## Visualize
-    la=tiff::readTIFF(f_i[i])
-    plot(0,0, xlim=margins[,1], ylim=sort(-margins[,2]),type="n",ann=FALSE,axes=FALSE, main = fileparts(f_i[i])$name)
-    rasterImage(la,margins[1,1],-margins[2,2],margins[2,1],-margins[1,2],)
-    points(dm$`Centroid X µm`,-dm$`Centroid Y µm`, col="red", cex=0.1)
-    rect(margins[1,1], -margins[2,2], margins[2,1], -margins[1,2], col=NULL, border = "red")
+    la=raster::raster(f_i[i])
+    ## @TODO: region of interest (ROI) should be read from QuPath groovy script
+    ROI <- as(raster::extent(100, 1200, la@extent@ymax - 1200, la@extent@ymax - 100), 'SpatialPolygons')
+    la_ <- raster::crop(la, ROI)
+    raster::plot(la_, ann=FALSE,axes=FALSE, useRaster=T,legend=F)
+    mtext(fileparts(f_i[i])$name)
+    points(dm$`Centroid X µm`,la@extent@ymax - dm$`Centroid Y µm`, col="black", pch=20, cex=0.4)
   }
   area2dish = dishSurfaceArea_cm2 / sum(cellCounts[,"area_cm2"])
   dishCount = round(sum(cellCounts[,"areaCount"]) * area2dish)
@@ -364,7 +360,7 @@ removeFromLiquidNitrogen <- function(rack, row, boxRow, boxColumn){
   return(mydb)
 }
 
-QuPathScript <- function(qpdir){
+.QuPathScript <- function(qpdir){
   qpdir = normalizePath(qpdir)
   paste("import static qupath.lib.gui.scripting.QPEx.*",
         "import qupath.lib.gui.tools.MeasurementExporter",
@@ -431,7 +427,7 @@ QuPathScript <- function(qpdir){
 
 
 
-SaveProject <- function(QUPATH_PRJ, imgFiles){
+.SaveProject <- function(QUPATH_PRJ, imgFiles){
   prj = paste("{",
               "  \"version\": \"0.2.3\",",
               "  \"createTimestamp\": 1606857053400,",
