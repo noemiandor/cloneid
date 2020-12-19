@@ -44,12 +44,16 @@ feed <- function(id, tx=Sys.time()){
 }
 
 
-getPedegreeTree <- function(cellLine){
+getPedegreeTree <- function(cellLine= cellLine, id = NULL){
   library(RMySQL)
   library(ape)
   
   mydb = .connect2DB()
-  stmt = paste0("select * from Passaging where cellLine = '",cellLine,"'");
+  if(is.null(id)){
+    stmt = paste0("select * from Passaging where cellLine = '",cellLine,"'");
+  }else{
+    stmt = findAllDescendandsOf(id, mydb = mydb)
+  }
   rs = suppressWarnings(dbSendQuery(mydb, stmt))
   kids = fetch(rs, n=-1)
   kids= kids[sort(kids$passage, index.return=T)$ix,,drop=F]
@@ -94,10 +98,12 @@ getPedegreeTree <- function(cellLine){
 
 
 
-findAllDescendandsOf <-function(ids, includeGR=F){
+findAllDescendandsOf <-function(ids, includeGR=F, mydb = NULL){
   library(RMySQL)
   
-  mydb = .connect2DB()
+  if(is.null(mydb)){
+    mydb = .connect2DB()
+  }
   stmt = paste0("select * from Passaging where id IN ",paste0("('",paste0(ids, collapse = "', '"),"')  order by date DESC"));
   rs = suppressWarnings(dbSendQuery(mydb, stmt))
   parents = fetch(rs, n=-1)
@@ -329,8 +335,8 @@ removeFromLiquidNitrogen <- function(rack, row, boxRow, boxColumn){
     ROI <- as(raster::extent(100, 1200, la@extent@ymax - 1200, la@extent@ymax - 100), 'SpatialPolygons')
     la_ <- raster::crop(la, ROI)
     raster::plot(la_, ann=FALSE,axes=FALSE, useRaster=T,legend=F)
-    mtext(fileparts(f_i[i])$name)
-    points(dm$`Centroid X µm`,la@extent@ymax - dm$`Centroid Y µm`, col="black", pch=20, cex=0.4)
+    mtext(fileparts(f_i[i])$name, cex=0.3)
+    points(dm$`Centroid X µm`,la@extent@ymax - dm$`Centroid Y µm`, col="black", pch=20, cex=0.3)
   }
   area2dish = dishSurfaceArea_cm2 / sum(cellCounts[,"area_cm2"])
   dishCount = round(sum(cellCounts[,"areaCount"]) * area2dish)
