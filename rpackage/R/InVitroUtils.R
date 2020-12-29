@@ -248,7 +248,6 @@ removeFromLiquidNitrogen <- function(rack, row, boxRow, boxColumn){
   QSCRIPT = "~/Downloads/qpscript/runDetectionROI.groovy"
   dir.create("~/Downloads/qpscript")
   dir.create(fileparts(QUPATH_PRJ)$pathstr)
-  write(.QuPathScript(qpdir = QUPATH_DIR), file=QSCRIPT)
   qpversion = list.files("/Applications", pattern = "QuPath")
   qpversion = gsub(".app","", strsplit(qpversion[length(qpversion)],"-")[[1]][2])
   
@@ -260,6 +259,7 @@ removeFromLiquidNitrogen <- function(rack, row, boxRow, boxColumn){
   stmt = paste0("select * from Passaging where id = '",from,"'");
   rs = suppressWarnings(dbSendQuery(mydb, stmt))
   kids = fetch(rs, n=-1)
+  write(.QuPathScript(qpdir = QUPATH_DIR, cellLine = kids$cellLine), file=QSCRIPT)
   
   ### Checks
   if(nrow(kids)==0){
@@ -270,7 +270,7 @@ removeFromLiquidNitrogen <- function(rack, row, boxRow, boxColumn){
     print(paste(from,"is not a",otherevent,". You must do",event,"from a",otherevent), quote = F)
     return()
   }
-  if(event=="seeding" && !is.na(kids$cellCount) && cellCount>kids$cellCount){
+  if(event=="seeding" && !is.na(kids$cellCount) && !is.na(cellCount) && cellCount>kids$cellCount){
     print("You cannot seed more than is available from harvest!", quote = F)
     return()
   }
@@ -335,11 +335,12 @@ removeFromLiquidNitrogen <- function(rack, row, boxRow, boxColumn){
     ROI <- as(raster::extent(100, 1200, la@extent@ymax - 1200, la@extent@ymax - 100), 'SpatialPolygons')
     la_ <- raster::crop(la, ROI)
     raster::plot(la_, ann=FALSE,axes=FALSE, useRaster=T,legend=F)
-    mtext(fileparts(f_i[i])$name, cex=0.3)
+    mtext(fileparts(f_i[i])$name, cex=0.45)
     points(dm$`Centroid X µm`,la@extent@ymax - dm$`Centroid Y µm`, col="black", pch=20, cex=0.3)
   }
   area2dish = dishSurfaceArea_cm2 / sum(cellCounts[,"area_cm2"])
   dishCount = round(sum(cellCounts[,"areaCount"]) * area2dish)
+  print(paste("Estimated number of cells in entire flask at",dishCount), quote = F)
   
   ### Insert
   passage = kids$passage
@@ -351,7 +352,7 @@ removeFromLiquidNitrogen <- function(rack, row, boxRow, boxColumn){
   stmt = paste0("INSERT INTO Passaging (id, passaged_from_id1, event, date, cellCount, passage, dishSurfaceArea_cm2, media) ",
                 "VALUES ('",id ,"', '",from,"', '",event,"', '",tx,"', ",dishCount,", ", passage,", ",dishSurfaceArea_cm2,", ", kids$media, ");")
   rs = dbSendQuery(mydb, stmt)
-  if(dishCount/cellCount > 2 || dishCount/cellCount <0.5){
+  if(!is.na(cellCount) && (dishCount/cellCount > 2 || dishCount/cellCount <0.5)){
     warning(paste0("Automated image analysis deviates from input cell count by more than a factor of 2. CellCount set to the former (",dishCount," cells)"))
   }
   
@@ -366,7 +367,17 @@ removeFromLiquidNitrogen <- function(rack, row, boxRow, boxColumn){
   return(mydb)
 }
 
-.QuPathScript <- function(qpdir){
+.QuPathScript <- function(qpdir, cellLine){
+  # Standard pipeline:
+  runPlugin = "runPlugin('qupath.imagej.detect.cells.WatershedCellDetection', '{\"detectionImage\": \"Red\",  \"backgroundRadius\": 15.0,  \"medianRadius\": 0.0,  \"sigma\": 3.0,  \"minArea\": 10.0,  \"maxArea\": 1000.0,  \"threshold\":0.09,  \"watershedPostProcess\": true,  \"cellExpansion\": 5.0,  \"includeNuclei\": true,  \"smoothBoundaries\": false,  \"makeMeasurements\": true}');"
+  # # NCI-N87 pipeline:
+  # if(cellLine=="NCI-N87"){
+  #   runPlugin = "runPlugin('qupath.imagej.detect.cells.WatershedCellDetection', '{\"detectionImageBrightfield\": \"Optical density sum\",  \"backgroundRadius\": 15.0,  \"medianRadius\": 0.0,  \"sigma\": 3.0,  \"minArea\": 10.0,  \"maxArea\": 1000.0,  \"threshold\": 0.1,  \"maxBackground\": 2.9,  \"watershedPostProcess\": true,  \"cellExpansion\": 5.0,  \"includeNuclei\": false,  \"smoothBoundaries\": true,  \"makeMeasurements\": true}');"
+  # }
+  # HGC-27 pipeline:
+  if(cellLine=="HGC-27"){
+    runPlugin = "runPlugin('qupath.imagej.detect.cells.WatershedCellDetection', '{\"detectionImageBrightfield\": \"Hematoxylin OD\",  \"requestedPixelSizeMicrons\": 0.5,  \"backgroundRadiusMicrons\": 8.0,  \"medianRadiusMicrons\": 0.0,  \"sigmaMicrons\": 1.5,  \"minAreaMicrons\": 90.0,  \"maxAreaMicrons\": 1200.0,  \"threshold\": 0.1,  \"maxBackground\": 2.0,  \"watershedPostProcess\": false,  \"cellExpansionMicrons\": 5.0,  \"includeNuclei\": false,  \"smoothBoundaries\": true,  \"makeMeasurements\": true}');"
+  }
   qpdir = normalizePath(qpdir)
   paste("import static qupath.lib.gui.scripting.QPEx.*",
         "import qupath.lib.gui.tools.MeasurementExporter",
@@ -415,8 +426,7 @@ removeFromLiquidNitrogen <- function(rack, row, boxRow, boxColumn){
         "println \"Success\";",
         "//createSelectAllObject(true);",
         "selectAnnotations();",
-        "runPlugin('qupath.imagej.detect.cells.WatershedCellDetection', '{\"detectionImage\": \"Red\",  \"backgroundRadius\": 15.0,  \"medianRadius\": 0.0,  \"sigma\": 3.0,  \"minArea\": 10.0,  \"maxArea\": 1000.0,  \"threshold\":0.09,  \"watershedPostProcess\": true,  \"cellExpansion\": 5.0,  \"includeNuclei\": true,  \"smoothBoundaries\": false,  \"makeMeasurements\": true}');",
-        "",
+        runPlugin,
         "",
         "",
         "def filename = entry.getImageName() + '.csv'",
