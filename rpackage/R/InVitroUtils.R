@@ -98,7 +98,7 @@ getPedegreeTree <- function(cellLine= cellLine, id = NULL){
 
 
 
-findAllDescendandsOf <-function(ids, includeGR=F, mydb = NULL){
+findAllDescendandsOf <-function(ids, includeGR=F, mydb = NULL, recursive=T){
   library(RMySQL)
   
   if(is.null(mydb)){
@@ -114,8 +114,10 @@ findAllDescendandsOf <-function(ids, includeGR=F, mydb = NULL){
     rs = suppressWarnings(dbSendQuery(mydb, stmt))
     kids = fetch(rs, n=-1)
     out = kids$id
-    for(id in kids$id){
-      out = c(out, .traceDescendands(id))
+    if(recursive){
+      for(id in kids$id){
+        out = c(out, .traceDescendands(id))
+      }
     }
     return(out)
   }
@@ -246,8 +248,8 @@ removeFromLiquidNitrogen <- function(rack, row, boxRow, boxColumn){
   QUPATH_DIR="~/QuPath/output/"; 
   QUPATH_PRJ = "~/Downloads/qproject/project.qpproj"
   QSCRIPT = "~/Downloads/qpscript/runDetectionROI.groovy"
-  dir.create("~/Downloads/qpscript")
-  dir.create(fileparts(QUPATH_PRJ)$pathstr)
+  suppressWarnings(dir.create("~/Downloads/qpscript"))
+  suppressWarnings(dir.create(fileparts(QUPATH_PRJ)$pathstr))
   qpversion = list.files("/Applications", pattern = "QuPath")
   qpversion = gsub(".app","", strsplit(qpversion[length(qpversion)],"-")[[1]][2])
   
@@ -259,7 +261,6 @@ removeFromLiquidNitrogen <- function(rack, row, boxRow, boxColumn){
   stmt = paste0("select * from Passaging where id = '",from,"'");
   rs = suppressWarnings(dbSendQuery(mydb, stmt))
   kids = fetch(rs, n=-1)
-  write(.QuPathScript(qpdir = QUPATH_DIR, cellLine = kids$cellLine), file=QSCRIPT)
   
   ### Checks
   if(nrow(kids)==0){
@@ -291,6 +292,7 @@ removeFromLiquidNitrogen <- function(rack, row, boxRow, boxColumn){
     dishSurfaceArea_cm2 = kids$dishSurfaceArea_cm2
   }
   
+  write(.QuPathScript(qpdir = QUPATH_DIR, cellLine = kids$cellLine), file=QSCRIPT)
   f_i = list.files("~/QuPath", pattern = paste0(id,"_10x_ph_"), full.names = T)
   unlink(TMP_DIR,recursive=T)
   dir.create(TMP_DIR)
@@ -332,7 +334,7 @@ removeFromLiquidNitrogen <- function(rack, row, boxRow, boxColumn){
     ## Visualize
     la=raster::raster(f_i[i])
     ## @TODO: region of interest (ROI) should be read from QuPath groovy script
-    ROI <- as(raster::extent(100, 1200, la@extent@ymax - 1200, la@extent@ymax - 100), 'SpatialPolygons')
+    ROI <- as(raster::extent(100, 1900, la@extent@ymax - 1200, la@extent@ymax - 100), 'SpatialPolygons')
     la_ <- raster::crop(la, ROI)
     raster::plot(la_, ann=FALSE,axes=FALSE, useRaster=T,legend=F)
     mtext(fileparts(f_i[i])$name, cex=0.45)
@@ -371,9 +373,9 @@ removeFromLiquidNitrogen <- function(rack, row, boxRow, boxColumn){
   # Standard pipeline:
   runPlugin = "runPlugin('qupath.imagej.detect.cells.WatershedCellDetection', '{\"detectionImage\": \"Red\",  \"backgroundRadius\": 15.0,  \"medianRadius\": 0.0,  \"sigma\": 3.0,  \"minArea\": 10.0,  \"maxArea\": 1000.0,  \"threshold\":0.09,  \"watershedPostProcess\": true,  \"cellExpansion\": 5.0,  \"includeNuclei\": true,  \"smoothBoundaries\": false,  \"makeMeasurements\": true}');"
   # # NCI-N87 pipeline:
-  # if(cellLine=="NCI-N87"){
-  #   runPlugin = "runPlugin('qupath.imagej.detect.cells.WatershedCellDetection', '{\"detectionImageBrightfield\": \"Optical density sum\",  \"backgroundRadius\": 15.0,  \"medianRadius\": 0.0,  \"sigma\": 3.0,  \"minArea\": 10.0,  \"maxArea\": 1000.0,  \"threshold\": 0.1,  \"maxBackground\": 2.9,  \"watershedPostProcess\": true,  \"cellExpansion\": 5.0,  \"includeNuclei\": false,  \"smoothBoundaries\": true,  \"makeMeasurements\": true}');"
-  # }
+  if(cellLine=="NCI-N87"){
+    runPlugin = "runPlugin('qupath.imagej.detect.cells.WatershedCellDetection', '{\"detectionImageBrightfield\": \"Hematoxylin OD\",  \"requestedPixelSizeMicrons\": 0.5,  \"backgroundRadiusMicrons\": 8.0,  \"medianRadiusMicrons\": 0.0,  \"sigmaMicrons\": 1.5,  \"minAreaMicrons\": 50.0,  \"maxAreaMicrons\": 1200.0,  \"threshold\": 0.09,  \"maxBackground\": 2.0,  \"watershedPostProcess\": false,  \"cellExpansionMicrons\": 5.0,  \"includeNuclei\": false,  \"smoothBoundaries\": true,  \"makeMeasurements\": true}');"
+  }
   # HGC-27 pipeline:
   if(cellLine=="HGC-27"){
     runPlugin = "runPlugin('qupath.imagej.detect.cells.WatershedCellDetection', '{\"detectionImageBrightfield\": \"Hematoxylin OD\",  \"requestedPixelSizeMicrons\": 0.5,  \"backgroundRadiusMicrons\": 8.0,  \"medianRadiusMicrons\": 0.0,  \"sigmaMicrons\": 1.5,  \"minAreaMicrons\": 90.0,  \"maxAreaMicrons\": 1200.0,  \"threshold\": 0.1,  \"maxBackground\": 2.0,  \"watershedPostProcess\": false,  \"cellExpansionMicrons\": 5.0,  \"includeNuclei\": false,  \"smoothBoundaries\": true,  \"makeMeasurements\": true}');"
@@ -391,7 +393,7 @@ removeFromLiquidNitrogen <- function(rack, row, boxRow, boxColumn){
         "def PixelHeight_new = 1.000;",
         "def x_left = 100;",
         "def y_left = 100;",
-        "def w_ROI =  1100;",
+        "def w_ROI =  1900;",
         "def h_ROI = 1100;",
         "//*************************************************",
         "",
