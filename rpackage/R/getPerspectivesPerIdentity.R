@@ -1,7 +1,6 @@
 getPerspectivesPerIdentity <- function(sName, whichP="GenomePerspective"){
   
-  yml = read_yaml(paste0(system.file(package='cloneid'), '/config/config.yaml'))
-  mydb = dbConnect(MySQL(), user=yml$mysqlConnection$user, password=yml$mysqlConnection$password, dbname=yml$mysqlConnection$database,host=yml$mysqlConnection$host, port=as.integer(yml$mysqlConnection$port))
+  mydb = .connect2DB()
 
   ##Perspective
   stmt = paste0("select size,cloneID, sampleName from Perspective where sampleName like \'%",sName,"%\'");

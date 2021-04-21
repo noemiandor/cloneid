@@ -1,7 +1,5 @@
 countCellsPerIdentity <- function(sName, state="G0G1"){
-  mydb = dbConnect(MySQL(), user = Sys.info()["user"], password = "lalalala", 
-                   dbname = "CLONEID", host = "cloneredesign.cswgogbb5ufg.us-east-1.rds.amazonaws.com")
-  
+  mydb = .connect2DB()
   stmt = paste0("select TranscriptomePerspective, GenomePerspective from Identity where size<1 and sampleName=\'",sName,"\'");
   rs = dbSendQuery(mydb, stmt)
   kids = fetch(rs, n = -1)
