@@ -1,8 +1,7 @@
 viewAllExperiments <- function(cellLine, n_time=2){
   stmt=paste0("select * from Passaging where cellLine=\'",cellLine,"\' and comment is null or (comment not like '%C%' and comment not like '%B%')");
   
-  mydb = dbConnect(MySQL(), user = Sys.info()["user"], password = "lalalala", 
-                   dbname = "CLONEID", host = "cloneredesign.cswgogbb5ufg.us-east-1.rds.amazonaws.com")
+  mydb = .connect2DB()
   
   rs = dbSendQuery(mydb, stmt)
   o = fetch(rs, n = -1)
