@@ -1,0 +1,171 @@
+.connect2DB <-function(){
+  tmp = suppressWarnings(try(lapply( dbListConnections( dbDriver( drv = "MySQL")), dbDisconnect)))
+  yml = yaml::read_yaml(paste0(system.file(package='cloneid'), '/config/config.yaml'))
+  mydb = dbConnect(MySQL(), user=yml$mysqlConnection$user, password=yml$mysqlConnection$password, dbname=yml$mysqlConnection$database,host=yml$mysqlConnection$host, port=as.integer(yml$mysqlConnection$port))
+  return(mydb)
+}
+
+
+getAttribute<-function (cloneID, whichP, attr){
+  library(RMySQL)
+  if(!isempty(grep("_ID",cloneID))){
+    cloneID=strsplit(cloneID,"_ID")[[1]][2]
+  }
+  whichP_=gsub("Genome","",gsub("Transcriptome","",whichP))
+  stmt=paste0("select ",attr," from ",whichP_," where whichPerspective='",whichP,"' AND cloneID=",cloneID)
+  
+  mydb = .connect2DB()
+  
+  rs = dbSendQuery(mydb, stmt)
+  o = fetch(rs, n=-1)
+  
+  dbClearResult(dbListResults(mydb)[[1]])
+  dbDisconnect(mydb)
+  
+  return(o[[attr]])
+}
+
+
+getRootID<-function(sampleName, whichP){
+  
+  mydb = .connect2DB()
+  
+  whichP_ = gsub("Exome", "", gsub("Genome", "", gsub("Transcriptome", "", whichP)))
+  stmt = paste0("select cloneID from ", whichP_, " where whichPerspective='",
+                whichP, "' AND sampleName='", sampleName, "' AND parent IS NULL")
+  rs = dbSendQuery(mydb, stmt)
+  root = fetch(rs, n = -1)
+  return (as.numeric(root$cloneID))
+}
+
+
+getCloneColors<-function(sName, whichP = "TranscriptomePerspective",cmap=NULL){
+  
+  ##Get all clones associeted with this sample
+  whichP_=gsub("Exome","",gsub("Genome","",gsub("Transcriptome","",whichP)))
+  cloneID = getRootID(sName, whichP)
+  
+  stmt = paste0("select cloneID from ",whichP_," where parent =",cloneID);
+  # stmt=paste0("select children from ",whichP_," where whichPerspective='",whichP,"' AND sampleName='",sName,"' AND parent IS NULL")
+  
+  mydb = .connect2DB()
+  rs = dbSendQuery(mydb, stmt)
+  
+  # kids = fetch(rs, n=-1)
+  # kids= kids[!is.na(kids)]
+  # kids =strsplit(kids,",")[[1]]
+  # ids=as.numeric(kids)
+  # ids=1+ids-min(ids)
+  kids = fetch(rs, n=-1)[,"cloneID"]
+  ids=1+kids-min(kids)
+  
+  dbClearResult(dbListResults(mydb)[[1]])
+  dbDisconnect(mydb)
+  
+  ##Get color codes
+  ucols=list("Identity"=terrain.colors(max(ids)+2),  
+             "TranscriptomePerspective"=rainbow(max(ids)+2),
+             "GenomePerspective"=gray.colors(max(ids)+2),
+             "ExomePerspective"=heat.colors(max(ids)+2));  
+  if(is.null(cmap)){
+    thecols=ucols[[whichP]]
+  }else{
+    f2 <- match.fun(cmap)
+    thecols=f2((max(ids)+2))
+  }
+  set.seed(25)
+  cols=sample(thecols,length(thecols))[ids]; names(cols)=as.character(kids)
+  return(cols)
+}
+
+
+
+identity2perspectiveMap<- function(sName,persp, includeSampleOrigin=F){
+  identities=cloneid::getSubclones(sName,"Identity")
+  tmp=sapply(identities,function(x) x$getPerspective(J("core.utils.Perspectives")$valueOf(persp))$toString())
+  persp=sapply(strsplit(names(tmp),"ID"),"[[",2)
+  if(includeSampleOrigin){
+    persp=paste0(sName,".",persp)
+  }
+  names(persp)=sapply(strsplit(tmp,"ID"),"[[",2)
+  return(persp)
+}
+getPerspectivesPerIdentity <- function(sName, whichP="GenomePerspective"){
+  
+  mydb = .connect2DB()
+  
+  ##Perspective
+  stmt = paste0("select size,cloneID, sampleName from Perspective where sampleName like \'%",sName,"%\'");
+  rs = dbSendQuery(mydb, stmt)
+  p = fetch(rs, n = -1)
+  rownames(p) = p$cloneID
+  
+  ##Identity
+  stmt = paste0("select size,cloneID, sampleName,",whichP," from Identity where sampleName = \'",sName,"\'");
+  rs = dbSendQuery(mydb, stmt)
+  i = fetch(rs, n = -1)
+  i = i[!is.na(i$GenomePerspective),]
+  
+  ##Join
+  stmt = paste0("select Perspective.size,Identity.cloneID, Perspective.cloneID as PerspectiveID , Perspective.sampleName  from Identity inner join Perspective on ", 
+                "Perspective.cloneID = Identity.",whichP," where Identity.sampleName =\'",sName,"\'");
+  rs = dbSendQuery(mydb, stmt)
+  o = fetch(rs, n = -1)
+  
+  
+  ##Complement missing
+  missingIDs = lapply(i$GenomePerspective, function(x) setdiff(unlist(strsplit(x,",")), o$PerspectiveID))
+  names(missingIDs) = i$cloneID
+  missingIDs = missingIDs[!sapply(  missingIDs, isempty)]
+  for(id in names(missingIDs)){
+    o_ = as.data.frame(matrix(NA,length(missingIDs[[id]]),ncol(o)))
+    colnames(o_) = colnames(o)
+    o_[,c("size","PerspectiveID","sampleName")]=p[missingIDs[[id]],]
+    o_$cloneID = id
+    o = rbind(o, o_)
+  }
+  
+  dbClearResult(dbListResults(mydb)[[1]])
+  dbDisconnect(mydb)
+  return(o[,c("size","cloneID","sampleName"), drop=F])
+}
+
+
+
+countCellsPerIdentity <- function(sName, state="G0G1"){
+  mydb = .connect2DB()
+  stmt = paste0("select TranscriptomePerspective, GenomePerspective from Identity where size<1 and sampleName=\'",sName,"\'");
+  rs = dbSendQuery(mydb, stmt)
+  kids = fetch(rs, n = -1)
+  kids$GenomePerspective_Size <- kids$TranscriptomePerspective_Size <- NA
+  ##Genome
+  for(kid in kids$GenomePerspective){
+    stmt = paste0("select count(size) from Perspective where state= \'",state,"\' and parent=",kid);
+    rs = dbSendQuery(mydb, stmt)
+    kids$GenomePerspective_Size[kids$GenomePerspective==kid]=fetch(rs, n = -1)
+  }
+  ##Transcriptome
+  for(kid in kids$TranscriptomePerspective){
+    stmt = paste0("select count(size) from Perspective where state= \'",state,"\' and parent=",kid);
+    rs = dbSendQuery(mydb, stmt)
+    kids$TranscriptomePerspective_Size[kids$TranscriptomePerspective==kid]=fetch(rs, n = -1)
+  }
+  kids$sName=sName
+  
+  dbClearResult(dbListResults(mydb)[[1]])
+  dbDisconnect(mydb)
+  return(kids)
+}
+
+
+getCloneMembers<-function(sName, type="Dominant", whichP="GenomePerspective"){
+  clones=cloneid::getSubclones(sName,whichP)
+  dc=clones[which.max(lapply(names(clones), getSPsize))]
+  if(type!="Dominant"){
+    dc=clones[names(clones)!=names(dc)]
+  }
+  dcID=unlist(lapply(names(dc), function(x) strsplit(x,"_ID")[[1]][2]))
+  members=lapply(dcID, function(x) cloneid::getSubclones(as.integer(x), whichP))
+  members=unlist(members)
+  return(members)
+}

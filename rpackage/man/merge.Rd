@@ -1,7 +1,7 @@
 \name{merge}
 \alias{merge}
 \title{Merging perspectives into clones' identities}
-\description{Merges either 2 different perspectives on the clonal composition of the same specimen OR the same perspective on the clonal composition of 2 or more different specimens to approximate each clone's identity as the consensus across perspectives/specimens.}
+\description{Merges either two different perspectives on the clonal composition of the same specimen OR the same perspective on the clonal composition of two or more different specimens to approximate each clone's identity as the consensus across perspectives/specimens. Resulting consensus profiles are added to the SQL table `Identity`. No new entry is made if no two perspectives agree on the existence of any clone.}
 \usage{merge(perspectives, specimens, simM = "euclidean", t=-Inf)}
 \arguments{
   \item{perspectives}{

@@ -44,7 +44,7 @@ feed <- function(id, tx=Sys.time()){
 }
 
 
-getPedegreeTree <- function(cellLine= cellLine, id = NULL){
+getPedigreeTree <- function(cellLine= cellLine, id = NULL){
   library(RMySQL)
   library(ape)
   
@@ -98,7 +98,7 @@ getPedegreeTree <- function(cellLine= cellLine, id = NULL){
 
 
 
-findAllDescendandsOf <-function(ids, includeGR=F, mydb = NULL, recursive=T){
+findAllDescendandsOf <-function(ids, mydb = NULL, recursive=T){
   library(RMySQL)
   
   if(is.null(mydb)){
@@ -130,12 +130,7 @@ findAllDescendandsOf <-function(ids, includeGR=F, mydb = NULL, recursive=T){
     d = setdiff(d, alllineages); ## exclude descendands with more recent parent (i.e. seedings)
     alllineages = c(alllineages, d)
     d = paste0("('",paste0(d, collapse = "', '"),"')")
-    if(includeGR){
-      out[[id]] = paste0("select P2.*, '",id,"' as Ancestor, DATEDIFF(P2.date, P1.date), POWER(P2.cellCount / P1.cellCount, 1 / DATEDIFF(P2.date, P1.date)) as GR_per_day ", 
-                         "FROM Passaging P1 JOIN Passaging P2 ON P1.id = P2.passaged_from_id1 WHERE P2.id IN ",d)
-    }else{
-      out[[id]] = paste0("select *, '",id,"' as Ancestor from Passaging where id IN ",d);
-    }
+    out[[id]] = paste0("select *, '",id,"' as Ancestor from Passaging where id IN ",d);
   }
   
   ## Union
@@ -413,13 +408,6 @@ plotLiquidNitrogenBox <- function(rack, row){
   
   dbClearResult(dbListResults(mydb)[[1]])
   dbDisconnect(mydb)
-}
-
-.connect2DB <-function(){
-  tmp = suppressWarnings(try(lapply( dbListConnections( dbDriver( drv = "MySQL")), dbDisconnect)))
-  yml = yaml::read_yaml(paste0(system.file(package='cloneid'), '/config/config.yaml'))
-  mydb = dbConnect(MySQL(), user=yml$mysqlConnection$user, password=yml$mysqlConnection$password, dbname=yml$mysqlConnection$database,host=yml$mysqlConnection$host, port=as.integer(yml$mysqlConnection$port))
-  return(mydb)
 }
 
 .QuPathScript <- function(qpdir, cellLine){

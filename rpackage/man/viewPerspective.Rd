@@ -1,23 +1,19 @@
 \name{viewPerspective}
 \alias{viewPerspective}
 \title{Biosample's subclonal composition inference}
-\description{Calculates user-specified perspective of the subclonal composition of a biosample and saves it to the database.}
-\usage{viewPerspective(pathToSample, whichP, tissue = NULL, expandsD ="expands", liaysonD = "liayson", suffix = ".sps.cbs", xy = NULL)}
+\description{Reads the subclonal composition of a biosample and adds it to the SQL table `Perspective`.}
+\usage{viewPerspective(spstatsFile, whichP, tissue = NULL, suffix = ".sps.cbs", xy = NULL)}
 \arguments{
-  \item{pathToSample}{
-     The path towards the perspective to be viewed (character). If no such path is found, cloneID will call the corresponding algorithm to create it.
+  \item{spstatsFile}{
+     The path towards .spstats file: data.frame with each row denoting a subpopulation and columns denoting their IDs and cellular fractions. \cr \cr    
+     The the file must be named according to the sample of origin of the profiled cells. \cr \cr
+     The file must be in a directory containing the output of a clonal decomposition algorithm. See \code{\link{CloneProfiles}} for format requirements of output files.
   }
   \item{whichP}{
-     What to calculate: GenomePerspective or TranscriptomePerspective.
+     What this assay provides: GenomePerspective or TranscriptomePerspective.
   }
   \item{tissue}{
      The tissue type of the specimen.
-  }
-  \item{expandsD}{
-     The output directory for the GenomePerspective.
-  }
-  \item{liaysonD}{
-     The output directory for the TranscriptomePerspective.
   }
   \item{suffix}{
      The suffix of the file within the output directory, containing the desired perspective.
@@ -28,9 +24,11 @@
  
 }
 \details{
+	Profiles of the subpopulations listed in the .spstats file will be added to the SQL table `Perspective`.
 }
 
 \author{Noemi Andor}
+
 
 
 
