@@ -1,7 +1,6 @@
 getRootID<-function(sampleName, whichP){
 
-  yml = read_yaml(paste0(system.file(package='cloneid'), '/config/config.yaml'))
-  mydb = dbConnect(MySQL(), user=yml$mysqlConnection$user, password=yml$mysqlConnection$password, dbname=yml$mysqlConnection$database,host=yml$mysqlConnection$host, port=as.integer(yml$mysqlConnection$port))
+  mydb = .connect2DB()
   
   whichP_ = gsub("Exome", "", gsub("Genome", "", gsub("Transcriptome", "", whichP)))
   stmt = paste0("select cloneID from ", whichP_, " where whichPerspective='",

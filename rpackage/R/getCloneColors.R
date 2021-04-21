@@ -7,8 +7,7 @@ getCloneColors<-function(sName, whichP = "TranscriptomePerspective",cmap=NULL){
   stmt = paste0("select cloneID from ",whichP_," where parent =",cloneID);
   # stmt=paste0("select children from ",whichP_," where whichPerspective='",whichP,"' AND sampleName='",sName,"' AND parent IS NULL")
 
-  yml = read_yaml(paste0(system.file(package='cloneid'), '/config/config.yaml'))
-  mydb = dbConnect(MySQL(), user=yml$mysqlConnection$user, password=yml$mysqlConnection$password, dbname=yml$mysqlConnection$database,host=yml$mysqlConnection$host, port=as.integer(yml$mysqlConnection$port))
+  mydb = .connect2DB()
   rs = dbSendQuery(mydb, stmt)
 
   # kids = fetch(rs, n=-1)
