@@ -21,7 +21,7 @@
   }
 }
 \details{
-	CLONEID's lineage tracing module streamlines routine monitoring of three aspects of in-vitro experiments: (i) the pedigree of all cell lineages grown in a lab; (ii) the exact media composition in which the cells grow and (iii) how often cells divide. Automatic recording of this information in the SQL table passaging requires technicians to adopt two new habits: (1) taking brightfield images of live cells both, immediately after seeding and any number of times before harvest. (2) Passing the images to CLONEID's \textit{seed} and \textit{harvest} functions respectively. This function facilitates the latter.
+	CLONEID's lineage tracing module streamlines routine monitoring of three aspects of in-vitro experiments: (i) the pedigree of all cell lineages grown in a lab; (ii) the exact media composition in which the cells grow and (iii) how often cells divide. Automatic recording of this information in the SQL table passaging requires technicians to adopt two new habits: (1) taking brightfield images of live cells both, immediately after seeding and any number of times before harvest. (2) Passing the images to CLONEID's seed and harvest functions respectively. This function facilitates the latter.
 }
 
 \author{Noemi Andor}

@@ -1,4 +1,8 @@
 /.metadata/
+/rpackage/R/revokeCloneExistence.R
+/rpackage/R/deleteSampleClones.R
+/rpackage/R/deleteClones.R
+/rpackage/R/deleteCloneWithID.R
 *.class
 
 ### STS ###

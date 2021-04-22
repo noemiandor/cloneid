@@ -13,9 +13,8 @@ findCloneMarkers<-function(sName, ccState = "G0G1"){
   
   ############################
   ## Get CellSurfaceMarkers ##
-  yml = yaml::read_yaml(paste0(system.file(package='cloneid'), '/config/config.yaml'))
-  mydb = dbConnect(MySQL(), user=yml$mysqlConnection$user, password=yml$mysqlConnection$password, dbname=yml$mysqlConnection$database,host=yml$mysqlConnection$host, port=as.integer(yml$mysqlConnection$port))
-  
+  mydb = connect2DB()
+ 
   stmt = paste0("select * from CellSurfaceMarkers_hg19");
   rs = dbSendQuery(mydb, stmt)
   kids = fetch(rs, n=-1)

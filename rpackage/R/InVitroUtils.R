@@ -14,7 +14,7 @@ harvest <- function(id, from, cellCount, tx = Sys.time(), media=NULL){
 
 feed <- function(id, tx=Sys.time()){
   library(RMySQL)
-  mydb = .connect2DB()
+  mydb = connect2DB()
   
   stmt = paste0("select * from Passaging where id = '",id,"'");
   rs = suppressWarnings(dbSendQuery(mydb, stmt))
@@ -48,7 +48,7 @@ getPedigreeTree <- function(cellLine= cellLine, id = NULL){
   library(RMySQL)
   library(ape)
   
-  mydb = .connect2DB()
+  mydb = connect2DB()
   if(is.null(id)){
     stmt = paste0("select * from Passaging where cellLine = '",cellLine,"'");
   }else{
@@ -88,7 +88,7 @@ getPedigreeTree <- function(cellLine= cellLine, id = NULL){
   str(tr)
   col = c("blue","red")
   names(col) = c("seeding","harvest")
-  plot(tr, underscore = T, cex=0.9, tip.color = col[kids[tr$tip.label,]$event])
+  plot(tr, underscore = T, cex=0.5, tip.color = col[kids[tr$tip.label,]$event])
   legend("topright",names(col),fill=col, bty="n")
   
   dbClearResult(dbListResults(mydb)[[1]])
@@ -102,16 +102,16 @@ findAllDescendandsOf <-function(ids, mydb = NULL, recursive=T){
   library(RMySQL)
   
   if(is.null(mydb)){
-    mydb = .connect2DB()
+    mydb = connect2DB()
   }
   stmt = paste0("select * from Passaging where id IN ",paste0("('",paste0(ids, collapse = "', '"),"')  order by date DESC"));
-  rs = suppressWarnings(dbSendQuery(mydb, stmt))
+  rs = suppressWarnings(RMySQL::dbSendQuery(mydb, stmt))
   parents = fetch(rs, n=-1)
   
   ## Recursive function to trace descendands
   .traceDescendands<-function(x){
     stmt = paste0("select * from Passaging where passaged_from_id1 = '",x,"'");
-    rs = suppressWarnings(dbSendQuery(mydb, stmt))
+    rs = suppressWarnings(RMySQL::dbSendQuery(mydb, stmt))
     kids = fetch(rs, n=-1)
     out = kids$id
     if(recursive){
@@ -138,7 +138,7 @@ findAllDescendandsOf <-function(ids, mydb = NULL, recursive=T){
   for(id in setdiff(names(out),names(out)[1])){
     stmt = paste0(stmt, " UNION (", out[[id]],")")
   }
-  print(stmt, quote=F)
+  return(stmt)
 }
 
 
@@ -151,7 +151,7 @@ readGrowthRate <- function(cellLine){
                " WHERE P2.event='harvest' and P1.cellLine='",cellLine,"'") 
   print(cmd, quote = F)
   
-  mydb = .connect2DB()
+  mydb = connect2DB()
   
   rs = dbSendQuery(mydb, cmd)
   kids = fetch(rs, n=-1)
@@ -163,7 +163,7 @@ readGrowthRate <- function(cellLine){
 
 populateLiquidNitrogenRacks <-function(rackID){
   library(RMySQL)
-  mydb = .connect2DB()
+  mydb = connect2DB()
   for(box in 1:13){
     for (br in c('A','B','C','D','E','F','G','H','I')){
       for (bc in 1:9){
@@ -181,7 +181,7 @@ populateLiquidNitrogenRacks <-function(rackID){
 
 plotCellLineHistory<-function(){
   library(RMySQL)
-  mydb = .connect2DB()
+  mydb = connect2DB()
   rs = dbSendQuery(mydb, "select name, year_of_first_report, doublingTime_hours from CellLinesAndBiopsies where year_of_first_report >0;")
   kids = fetch(rs, n=-1)
   
@@ -201,7 +201,7 @@ plotCellLineHistory<-function(){
 
 updateLiquidNitrogen <- function(id, cellCount, rack, row, boxRow, boxColumn){
   library(RMySQL)
-  mydb = .connect2DB()
+  mydb = connect2DB()
   cmd=paste0("UPDATE LiquidNitrogen SET ",
              "id = '",id,"',",
              "cellCount = ",cellCount," WHERE ",
@@ -219,7 +219,7 @@ updateLiquidNitrogen <- function(id, cellCount, rack, row, boxRow, boxColumn){
 
 removeFromLiquidNitrogen <- function(rack, row, boxRow, boxColumn){
   library(RMySQL)
-  mydb = .connect2DB()
+  mydb = connect2DB()
   cmd=paste0("UPDATE LiquidNitrogen SET ",
              "id = NULL,",
              "cellCount = 0 WHERE ",
@@ -236,7 +236,7 @@ removeFromLiquidNitrogen <- function(rack, row, boxRow, boxColumn){
 
 plotLiquidNitrogenBox <- function(rack, row){
   library(RMySQL)
-  mydb = .connect2DB()
+  mydb = connect2DB()
   cmd=paste0("select * from LiquidNitrogen where ",
              "Rack = '",rack,"' AND ",
              "Row = '",row,"'");
@@ -283,7 +283,7 @@ plotLiquidNitrogenBox <- function(rack, row){
   EVENTTYPES = c("seeding","harvest")
   otherevent = EVENTTYPES[EVENTTYPES!=event]
   
-  mydb = .connect2DB()
+  mydb = connect2DB()
   
   stmt = paste0("select * from Passaging where id = '",from,"'");
   rs = suppressWarnings(dbSendQuery(mydb, stmt))

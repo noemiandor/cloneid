@@ -64,24 +64,6 @@ GenomePerspective TranscriptomePerspective Identity
 2 "SP_0.47_ID2"     "Clone_0.394_ID6"        "Clone_0.432"
 
 
-
-##Directly compare Perspectives
-display("KATOIII","GenomePerspective",save = T)
-display("KATOIII","TranscriptomePerspective",save = T)
-display("KATOIII","Identity",save = T)
-tiff(filename = paste("KATOIII_CloneIDs_exomeVStranscriptome.tif",sep=""), width=6, height=4, units="in", res=200)
-compare(c(20,19),c(91,92),perspective1="GenomePerspective",perspective2="TranscriptomePerspective",col=c("red","blue"))
-dev.off()
-
-##Display variuous perspectives on Identity
-par(mfrow=c(3,1))
-display("KATOIII","Identity",save=T)
-display("KATOIII","Identity",colorBy="GenomePerspective",save=T)
-display("KATOIII","Identity",colorBy="TranscriptomePerspective",save=T,deep = T)
-# display("KATOIII","Identity",colorBy="TranscriptomePerspective>1:300001-108700000", deep=F)
-display("KATOIII","Identity",colorBy="TranscriptomePerspective>MKI67,CDK4,CCND1,CDK6", deep=T,save=T)
-
-
 whichP="TranscriptomePerspective"; prefix="Clone_"
 sps=as.data.frame(getSubProfiles("KATOIII",whichP=whichP,includeRoot = T)); 
 cols=c("gray","red","yellow");names(cols)=grep(prefix,colnames(sps),value = T)

@@ -1,4 +1,4 @@
-.connect2DB <-function(){
+connect2DB <-function(){
   tmp = suppressWarnings(try(lapply( dbListConnections( dbDriver( drv = "MySQL")), dbDisconnect)))
   yml = yaml::read_yaml(paste0(system.file(package='cloneid'), '/config/config.yaml'))
   mydb = dbConnect(MySQL(), user=yml$mysqlConnection$user, password=yml$mysqlConnection$password, dbname=yml$mysqlConnection$database,host=yml$mysqlConnection$host, port=as.integer(yml$mysqlConnection$port))
@@ -14,7 +14,7 @@ getAttribute<-function (cloneID, whichP, attr){
   whichP_=gsub("Genome","",gsub("Transcriptome","",whichP))
   stmt=paste0("select ",attr," from ",whichP_," where whichPerspective='",whichP,"' AND cloneID=",cloneID)
   
-  mydb = .connect2DB()
+  mydb = connect2DB()
   
   rs = dbSendQuery(mydb, stmt)
   o = fetch(rs, n=-1)
@@ -28,7 +28,7 @@ getAttribute<-function (cloneID, whichP, attr){
 
 getRootID<-function(sampleName, whichP){
   
-  mydb = .connect2DB()
+  mydb = connect2DB()
   
   whichP_ = gsub("Exome", "", gsub("Genome", "", gsub("Transcriptome", "", whichP)))
   stmt = paste0("select cloneID from ", whichP_, " where whichPerspective='",
@@ -48,7 +48,7 @@ getCloneColors<-function(sName, whichP = "TranscriptomePerspective",cmap=NULL){
   stmt = paste0("select cloneID from ",whichP_," where parent =",cloneID);
   # stmt=paste0("select children from ",whichP_," where whichPerspective='",whichP,"' AND sampleName='",sName,"' AND parent IS NULL")
   
-  mydb = .connect2DB()
+  mydb = connect2DB()
   rs = dbSendQuery(mydb, stmt)
   
   # kids = fetch(rs, n=-1)
@@ -92,7 +92,7 @@ identity2perspectiveMap<- function(sName,persp, includeSampleOrigin=F){
 }
 getPerspectivesPerIdentity <- function(sName, whichP="GenomePerspective"){
   
-  mydb = .connect2DB()
+  mydb = connect2DB()
   
   ##Perspective
   stmt = paste0("select size,cloneID, sampleName from Perspective where sampleName like \'%",sName,"%\'");
@@ -133,7 +133,7 @@ getPerspectivesPerIdentity <- function(sName, whichP="GenomePerspective"){
 
 
 countCellsPerIdentity <- function(sName, state="G0G1"){
-  mydb = .connect2DB()
+  mydb = connect2DB()
   stmt = paste0("select TranscriptomePerspective, GenomePerspective from Identity where size<1 and sampleName=\'",sName,"\'");
   rs = dbSendQuery(mydb, stmt)
   kids = fetch(rs, n = -1)
