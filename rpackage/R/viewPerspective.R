@@ -1,4 +1,4 @@
-viewPerspective<-function(spstatsFile, whichP, tissue=NULL, suffix=".sps.cbs", xy=NULL){
+viewPerspective<-function(spstatsFile, whichP, suffix=".sps.cbs", xy=NULL){
   #   library("rJava")
   #   library(matlab)
   NUMRES=getNumRes()
