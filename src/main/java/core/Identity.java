@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -34,7 +35,7 @@ public class Identity extends Clone {
 	 */
 	private Map<Perspectives,Set<Perspective>> perspectives;
 
-	protected Identity(float size,  String sampleName, String[] nMut) {
+	protected Identity(float size,  String sampleName, String[] nMut) throws SQLException {
 		super(size, sampleName);
 		this.profile=new Profile(nMut);
 		perspectives=new HashMap<Perspectives,Set<Perspective>>();

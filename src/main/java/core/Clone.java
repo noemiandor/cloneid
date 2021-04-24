@@ -6,6 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -49,9 +50,9 @@ public abstract class Clone {
 	protected List<Clone> children;
 
 	/**
-	 * The name of the biosample in which this clone was detected.
+	 * The name of the source (a cell line or patient) in which this clone was detected.
 	 */
-	protected String sampleName;
+	protected String sampleSource;
 
 
 	/**
@@ -97,10 +98,11 @@ public abstract class Clone {
 	 * Instantiates a clone from:
 	 * @param size - the fraction of cells from the biosample that have been assigned to this clone.
 	 * @param sampleName - the name of the biosample.
+	 * @throws SQLException 
 	 */
-	public Clone(float size, String sampleName){
+	public Clone(float size, String sampleName) throws SQLException{
 		this.size=size;
-		this.sampleName=sampleName;
+		setCellLineOrPatientFor(sampleName);
 		children=new ArrayList<Clone>();
 	}
 
@@ -112,7 +114,8 @@ public abstract class Clone {
 	 * @throws Exception 
 	 */
 	public Clone(File outFile, Perspectives whichPerspective, String parentCloneID) throws Exception {
-		this.sampleName=outFile.getName().split("\\.")[0];
+		String sampleName =outFile.getName().split("\\.")[0];
+		setCellLineOrPatientFor(sampleName);	
 		children=new ArrayList<Clone>();
 		try{
 			this.size=Float.parseFloat(parentCloneID.split("_")[1]); 
@@ -187,7 +190,7 @@ public abstract class Clone {
 		CLONEID db= new CLONEID();
 		db.connect();
 		//@TODO: there's a risk here of overlapping clone sizes and wrong assignment of clone members
-		String selstmt="SELECT cloneID,coordinates from "+CLONEID.getTableNameForClass(this.getClass().getSimpleName())+" where abs(size-"+size+")<"+PRECISION+" AND whichPerspective=\'"+this.getClass().getSimpleName()+"\' AND sampleName=\'"+sampleName+"\';";
+		String selstmt="SELECT cloneID,coordinates from "+CLONEID.getTableNameForClass(this.getClass().getSimpleName())+" where abs(size-"+size+")<"+PRECISION+" AND whichPerspective=\'"+this.getClass().getSimpleName()+"\' AND sampleSource=\'"+sampleSource+"\';";
 		ResultSet rs =db.getStatement().executeQuery(selstmt);
 		rs.next();
 		this.cloneID=rs.getInt("cloneID");
@@ -209,6 +212,27 @@ public abstract class Clone {
 		return profile;
 	}
 
+	
+	private void setCellLineOrPatientFor(String origin2) throws SQLException {
+		
+		if(this.getClass().equals(Identity.class)) {
+			return;
+		}
+
+		
+		((Perspective)this).origin = origin2;
+		
+		CLONEID db= new CLONEID();
+		db.connect();
+		
+		String selstmt="SELECT cellLine from Passaging where id = '"+origin2+"';";
+		ResultSet rs =db.getStatement().executeQuery(selstmt);
+		rs.next();
+		this.sampleSource = rs.getString("cellLine");
+		
+		db.close();
+	} 
+	
 	/**
 	 * Retrieves the properties of this clone to be saved in the database.
 	 * @return a map of the attribute values in a database-compatible format, with keys naming the table columns in the database.
@@ -236,7 +260,7 @@ public abstract class Clone {
 		}
 
 		map.put( "rootID", getRoot().cloneID+"");
-		map.put( "sampleName", "\'"+sampleName+"\'");
+		map.put( "sampleSource", "\'"+sampleSource+"\'");
 		if(coordinates!=null){
 			map.put("coordinates", "\'"+coordinates[0]+","+coordinates[1]+"\'");
 		}
@@ -262,12 +286,12 @@ public abstract class Clone {
 	 * @param c - the clone contained within this clone. 
 	 */
 	private void addChild(Clone c){
-		if(!c.sampleName.equals(sampleName)){
-			throw new IllegalArgumentException();
-		}
 		//children and parent must be of the same type: e.g. an identity's parent can't be a perspective
 		if(!c.getClass().equals(this.getClass())){
 			throw new IncompatibleClassChangeError();
+		}
+		if(!c.sampleSource.equals(sampleSource)){
+			throw new IllegalArgumentException();
 		}
 //		//child can't be larger than parent
 //		if(c.size>=this.size){
@@ -298,7 +322,7 @@ public abstract class Clone {
 
 		//Check if clone doesn't exist yet in DB
 		Integer existingid=isInDB(tableName, cloneid);
-		Map<String,String> map=getDBformattedAttributesAsMap();
+		Map<String,String> map = this.getDBformattedAttributesAsMap();
 		if(existingid==null){
 			//Formulate INSERT statement
 			String addstmt = "INSERT INTO " + tableName+ "(";
@@ -363,7 +387,7 @@ public abstract class Clone {
 	private Integer isInDB(String tableName, CLONEID db) throws Exception {
 		int hash = Arrays.deepHashCode(profile.getValues());
 		//@TODO: risk that clone is falsely classified as already existent even though it is not <=> hash is non-unique for long arrays
-		String selstmt="SELECT cloneID from "+tableName+" where abs(size-"+this.size+")<"+PRECISION+" and profile_hash="+hash+" AND whichPerspective=\'"+this.getClass().getSimpleName()+"\' AND sampleName=\'"+sampleName+"\';"; 
+		String selstmt="SELECT cloneID from "+tableName+" where abs(size-"+this.size+")<"+PRECISION+" and profile_hash="+hash+" AND whichPerspective=\'"+this.getClass().getSimpleName()+"\' AND sampleSource=\'"+sampleSource+"\';"; 
 		ResultSet rs =db.getStatement().executeQuery(selstmt);
 		if(rs.next()){
 			return rs.getInt(1);
@@ -378,8 +402,9 @@ public abstract class Clone {
 	 * @param sampleName - the name of the biosample
 	 * @param which - the perspective from which this clone is viewed or NULL, if we have the privilege of dealing with the clone's identity
 	 * @return
+	 * @throws SQLException 
 	 */
-	public static <T extends Profile> Clone getInstance(float size,  String sampleName, Perspectives which, String[] nMut){
+	public static <T extends Profile> Clone getInstance(float size,  String sampleName, Perspectives which, String[] nMut) throws SQLException{
 		if(which.equals(Perspectives.Identity)){
 			return new Identity(size, sampleName,nMut);
 		}else if(which.equals(Perspectives.GenomePerspective)){
@@ -411,7 +436,7 @@ public abstract class Clone {
 	}
 
 	public void setParent(Clone clone) {
-		if(!sampleName.equals(clone.sampleName)){
+		if(!sampleSource.equals(clone.sampleSource)){
 			throw new IllegalArgumentException();
 		}
 		this.parent=clone;
@@ -452,8 +477,8 @@ public abstract class Clone {
 		this.childrenIDs=childrenIDs;
 	}
 
-	public String getSampleName() {
-		return sampleName;
+	public String getSampleSource() {
+		return sampleSource;
 	}
 
 	public int[] getChildrenIDs() {

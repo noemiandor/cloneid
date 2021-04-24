@@ -4,6 +4,7 @@ import java.io.File;
 import core.Clone;
 import core.GenomePerspective;
 import core.Perspective;
+import core.TranscriptomePerspective;
 import core.utils.Helper;
 import core.utils.Perspectives;
 import core.utils.Profile;
@@ -49,7 +50,7 @@ public final class Manager {
 
 	public static Map<String, Profile> profiles(String sampleName, Perspectives which, boolean includeRoot) throws Exception {
 		String tN = CLONEID.getTableNameForClass(which.name());
-		String selstmt="SELECT size,cloneID from "+tN+" where hasChildren=true AND sampleName=\'"+sampleName+"\' AND whichPerspective=\'"+which+"\' ORDER BY size DESC;"; 
+		String selstmt="SELECT size,cloneID from "+tN+" where hasChildren=true AND sampleSource=\'"+sampleName+"\' AND whichPerspective=\'"+which+"\' ORDER BY size DESC;"; 
 		return(gatherProfiles(selstmt,which,includeRoot));
 	}
 
@@ -103,7 +104,7 @@ public final class Manager {
 
 	public static Map<String, Clone> display(String sampleName, Perspectives which) throws Exception{
 		String tN = CLONEID.getTableNameForClass(which.name());
-		String selstmt="SELECT cloneID,size from "+tN+" where parent IS NULL AND hasChildren=true AND sampleName=\'"+sampleName+"\' AND whichPerspective=\'"+which+"\' ORDER BY size DESC;";
+		String selstmt="SELECT cloneID,size from "+tN+" where parent IS NULL AND hasChildren=true AND sampleSource=\'"+sampleName+"\' AND whichPerspective=\'"+which+"\' ORDER BY size DESC;";
 		Map<String, Clone> cloneSizes=gatherForDisplay(selstmt,sampleName, which);
 		return(cloneSizes);
 	}
@@ -181,19 +182,20 @@ public final class Manager {
 			}
 		*/
 
-		YamlReaderService yamlReader = new YamlReaderService();
-		Boolean forceCreateSchema = false;
-
-		for (String arg : args) {
-
-			if (arg.equals("-c") || arg.equals("--create-schema") || arg.equals("-f") || arg.equals("--force-create-schema")) {
-
-				if (arg.equals("-f") || arg.equals("--force-create-schema")) { forceCreateSchema = true; }
-				createSchema(yamlReader, forceCreateSchema);
-
-			} 
-
-		}
+			
+//		YamlReaderService yamlReader = new YamlReaderService();
+//		Boolean forceCreateSchema = false;
+//
+//		for (String arg : args) {
+//
+//			if (arg.equals("-c") || arg.equals("--create-schema") || arg.equals("-f") || arg.equals("--force-create-schema")) {
+//
+//				if (arg.equals("-f") || arg.equals("--force-create-schema")) { forceCreateSchema = true; }
+//				createSchema(yamlReader, forceCreateSchema);
+//
+//			} 
+//
+//		}
 		
 		try {
 			/*
@@ -209,8 +211,11 @@ public final class Manager {
 //			Perspective p2 = new GenomePerspective(new File("/Users/noemi/Projects/PMO/MeasuringGIperClone/data/GastricCancerCLs/scDNAseq/E07_180831_clones/HGC-27.sps.cbs"), "CN_Estimate");
 //			System.out.println(p2.getChildrensSizes());
 			//			p2.save2DB();
-			profiles(119963, Perspectives.TranscriptomePerspective, false);
-
+//			display("HGC-27", Perspectives.Identity);
+//			profiles(119963, Perspectives.TranscriptomePerspective, false);
+			TranscriptomePerspective tmp = new TranscriptomePerspective(new File("/Users/4470246/Projects/PMO/MeasuringGIperClone/data/GastricCancerCLs/scRNAseq/C07_190610_LIAYSON//SNU-16_3.sps.cbs"), "CN_Estimate");
+//			TranscriptomePerspective tmp = new TranscriptomePerspective(new File("/Users/4470246/Projects/PMO/MeasuringGIperClone/data/GastricCancerCLs/scRNAseq/C07_190610_LIAYSON//SNU-16_3.0.1914997.sps.cbs"), "Clone_0.191499695181847");
+tmp.save2DB();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

@@ -18,5 +18,3 @@
 	For each input ID, returns all lineages from the Passaging table that can be traced back to this ID.
 }
 
-\author{Noemi Andor}
-

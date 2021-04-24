@@ -17,6 +17,3 @@
 \value{A map of each clone to its unique ID.
 }
 
-\author{Noemi Andor}
-
-\examples{}

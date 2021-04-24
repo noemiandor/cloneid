@@ -12,6 +12,28 @@ harvest <- function(id, from, cellCount, tx = Sys.time(), media=NULL){
 }
 
 
+init <- function(id, cellLine, cellCount, tx = Sys.time(), media=NULL, dishSurfaceArea_cm2=NULL){
+  mydb = connect2DB()
+  
+  dishCount = cellCount;
+  if(!is.null(dishSurfaceArea_cm2)){
+    dishCount = .readQuPathOutput(id= id, cellLine = cellLine, dishSurfaceArea_cm2 = dishSurfaceArea_cm2, cellCount = cellCount);
+  }
+  if(is.null(media)){
+    media = "NULL"
+  }
+  if(is.null(dishSurfaceArea_cm2)){
+    dishSurfaceArea_cm2 = "NULL"
+  }
+  stmt = paste0("INSERT INTO Passaging (id, cellLine, event, date, cellCount, passage, dishSurfaceArea_cm2, media) ",
+                "VALUES ('",id ,"', '",cellLine,"', 'harvest', '",tx,"', ",dishCount,", ", 1,", ",dishSurfaceArea_cm2,", ", media, ");")
+  rs = dbSendQuery(mydb, stmt)
+  
+  dbClearResult(dbListResults(mydb)[[1]])
+  dbDisconnect(mydb)
+}
+
+
 feed <- function(id, tx=Sys.time()){
   library(RMySQL)
   mydb = connect2DB()
@@ -182,7 +204,7 @@ populateLiquidNitrogenRacks <-function(rackID){
 plotCellLineHistory<-function(){
   library(RMySQL)
   mydb = connect2DB()
-  rs = dbSendQuery(mydb, "select name, year_of_first_report, doublingTime_hours from CellLinesAndBiopsies where year_of_first_report >0;")
+  rs = dbSendQuery(mydb, "select name, year_of_first_report, doublingTime_hours from CellLinesAndPatients where year_of_first_report >0;")
   kids = fetch(rs, n=-1)
   
   kids = kids[sort(kids$year_of_first_report, index.return=T)$ix,]
@@ -270,16 +292,7 @@ plotLiquidNitrogenBox <- function(rack, row){
   library(RMySQL)
   library(matlab)
   UM2CM = 1e-4
-  ## QuPath Settings; @TODO: should be set under settings, not here
-  TMP_DIR = "~/Downloads/tmp";
-  QUPATH_DIR="~/QuPath/output/"; 
-  QUPATH_PRJ = "~/Downloads/qproject/project.qpproj"
-  QSCRIPT = "~/Downloads/qpscript/runDetectionROI.groovy"
-  suppressWarnings(dir.create("~/Downloads/qpscript"))
-  suppressWarnings(dir.create(fileparts(QUPATH_PRJ)$pathstr))
-  qpversion = list.files("/Applications", pattern = "QuPath")
-  qpversion = gsub(".app","", strsplit(qpversion[length(qpversion)],"-")[[1]][2])
-  
+
   EVENTTYPES = c("seeding","harvest")
   otherevent = EVENTTYPES[EVENTTYPES!=event]
   
@@ -319,7 +332,37 @@ plotLiquidNitrogenBox <- function(rack, row){
     dishSurfaceArea_cm2 = kids$dishSurfaceArea_cm2
   }
   
-  write(.QuPathScript(qpdir = QUPATH_DIR, cellLine = kids$cellLine), file=QSCRIPT)
+  dishCount = .readQuPathOutput(id= id, cellLine = kids$cellLine, dishSurfaceArea_cm2 = dishSurfaceArea_cm2, cellCount = cellCount);
+  
+  ### Insert
+  passage = kids$passage
+  if(event=="seeding"){
+    passage = passage+1
+  }
+  ## @TODO: remove
+  # stmt = paste0("update Passaging set cellCount = ",dishCount," where id='",id,"';")
+  stmt = paste0("INSERT INTO Passaging (id, passaged_from_id1, event, date, cellCount, passage, dishSurfaceArea_cm2, media) ",
+                "VALUES ('",id ,"', '",from,"', '",event,"', '",tx,"', ",dishCount,", ", passage,", ",dishSurfaceArea_cm2,", ", kids$media, ");")
+  rs = dbSendQuery(mydb, stmt)
+  
+  dbClearResult(dbListResults(mydb)[[1]])
+  dbDisconnect(mydb)
+}
+
+
+.readQuPathOutput <- function(id, cellLine, dishSurfaceArea_cm2, cellCount){
+  ## QuPath Settings; @TODO: should be set under settings, not here
+  TMP_DIR = "~/Downloads/tmp";
+  QUPATH_DIR="~/QuPath/output/"; 
+  QUPATH_PRJ = "~/Downloads/qproject/project.qpproj"
+  QSCRIPT = "~/Downloads/qpscript/runDetectionROI.groovy"
+  suppressWarnings(dir.create("~/Downloads/qpscript"))
+  suppressWarnings(dir.create(fileparts(QUPATH_PRJ)$pathstr))
+  qpversion = list.files("/Applications", pattern = "QuPath")
+  qpversion = gsub(".app","", strsplit(qpversion[length(qpversion)],"-")[[1]][2])
+  
+  
+  write(.QuPathScript(qpdir = QUPATH_DIR, cellLine = cellLine), file=QSCRIPT)
   f_i = list.files("~/QuPath", pattern = paste0(id,"_10x_ph_"), full.names = T)
   unlink(TMP_DIR,recursive=T)
   dir.create(TMP_DIR)
@@ -392,23 +435,12 @@ plotLiquidNitrogenBox <- function(rack, row){
   dishCount = round(sum(cellCounts[,"areaCount"]) * area2dish)
   print(paste("Estimated number of cells in entire flask at",dishCount), quote = F)
   
-  ### Insert
-  passage = kids$passage
-  if(event=="seeding"){
-    passage = passage+1
-  }
-  ## @TODO: remove
-  # stmt = paste0("update Passaging set cellCount = ",dishCount," where id='",id,"';")
-  stmt = paste0("INSERT INTO Passaging (id, passaged_from_id1, event, date, cellCount, passage, dishSurfaceArea_cm2, media) ",
-                "VALUES ('",id ,"', '",from,"', '",event,"', '",tx,"', ",dishCount,", ", passage,", ",dishSurfaceArea_cm2,", ", kids$media, ");")
-  rs = dbSendQuery(mydb, stmt)
   if(!is.na(cellCount) && (dishCount/cellCount > 2 || dishCount/cellCount <0.5)){
     warning(paste0("Automated image analysis deviates from input cell count by more than a factor of 2. CellCount set to the former (",dishCount," cells)"))
   }
-  
-  dbClearResult(dbListResults(mydb)[[1]])
-  dbDisconnect(mydb)
+  return(dishCount)
 }
+
 
 .QuPathScript <- function(qpdir, cellLine){
   # Standard pipeline:

@@ -3,6 +3,7 @@ package core;
 
 import java.io.File;
 import java.io.IOException;
+import java.sql.SQLException;
 
 import core.utils.Genome;
 import core.utils.Perspectives;
@@ -15,7 +16,7 @@ import core.utils.Transcriptome;
  */
 public class TranscriptomePerspective extends Perspective{
 
-	public TranscriptomePerspective(float f, String sampleName, String[] nMut) {
+	public TranscriptomePerspective(float f, String sampleName, String[] nMut) throws SQLException {
 		super(f, sampleName);
 		this.profile=new Transcriptome(nMut);
 	}

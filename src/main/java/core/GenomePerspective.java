@@ -2,6 +2,7 @@ package core;
 
 import java.io.File;
 import java.io.IOException;
+import java.sql.SQLException;
 
 import core.utils.Genome;
 import core.utils.Perspectives;
@@ -13,7 +14,7 @@ import core.utils.Perspectives;
  */
 public class GenomePerspective extends Perspective{
 
-	public GenomePerspective(float f, String sampleName, String[] nMut) {
+	public GenomePerspective(float f, String sampleName, String[] nMut) throws SQLException {
 		super(f, sampleName);
 		this.profile=new Genome(nMut);
 	}

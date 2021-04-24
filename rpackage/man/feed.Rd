@@ -15,8 +15,6 @@
 	Entry associated with the seeding ID will be updated with a timestamp indicating a feeding.
 }
 
-\author{Noemi Andor}
-
 
 
 

@@ -20,7 +20,7 @@
 \value{A matrix with rows corresponding to features and columns corresponding to subclones.
 }
 
-\author{Noemi Andor}
+\
 
 \examples{
   pm=getSubProfiles(cloneID_or_sampleName = "LGG2T1",whichP = "GenomePerspective", includeRoot = FALSE)

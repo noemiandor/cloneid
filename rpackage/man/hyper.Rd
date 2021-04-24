@@ -21,12 +21,4 @@ Both probabilities are modeled as Hypergeometric distributions: For (\bold{b}), 
 }
 \value{Probability that \eqn{SP_P} is related to \eqn{SP_R}.}
 
-\author{Noemi Andor}
-
-\examples{
-  
-}
-
-
-
 

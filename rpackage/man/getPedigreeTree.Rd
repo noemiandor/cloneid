@@ -15,6 +15,5 @@
 	
 }
 
-\author{Noemi Andor}
 
 

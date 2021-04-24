@@ -17,5 +17,4 @@
 \value{A string describing subclones' state.
 }
 
-\author{Noemi Andor}
 

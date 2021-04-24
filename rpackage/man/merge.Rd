@@ -44,8 +44,6 @@ Next, subpopulations  \eqn{S} are grouped into categories by hierarchical cluste
 }
 
 
-\author{Noemi Andor}
-
 \examples{
   #par(mfrow=c(4,1))
   #display(cloneID_or_sampleName = "KATOIII",whichP = "GenomePerspective")display(cloneID_or_sampleName,whichP="GenomePerspective", colorBy = NULL, deep = F, save = F)

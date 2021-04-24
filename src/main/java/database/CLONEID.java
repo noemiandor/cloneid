@@ -42,6 +42,8 @@ public final class CLONEID {
 				+ yamlReader.getConfig().getMysqlConnection().get("port")
 				+ "?serverTimezone=UTC";
 
+
+		
 		con = DriverManager.getConnection(db_connect_string, db_userid, db_password);
 		stmt = con.createStatement();
 		stmt.executeQuery("USE CLONEID");
@@ -88,7 +90,7 @@ public final class CLONEID {
 	 * @throws Exception
 	 */
 	public Clone getClone(int cloneID, Perspectives which) throws Exception {
-		String attr="size,sampleName,whichPerspective,parent,coordinates";
+		String attr="size,sampleSource,whichPerspective,parent,coordinates";
 		if(which==Perspectives.Identity){
 			attr+=","+Arrays.toString(Perspectives.values()).replace(", Identity", "").replace("[", "").replace("]", "");
 

@@ -6,8 +6,8 @@
 \arguments{
   \item{spstatsFile}{
      The path to an .spstats file: data.frame with each row denoting a subpopulation and columns denoting their IDs and cellular fractions. \cr \cr    
-     The the file must be named according to the sample of origin of the profiled cells. \cr \cr
-     The file must be in a directory containing the output of a clonal decomposition algorithm. See \code{\link{CloneProfiles}} for format requirements of output files.
+     File must be named according to the sample of origin of the profiled cells and  must be in a directory containing the output of a clonal decomposition algorithm. 
+     See \code{\link{CloneProfiles}} for format requirements of output files.
   }
   \item{whichP}{
      What this assay provides: GenomePerspective or TranscriptomePerspective.
@@ -23,11 +23,5 @@
 \details{
 	Profiles of the subpopulations listed in the .spstats file will be added to the SQL table `Perspective`.
 }
-
-\author{Noemi Andor}
-
-
-
-
 
 
