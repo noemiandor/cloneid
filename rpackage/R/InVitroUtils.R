@@ -66,7 +66,7 @@ feed <- function(id, tx=Sys.time()){
 }
 
 
-getPedigreeTree <- function(cellLine= cellLine, id = NULL){
+getPedigreeTree <- function(cellLine= cellLine, id = NULL, cex = 0.5){
   library(RMySQL)
   library(ape)
   
@@ -110,7 +110,7 @@ getPedigreeTree <- function(cellLine= cellLine, id = NULL){
   str(tr)
   col = c("blue","red")
   names(col) = c("seeding","harvest")
-  plot(tr, underscore = T, cex=0.5, tip.color = col[kids[tr$tip.label,]$event])
+  plot(tr, underscore = T, cex=cex, tip.color = col[kids[tr$tip.label,]$event])
   legend("topright",names(col),fill=col, bty="n")
   
   dbClearResult(dbListResults(mydb)[[1]])

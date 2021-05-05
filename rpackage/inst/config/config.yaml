@@ -5,11 +5,3 @@ mysqlConnection:
   password: 
   database: CLONEID
   schemaScript: CLONEID_schema.sql
-
-dbTables:
-  - CellLines
-  - Freezing
-  - Identity
-  - Loci
-  - Passaging
-  - Perspective
