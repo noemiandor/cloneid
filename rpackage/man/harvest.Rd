@@ -5,7 +5,7 @@
 \usage{harvest(id, from, cellCount, tx = Sys.time(), media=NULL)}
 \arguments{
   \item{id}{
-     The prefix of the file holding brightfield image(s) associated with this harvest event. This will be used as key in the Passaging table.
+     The prefix of the file holding brightfield image(s) associated with this harvest event. This will be used as key in the Passaging table.  One or multiple .tif files with the same prefix must be under ~/QuPath/.
   }
   \item{from}{
      The ID of the seeding event from which these cells were harvested.
