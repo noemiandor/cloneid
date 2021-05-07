@@ -120,7 +120,7 @@ getPedigreeTree <- function(cellLine= cellLine, id = NULL, cex = 0.5){
 
 
 
-findAllDescendandsOf <-function(ids, mydb = NULL, recursive=T){
+findAllDescendandsOf <-function(ids, mydb = NULL, recursive = T, verbose = T){
   library(RMySQL)
   
   if(is.null(mydb)){
@@ -160,7 +160,15 @@ findAllDescendandsOf <-function(ids, mydb = NULL, recursive=T){
   for(id in setdiff(names(out),names(out)[1])){
     stmt = paste0(stmt, " UNION (", out[[id]],")")
   }
-  return(stmt)
+  if(verbose){
+    print(stmt)
+  }
+  
+  ## Get results from DB
+  rs = suppressWarnings(RMySQL::dbSendQuery(mydb, stmt))
+  res = fetch(rs, n=-1)
+  
+  return(res)
 }
 
 
@@ -291,7 +299,6 @@ plotLiquidNitrogenBox <- function(rack, row){
 .seed_or_harvest <- function(event, id, from, cellCount, tx, dishSurfaceArea_cm2, media){
   library(RMySQL)
   library(matlab)
-  UM2CM = 1e-4
 
   EVENTTYPES = c("seeding","harvest")
   otherevent = EVENTTYPES[EVENTTYPES!=event]
@@ -352,6 +359,7 @@ plotLiquidNitrogenBox <- function(rack, row){
 
 .readQuPathOutput <- function(id, cellLine, dishSurfaceArea_cm2, cellCount){
   ## QuPath Settings; @TODO: should be set under settings, not here
+  UM2CM = 1e-4
   TMP_DIR = "~/Downloads/tmp";
   QUPATH_DIR="~/QuPath/output/"; 
   QUPATH_PRJ = "~/Downloads/qproject/project.qpproj"
