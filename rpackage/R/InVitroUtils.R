@@ -73,11 +73,11 @@ getPedigreeTree <- function(cellLine= cellLine, id = NULL, cex = 0.5){
   mydb = connect2DB()
   if(is.null(id)){
     stmt = paste0("select * from Passaging where cellLine = '",cellLine,"'");
+    rs = suppressWarnings(dbSendQuery(mydb, stmt))
+    kids = fetch(rs, n=-1)
   }else{
-    stmt = findAllDescendandsOf(id, mydb = mydb)
+    kids = findAllDescendandsOf(id, mydb = mydb)
   }
-  rs = suppressWarnings(dbSendQuery(mydb, stmt))
-  kids = fetch(rs, n=-1)
   kids= kids[sort(kids$passage, index.return=T)$ix,,drop=F]
   rownames(kids) = kids$id
   
