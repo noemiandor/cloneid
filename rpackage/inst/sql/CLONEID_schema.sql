@@ -62,6 +62,25 @@ CREATE TABLE `CellSurfaceMarkers_hg19` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Table structure for table `Flask`
+--
+
+DROP TABLE IF EXISTS `Flask`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `Flask` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `manufacturer` varchar(40) DEFAULT NULL,
+  `material` enum('Polystyrene','Polyethylene','Terephthalate') DEFAULT NULL,
+  `dishSurfaceArea_cm2` float DEFAULT NULL,
+  `surface_treated_type` enum('Not Treated','TC-treated','Ultra Low Attachment','Amine','Carboxyl','Fibronectin','Collagen') DEFAULT NULL,
+  `bottom_shape` enum('U-shaped','Rectangular','Modified Triangular') DEFAULT NULL,
+  `link` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
 -- Table structure for table `FlowCytometry`
 --
 
@@ -298,12 +317,15 @@ CREATE TABLE `Passaging` (
   `feeding13` timestamp NULL DEFAULT NULL,
   `feeding14` timestamp NULL DEFAULT NULL,
   `feeding15` timestamp NULL DEFAULT NULL,
+  `flask` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `fk_harvest1` (`passaged_from_id1`),
   KEY `fk_harvest2` (`passaged_from_id2`),
   KEY `FK_cellLine` (`cellLine`),
   KEY `media` (`media`),
+  KEY `FK_flaskID` (`flask`),
   CONSTRAINT `FK_cellLine` FOREIGN KEY (`cellLine`) REFERENCES `CellLinesAndPatients` (`name`),
+  CONSTRAINT `FK_flaskID` FOREIGN KEY (`flask`) REFERENCES `Flask` (`id`) ON UPDATE CASCADE,
   CONSTRAINT `Passaging_ibfk_1` FOREIGN KEY (`media`) REFERENCES `Media` (`id`),
   CONSTRAINT `Passaging_ibfk_2` FOREIGN KEY (`media`) REFERENCES `Media` (`id`),
   CONSTRAINT `fk_harvest1` FOREIGN KEY (`passaged_from_id1`) REFERENCES `Passaging` (`id`) ON UPDATE CASCADE,
@@ -377,4 +399,4 @@ CREATE TABLE `Perspective` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2021-05-05 10:42:29
+-- Dump completed on 2021-05-13  9:01:20
