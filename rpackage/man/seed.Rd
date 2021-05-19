@@ -2,7 +2,7 @@
 \alias{seed}
 \title{New database entry: Seeding cells to a new flask for growth.}
 \description{Database insert function for table Passaging.}
-\usage{seed(id, from, cellCount, dishSurfaceArea_cm2, tx = Sys.time(), media=NULL) }
+\usage{seed(id, from, cellCount, flask, tx = Sys.time(), media=NULL) }
 \arguments{
   \item{id}{
      The prefix of the file holding brightfield image(s) associated with this seeding event. This will be used as key in the Passaging table. One or multiple .tif files with the same prefix must be under ~/QuPath/. 
@@ -13,8 +13,8 @@
   \item{cellCount}{
      Technician's best guess on how many cells are in the flask at the time of seeding. This is only for comparison with cell count inferred from segmentation algorithm and will not be saved to the database.
   }
-  \item{dishSurfaceArea_cm2}{
-     The size of the flask in which the cells were seeded.
+  \item{flask}{
+     The ID of the flask type in which the cells were seeded.
   }
   \item{tx}{
      Timestamp at which the seeding was performed. Defaults to current system time

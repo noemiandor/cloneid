@@ -1,32 +1,29 @@
-seed <- function(id, from, cellCount, dishSurfaceArea_cm2, tx = Sys.time(), media=NULL){ 
-  ## Typical values for dishSurfaceArea_cm2 are: 
-  ## a) 75 cm^2 = 10.1 cm x 7.30 cm  
-  ## b) 25 cm^2 = 5.08 cm x 5.08 cm
-  ## c) well from 96-plate = 0.32 cm^2
-  .seed_or_harvest(event = "seeding", id=id, from = from, cellCount = cellCount, tx = tx, dishSurfaceArea_cm2 = dishSurfaceArea_cm2, media = media)
+seed <- function(id, from, cellCount, flask, tx = Sys.time(), media=NULL){ 
+  .seed_or_harvest(event = "seeding", id=id, from = from, cellCount = cellCount, tx = tx, flask = flask, media = media)
 }
 
 
 harvest <- function(id, from, cellCount, tx = Sys.time(), media=NULL){
-  .seed_or_harvest(event = "harvest", id=id, from=from, cellCount = cellCount, tx = tx, dishSurfaceArea_cm2 = NULL, media = media)
+  .seed_or_harvest(event = "harvest", id=id, from=from, cellCount = cellCount, tx = tx, flask = NULL, media = media)
 }
 
 
-init <- function(id, cellLine, cellCount, tx = Sys.time(), media=NULL, dishSurfaceArea_cm2=NULL){
+init <- function(id, cellLine, cellCount, tx = Sys.time(), media=NULL, flask=NULL){
   mydb = connect2DB()
   
   dishCount = cellCount;
-  if(!is.null(dishSurfaceArea_cm2)){
+  if(!is.null(flask)){
+    dishSurfaceArea_cm2 = .readDishSurfaceArea_cm2(flask, mydb)
     dishCount = .readQuPathOutput(id= id, cellLine = cellLine, dishSurfaceArea_cm2 = dishSurfaceArea_cm2, cellCount = cellCount);
   }
   if(is.null(media)){
     media = "NULL"
   }
-  if(is.null(dishSurfaceArea_cm2)){
-    dishSurfaceArea_cm2 = "NULL"
+  if(is.null(flask)){
+    flask = "NULL"
   }
-  stmt = paste0("INSERT INTO Passaging (id, cellLine, event, date, cellCount, passage, dishSurfaceArea_cm2, media) ",
-                "VALUES ('",id ,"', '",cellLine,"', 'harvest', '",tx,"', ",dishCount,", ", 1,", ",dishSurfaceArea_cm2,", ", media, ");")
+  stmt = paste0("INSERT INTO Passaging (id, cellLine, event, date, cellCount, passage, flask, media) ",
+                "VALUES ('",id ,"', '",cellLine,"', 'harvest', '",tx,"', ",dishCount,", ", 1,", ",flask,", ", media, ");")
   rs = dbSendQuery(mydb, stmt)
   
   dbClearResult(dbListResults(mydb)[[1]])
@@ -296,7 +293,7 @@ plotLiquidNitrogenBox <- function(rack, row){
 }
 
 
-.seed_or_harvest <- function(event, id, from, cellCount, tx, dishSurfaceArea_cm2, media){
+.seed_or_harvest <- function(event, id, from, cellCount, tx, flask, media){
   library(RMySQL)
   library(matlab)
 
@@ -334,10 +331,12 @@ plotLiquidNitrogenBox <- function(rack, row){
   }
   ## TODO: What if from is too far in the past
   
-  ## dishSurfaceArea_cm2 cannot have changed if this is a harvest event: 
+  ## flask cannot have changed if this is a harvest event: 
   if(event=="harvest"){
-    dishSurfaceArea_cm2 = kids$dishSurfaceArea_cm2
+    flask = kids$flask
   }
+  
+  dishSurfaceArea_cm2 = .readDishSurfaceArea_cm2(flask, mydb)
   
   dishCount = .readQuPathOutput(id= id, cellLine = kids$cellLine, dishSurfaceArea_cm2 = dishSurfaceArea_cm2, cellCount = cellCount);
   
@@ -348,8 +347,8 @@ plotLiquidNitrogenBox <- function(rack, row){
   }
   ## @TODO: remove
   # stmt = paste0("update Passaging set cellCount = ",dishCount," where id='",id,"';")
-  stmt = paste0("INSERT INTO Passaging (id, passaged_from_id1, event, date, cellCount, passage, dishSurfaceArea_cm2, media) ",
-                "VALUES ('",id ,"', '",from,"', '",event,"', '",tx,"', ",dishCount,", ", passage,", ",dishSurfaceArea_cm2,", ", kids$media, ");")
+  stmt = paste0("INSERT INTO Passaging (id, passaged_from_id1, event, date, cellCount, passage, flask, media) ",
+                "VALUES ('",id ,"', '",from,"', '",event,"', '",tx,"', ",dishCount,", ", passage,", ",flask,", ", kids$media, ");")
   rs = dbSendQuery(mydb, stmt)
   
   dbClearResult(dbListResults(mydb)[[1]])
@@ -358,6 +357,10 @@ plotLiquidNitrogenBox <- function(rack, row){
 
 
 .readQuPathOutput <- function(id, cellLine, dishSurfaceArea_cm2, cellCount){
+  ## Typical values for dishSurfaceArea_cm2 are: 
+  ## a) 75 cm^2 = 10.1 cm x 7.30 cm  
+  ## b) 25 cm^2 = 5.08 cm x 5.08 cm
+  ## c) well from 96-plate = 0.32 cm^2
   ## QuPath Settings; @TODO: should be set under settings, not here
   UM2CM = 1e-4
   TMP_DIR = "~/Downloads/tmp";
@@ -449,6 +452,17 @@ plotLiquidNitrogenBox <- function(rack, row){
   return(dishCount)
 }
 
+
+## Read dishSurfaceArea_cm2 of this flask 
+.readDishSurfaceArea_cm2 <- function(flask, mydb = NULL){
+  if(is.null(mydb)){
+    mydb = connect2DB()
+  }
+  stmt = paste0("select dishSurfaceArea_cm2 from Flask where id = ", flask)
+  rs = suppressWarnings(dbSendQuery(mydb, stmt))
+  dishSurfaceArea_cm2 = fetch(rs, n=-1)
+  return(dishSurfaceArea_cm2[[1]])
+}
 
 .QuPathScript <- function(qpdir, cellLine){
   # Standard pipeline:
