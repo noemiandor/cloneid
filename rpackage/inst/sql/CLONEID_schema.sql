@@ -71,13 +71,13 @@ DROP TABLE IF EXISTS `Flask`;
 CREATE TABLE `Flask` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `manufacturer` varchar(40) DEFAULT NULL,
-  `material` enum('Polystyrene','Polyethylene','Terephthalate') DEFAULT NULL,
+  `material` enum('Polystyrene','Polyethylene Terephthalate') DEFAULT NULL,
   `dishSurfaceArea_cm2` float DEFAULT NULL,
-  `surface_treated_type` enum('Not Treated','TC-treated','Ultra Low Attachment','Amine','Carboxyl','Fibronectin','Collagen') DEFAULT NULL,
-  `bottom_shape` enum('U-shaped','Rectangular','Modified Triangular') DEFAULT NULL,
+  `surface_treated_type` enum('Not Treated','TC-treated','Ultra Low Attachment','Amine','Carboxyl','Fibronectin','Collagen','Gelatin') DEFAULT NULL,
+  `bottom_shape` enum('U-shaped','Rectangular','Modified Triangular','Flat') DEFAULT NULL,
   `link` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -236,7 +236,7 @@ CREATE TABLE `Media` (
   CONSTRAINT `Media_ibfk_7` FOREIGN KEY (`Salt`) REFERENCES `MediaIngredients` (`name`),
   CONSTRAINT `Media_ibfk_8` FOREIGN KEY (`antibiotic`) REFERENCES `MediaIngredients` (`name`),
   CONSTRAINT `Media_ibfk_9` FOREIGN KEY (`antibiotic2`) REFERENCES `MediaIngredients` (`name`)
-) ENGINE=InnoDB AUTO_INCREMENT=51 DEFAULT CHARSET=latin1 COMMENT='HEPES and other organic buffers can be used with many cell l';
+) ENGINE=InnoDB AUTO_INCREMENT=53 DEFAULT CHARSET=latin1 COMMENT='HEPES and other organic buffers can be used with many cell l';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -399,4 +399,4 @@ CREATE TABLE `Perspective` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2021-05-13  9:01:20
+-- Dump completed on 2021-05-19  7:08:39
