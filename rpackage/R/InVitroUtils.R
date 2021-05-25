@@ -302,13 +302,13 @@ plotLiquidNitrogenBox <- function(rack, row){
   
   mydb = connect2DB()
   
-  stmt = paste0("select * from Passaging where id = '",from,"'");
+  stmt = paste0("select * from QuPathEvaluation where id = '",from,"'");
   rs = suppressWarnings(dbSendQuery(mydb, stmt))
   kids = fetch(rs, n=-1)
   
   ### Checks
   if(nrow(kids)==0){
-    print(paste(from,"does not exist in table Passaging"), quote = F)
+    print(paste(from,"does not exist in table QuPathEvaluation"), quote = F)
     return()
   }
   if(kids$event !=otherevent){
@@ -346,9 +346,9 @@ plotLiquidNitrogenBox <- function(rack, row){
     passage = passage+1
   }
   ## @TODO: remove
-  # stmt = paste0("update Passaging set cellCount = ",dishCount," where id='",id,"';")
-  stmt = paste0("INSERT INTO Passaging (id, passaged_from_id1, event, date, cellCount, passage, flask, media) ",
-                "VALUES ('",id ,"', '",from,"', '",event,"', '",tx,"', ",dishCount,", ", passage,", ",flask,", ", kids$media, ");")
+  # stmt = paste0("update QuPathEvaluation set cellCount = ",dishCount," where id='",id,"';")
+  stmt = paste0("UPDATE QuPathEvaluation set cellCount = ", dishCount
+                " WHERE id = '",id ,"'"))
   rs = dbSendQuery(mydb, stmt)
   
   dbClearResult(dbListResults(mydb)[[1]])
