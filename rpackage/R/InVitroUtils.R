@@ -421,27 +421,27 @@ plotLiquidNitrogenBox <- function(rack, row){
     mtext(fileparts(f_i[i])$name, cex=0.45)
     points(dm$`Centroid X µm`,la@extent@ymax - dm$`Centroid Y µm`, col="black", pch=20, cex=0.3)
   }
-  ## Check cell counts standard deviation across images:
-  tmp = sort(cellCounts[,"areaCount"], decreasing = T)
-  if(max(tmp) - min(tmp) > min(tmp) ){ #tmp[1] - tmp[2]>tmp[2]
-    options(warn=1)
-    warning(paste("High standard deviation in number of cells detected across the", length(f), "images."))
-    options(warn=0)
-    toExclude <- readline(prompt="Exclude any images (bl, br, tl, tr, none)?")
-    if(nchar(toExclude)>0){
-      toExclude = sapply(strsplit(toExclude,",")[[1]],trimws)
-      toExclude = paste0(as.character(toExclude),".tif")
-      ii = sapply(toExclude, function(x) grep(x, rownames(cellCounts)))
-      if(!isempty(ii)){
-        print(paste("Excluding",rownames(cellCounts)[ii],"from analysis."), quote = F)
-        cellCounts= cellCounts[-ii,, drop=F]
-      }
-      if(length(ii)==length(f)){
-        print("At least one valid image needs to be left. Aborting", quote = F)
-        return()
-      }
-    }
-  }
+  # ## Check cell counts standard deviation across images:
+  # tmp = sort(cellCounts[,"areaCount"], decreasing = T)
+  # if(max(tmp) - min(tmp) > min(tmp) ){ #tmp[1] - tmp[2]>tmp[2]
+  #   options(warn=1)
+  #   warning(paste("High standard deviation in number of cells detected across the", length(f), "images."))
+  #   options(warn=0)
+  #   toExclude <- readline(prompt="Exclude any images (bl, br, tl, tr, none)?")
+  #   if(nchar(toExclude)>0){
+  #     toExclude = sapply(strsplit(toExclude,",")[[1]],trimws)
+  #     toExclude = paste0(as.character(toExclude),".tif")
+  #     ii = sapply(toExclude, function(x) grep(x, rownames(cellCounts)))
+  #     if(!isempty(ii)){
+  #       print(paste("Excluding",rownames(cellCounts)[ii],"from analysis."), quote = F)
+  #       cellCounts= cellCounts[-ii,, drop=F]
+  #     }
+  #     if(length(ii)==length(f)){
+  #       print("At least one valid image needs to be left. Aborting", quote = F)
+  #       return()
+  #     }
+  #   }
+  # }
   area2dish = dishSurfaceArea_cm2 / sum(cellCounts[,"area_cm2"])
   dishCount = round(sum(cellCounts[,"areaCount"]) * area2dish)
   print(paste("Estimated number of cells in entire flask at",dishCount), quote = F)
