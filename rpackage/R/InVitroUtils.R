@@ -296,7 +296,7 @@ plotLiquidNitrogenBox <- function(rack, row){
 .seed_or_harvest <- function(event, id, from, cellCount, tx, flask, media){
   library(RMySQL)
   library(matlab)
-
+  
   EVENTTYPES = c("seeding","harvest")
   otherevent = EVENTTYPES[EVENTTYPES!=event]
   
@@ -346,13 +346,13 @@ plotLiquidNitrogenBox <- function(rack, row){
     passage = passage+1
   }
   ## @TODO: remove
-  # stmt = paste0("update QuPathEvaluation set cellCount = ",dishCount," where id='",id,"';")
-  stmt = paste0("UPDATE QuPathEvaluation set cellCount = ", dishCount
-                " WHERE id = '",id ,"'"))
-  rs = dbSendQuery(mydb, stmt)
-  
-  dbClearResult(dbListResults(mydb)[[1]])
-  dbDisconnect(mydb)
+  stmt = paste0("update QuPathEvaluation set cellCount = ",dishCount," where id='",id,"';")
+  #stmt = paste0("UPDATE QuPathEvaluation set cellCount = ", dishCount
+                #" WHERE id = '",id ,"'"))
+rs = dbSendQuery(mydb, stmt)
+
+dbClearResult(dbListResults(mydb)[[1]])
+dbDisconnect(mydb)
 }
 
 
@@ -371,18 +371,25 @@ plotLiquidNitrogenBox <- function(rack, row){
   suppressWarnings(dir.create(fileparts(QUPATH_PRJ)$pathstr))
   qpversion = list.files("/Applications", pattern = "QuPath")
   qpversion = gsub(".app","", strsplit(qpversion[length(qpversion)],"-")[[1]][2])
-  
-  
+
+########
   write(.QuPathScript(qpdir = QUPATH_DIR, cellLine = cellLine), file=QSCRIPT)
   f_i = list.files("~/QuPath", pattern = paste0(id,"_10x_ph_"), full.names = T)
   unlink(TMP_DIR,recursive=T)
   dir.create(TMP_DIR)
   file.copy(f_i, TMP_DIR)
+  fn = sapply(f_i, function(x) fileparts(x)$name)
   write(.SaveProject(QUPATH_PRJ, paste0(TMP_DIR,filesep,sapply(f_i, function(x) fileparts(x)$name),".tif")), file=QUPATH_PRJ)
   cmd = paste0("/Applications/QuPath-",qpversion,".app/Contents/MacOS/QuPath-",qpversion," script ", QSCRIPT, " -p ", QUPATH_PRJ)
   print(cmd, quote = F)
+  cmd_brightnessCorrection_list<-list()
+  cmd_brightnessCorrection = unlist(cmd_brightnessCorrection_list)
+  for(i in 1:length(fn)){
+    print(fn[i])
+    cmd_brightnessCorrection_list[[i]] = (paste0("python brightnessCorrection.py ", TMP_DIR,filesep,fn[i],".tif"))
+    system(cmd_brightnessCorrection_list[[i]])
+  }
   system(cmd)
-  
   
   ## Wait and look for imaging analysis output
   print(paste0("Waiting for ",id," to appear under ",QUPATH_DIR," ..."), quote = F)
