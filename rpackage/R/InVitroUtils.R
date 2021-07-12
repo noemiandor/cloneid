@@ -7,6 +7,9 @@ harvest <- function(id, from, cellCount, tx = Sys.time(), media=NULL){
   .seed_or_harvest(event = "harvest", id=id, from=from, cellCount = cellCount, tx = tx, flask = NULL, media = media)
 }
 
+#To remove
+flask = NULL
+media=NULL
 
 init <- function(id, cellLine, cellCount, tx = Sys.time(), media=NULL, flask=NULL){
   mydb = connect2DB()
@@ -348,13 +351,14 @@ plotLiquidNitrogenBox <- function(rack, row){
   ## @TODO: remove
   stmt = paste0("update QuPathEvaluation set cellCount = ",dishCount," where id='",id,"';")
   #stmt = paste0("UPDATE QuPathEvaluation set cellCount = ", dishCount
-                #" WHERE id = '",id ,"'"))
-rs = dbSendQuery(mydb, stmt)
-
-dbClearResult(dbListResults(mydb)[[1]])
-dbDisconnect(mydb)
+  #" WHERE id = '",id ,"'"))
+  rs = dbSendQuery(mydb, stmt)
+  
+  dbClearResult(dbListResults(mydb)[[1]])
+  dbDisconnect(mydb)
 }
 
+#cellLine = NULL
 
 .readQuPathOutput <- function(id, cellLine, dishSurfaceArea_cm2, cellCount){
   ## Typical values for dishSurfaceArea_cm2 are: 
@@ -364,70 +368,81 @@ dbDisconnect(mydb)
   ## QuPath Settings; @TODO: should be set under settings, not here
   UM2CM = 1e-4
   TMP_DIR = "~/Downloads/tmp";
-  QUPATH_DIR="~/QuPath/output/"; 
+  QUPATH_DIR="~/cellPose_count"; 
+  QUPATH_DIR_anno = "~/cellPose_count/Annotations"; 
   QUPATH_PRJ = "~/Downloads/qproject/project.qpproj"
   QSCRIPT = "~/Downloads/qpscript/runDetectionROI.groovy"
   suppressWarnings(dir.create("~/Downloads/qpscript"))
   suppressWarnings(dir.create(fileparts(QUPATH_PRJ)$pathstr))
   qpversion = list.files("/Applications", pattern = "QuPath")
   qpversion = gsub(".app","", strsplit(qpversion[length(qpversion)],"-")[[1]][2])
-
-########
+  #}
+  ########
+  setwd("~/cellPose_count")
   write(.QuPathScript(qpdir = QUPATH_DIR, cellLine = cellLine), file=QSCRIPT)
-  f_i = list.files("~/QuPath", pattern = paste0(id,"_10x_ph_"), full.names = T)
+  f_i = list.files("~/cellPose_count", pattern = paste0("_10x_ph_"), full.names = T)
+  f_i
+  f_a1 = sapply(file_names, function(x) strsplit(fileparts(x)$name,"_10x")[[1]][[1]])
+  f_a1
+  f_b = unique(f_a1)
+  f_b
   unlink(TMP_DIR,recursive=T)
   dir.create(TMP_DIR)
   file.copy(f_i, TMP_DIR)
   fn = sapply(f_i, function(x) fileparts(x)$name)
-  write(.SaveProject(QUPATH_PRJ, paste0(TMP_DIR,filesep,sapply(f_i, function(x) fileparts(x)$name),".tif")), file=QUPATH_PRJ)
-  cmd = paste0("/Applications/QuPath-",qpversion,".app/Contents/MacOS/QuPath-",qpversion," script ", QSCRIPT, " -p ", QUPATH_PRJ)
-  print(cmd, quote = F)
-  cmd_brightnessCorrection_list<-list()
-  cmd_brightnessCorrection = unlist(cmd_brightnessCorrection_list)
-  for(i in 1:length(fn)){
-    print(fn[i])
-    cmd_brightnessCorrection_list[[i]] = (paste0("python brightnessCorrection.py ", TMP_DIR,filesep,fn[i],".tif"))
-    system(cmd_brightnessCorrection_list[[i]])
-  }
-  system(cmd)
-  
-  ## Wait and look for imaging analysis output
-  print(paste0("Waiting for ",id," to appear under ",QUPATH_DIR," ..."), quote = F)
+  write(.SaveProject(QUPATH_PRJ, paste0(TMP_DIR,filesep,sapply(f_i, function(x) fileparts(x)$name),".csv")), file=QUPATH_PRJ)
+  # cmd = paste0("/Applications/QuPath-",qpversion,".app/Contents/MacOS/QuPath-",qpversion," script ", QSCRIPT, " -p ", QUPATH_PRJ)
+  # print(cmd, quote = F)
+  # cmd_brightnessCorrection_list<-list()
+  # cmd_brightnessCorrection =  unlist(cmd_brightnessCorrection_list)
+  # for(i in 1:length(fn)){
+  #   cmd_brightnessCorrection_list[[i]] = (paste0("python brightnessCorrection.py ", TMP_DIR,filesep,fn[i],".tif"))
+  #   system(cmd_brightnessCorrection_list[[i]])
+  # }
+  # system(cmd)
+  # 
+  # ## Wait and look for imaging analysis output
+  # print(paste0("Waiting for ",id," to appear under ",QUPATH_DIR," ..."), quote = F)
+  ########
   f = c()
   while(length(f)<length(f_i)){
     Sys.sleep(3)
-    f = list.files(paste0(QUPATH_DIR,"DetectionResults"), pattern = paste0(id,"_10x_ph_"), full.names = T)
+    #pattern = paste0("_10x_ph_"),
+    f = list.files(paste0(QUPATH_DIR), pattern = paste0("_10x_ph_"), full.names = T)
   }
-  f_a = list.files(paste0(QUPATH_DIR,"Annotations"), pattern = paste0(id,"_10x_ph_"), full.names = T)
+  f_a = list.files(paste0(QUPATH_DIR_anno), pattern = paste0("_10x_ph_"), full.names = T)
   print(paste0("QPath output found for ",fileparts(f[1])$name," and ",(length(f)-1)," other image files."), quote = F)
-  
+  }
+  f
+  f_a
   ## Read automated image analysis output
   par(mfrow=c(2,2))
   cellCounts = matrix(NA,length(f),2);
+  cellCounts
   colnames(cellCounts) = c("areaCount","area_cm2")
   rownames(cellCounts) = sapply(f, function(x) fileparts(x)$name)
   for(i in 1:length(f)){
     dm = read.table(f[i],sep="\t", check.names = F, stringsAsFactors = F, header = T)
     anno = read.table(f_a[i],sep="\t", check.names = F, stringsAsFactors = F, header = T)
-    margins = apply(dm[,c("Centroid X µm","Centroid Y µm")],2,quantile,c(0,1), na.rm=T)
+    #margins = apply(dm[,c("Centroid X µm","Centroid Y µm")],2,quantile,c(0,1), na.rm=T)
     ## Adjust by cell radius:
-    cellRad = median(dm$`Cell: Perimeter`)/(2*pi) 
-    margins[2,] = margins[2,] + cellRad;
-    margins[1,] = margins[1,] - cellRad
-    width_height = (margins[2,]- margins[1,])*UM2CM
+    # cellRad = median(dm$`Cell: Perimeter`)/(2*pi) 
+    # margins[2,] = margins[2,] + cellRad;
+    # margins[1,] = margins[1,] - cellRad
+    # width_height = (margins[2,]- margins[1,])*UM2CM
     areaCount = nrow(dm)
     # area_cm2 = width_height[1] * width_height[2]; 
     area_cm2 = anno$`Area µm^2`[1]*UM2CM^2
     cellCounts[fileparts(f[i])$name,] = c(areaCount, area_cm2)
-    ## Visualize
-    la=raster::raster(f_i[i])
-    ## @TODO: region of interest (ROI) should be read from QuPath groovy script
-    ROI <- as(raster::extent(100, 1900, la@extent@ymax - 1200, la@extent@ymax - 100), 'SpatialPolygons')
-    la_ <- raster::crop(la, ROI)
-    raster::plot(la_, ann=FALSE,axes=FALSE, useRaster=T,legend=F)
-    mtext(fileparts(f_i[i])$name, cex=0.45)
-    points(dm$`Centroid X µm`,la@extent@ymax - dm$`Centroid Y µm`, col="black", pch=20, cex=0.3)
-  }
+  #   ## Visualize
+  #   la=raster::raster(f_i[i])
+  #   ## @TODO: region of interest (ROI) should be read from QuPath groovy script
+  #   ROI <- as(raster::extent(100, 1900, la@extent@ymax - 1200, la@extent@ymax - 100), 'SpatialPolygons')
+  #   la_ <- raster::crop(la, ROI)
+  #   raster::plot(la_, ann=FALSE,axes=FALSE, useRaster=T,legend=F)
+  #   mtext(fileparts(f_i[i])$name, cex=0.45)
+  #   points(dm$`Centroid X µm`,la@extent@ymax - dm$`Centroid Y µm`, col="black", pch=20, cex=0.3)
+  # }
   # ## Check cell counts standard deviation across images:
   # tmp = sort(cellCounts[,"areaCount"], decreasing = T)
   # if(max(tmp) - min(tmp) > min(tmp) ){ #tmp[1] - tmp[2]>tmp[2]
@@ -459,18 +474,7 @@ dbDisconnect(mydb)
   return(dishCount)
 }
 
-
-## Read dishSurfaceArea_cm2 of this flask 
-.readDishSurfaceArea_cm2 <- function(flask, mydb = NULL){
-  if(is.null(mydb)){
-    mydb = connect2DB()
-  }
-  stmt = paste0("select dishSurfaceArea_cm2 from Flask where id = ", flask)
-  rs = suppressWarnings(dbSendQuery(mydb, stmt))
-  dishSurfaceArea_cm2 = fetch(rs, n=-1)
-  return(dishSurfaceArea_cm2[[1]])
-}
-
+  
 .QuPathScript <- function(qpdir, cellLine){
   # Standard pipeline:
   runPlugin = "runPlugin('qupath.imagej.detect.cells.WatershedCellDetection', '{\"detectionImage\": \"Red\",  \"backgroundRadius\": 15.0,  \"medianRadius\": 0.0,  \"sigma\": 3.0,  \"minArea\": 10.0,  \"maxArea\": 1000.0,  \"threshold\":0.09,  \"watershedPostProcess\": true,  \"cellExpansion\": 5.0,  \"includeNuclei\": true,  \"smoothBoundaries\": false,  \"makeMeasurements\": true}');"
