@@ -402,12 +402,12 @@ plotLiquidNitrogenBox <- function(rack, row){
   for(i in 1:length(f)){
     dm = read.table(f[i],sep="\t", check.names = F, stringsAsFactors = F, header = T)
     anno = read.table(f_a[i],sep="\t", check.names = F, stringsAsFactors = F, header = T)
-    margins = apply(dm[,c("Centroid X µm","Centroid Y µm")],2,quantile,c(0,1), na.rm=T)
+    # margins = apply(dm[,c("Centroid X µm","Centroid Y µm")],2,quantile,c(0,1), na.rm=T)
     ## Adjust by cell radius:
-    cellRad = median(dm$`Cell: Perimeter`)/(2*pi) 
-    margins[2,] = margins[2,] + cellRad;
-    margins[1,] = margins[1,] - cellRad
-    width_height = (margins[2,]- margins[1,])*UM2CM
+    # cellRad = median(dm$`Cell: Perimeter`)/(2*pi) 
+    # margins[2,] = margins[2,] + cellRad;
+    # margins[1,] = margins[1,] - cellRad
+    # width_height = (margins[2,]- margins[1,])*UM2CM
     areaCount = nrow(dm)
     # area_cm2 = width_height[1] * width_height[2]; 
     area_cm2 = anno$`Area µm^2`[1]*UM2CM^2
