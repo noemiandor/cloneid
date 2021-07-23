@@ -371,7 +371,10 @@ plotLiquidNitrogenBox <- function(rack, row){
   suppressWarnings(dir.create(fileparts(QUPATH_PRJ)$pathstr))
   qpversion = list.files("/Applications", pattern = "QuPath")
   qpversion = gsub(".app","", strsplit(qpversion[length(qpversion)],"-")[[1]][2])
-  
+  dir.create(paste0(QUPATH_DIR,filesep,"SegmentationMasks"))
+  ## @TODO: region of interest (ROI) should be read from QuPath groovy script
+  ## Region of interest: xmin, xmax; ymin to substract from, ymax to substract from
+  ROI = c(100, 1900, -1200, -100)
   
   write(.QuPathScript(qpdir = QUPATH_DIR, cellLine = cellLine), file=QSCRIPT)
   f_i = list.files("~/QuPath", pattern = paste0(id,"_10x_ph_"), full.names = T)
@@ -395,53 +398,43 @@ plotLiquidNitrogenBox <- function(rack, row){
   print(paste0("QPath output found for ",fileparts(f[1])$name," and ",(length(f)-1)," other image files."), quote = F)
   
   ## Read automated image analysis output
-  par(mfrow=c(2,2))
+  par(mfrow=c(1,1))
   cellCounts = matrix(NA,length(f),2);
   colnames(cellCounts) = c("areaCount","area_cm2")
   rownames(cellCounts) = sapply(f, function(x) fileparts(x)$name)
   for(i in 1:length(f)){
     dm = read.table(f[i],sep="\t", check.names = F, stringsAsFactors = F, header = T)
     anno = read.table(f_a[i],sep="\t", check.names = F, stringsAsFactors = F, header = T)
-    # margins = apply(dm[,c("Centroid X µm","Centroid Y µm")],2,quantile,c(0,1), na.rm=T)
-    ## Adjust by cell radius:
-    # cellRad = median(dm$`Cell: Perimeter`)/(2*pi) 
-    # margins[2,] = margins[2,] + cellRad;
-    # margins[1,] = margins[1,] - cellRad
-    # width_height = (margins[2,]- margins[1,])*UM2CM
     areaCount = nrow(dm)
-    # area_cm2 = width_height[1] * width_height[2]; 
     area_cm2 = anno$`Area µm^2`[1]*UM2CM^2
     cellCounts[fileparts(f[i])$name,] = c(areaCount, area_cm2)
     ## Visualize
+    png(paste0(QUPATH_DIR,filesep,"SegmentationMasks",filesep,fileparts(f[i])$name,".png"), width = ROI[2]-ROI[1], height = ROI[4]-ROI[3])
     la=raster::raster(f_i[i])
-    ## @TODO: region of interest (ROI) should be read from QuPath groovy script
-    ROI <- as(raster::extent(100, 1900, la@extent@ymax - 1200, la@extent@ymax - 100), 'SpatialPolygons')
-    la_ <- raster::crop(la, ROI)
+    region <- as(raster::extent(ROI[1], ROI[2], la@extent@ymax + ROI[3], la@extent@ymax + ROI[4]), 'SpatialPolygons')
+    la_ <- raster::crop(la, region)
     raster::plot(la_, ann=FALSE,axes=FALSE, useRaster=T,legend=F)
     mtext(fileparts(f_i[i])$name, cex=0.45)
-    points(dm$`Centroid X µm`,la@extent@ymax - dm$`Centroid Y µm`, col="black", pch=20, cex=0.3)
+    points(dm$`Centroid X µm`,la@extent@ymax - dm$`Centroid Y µm`, col="black", pch=20, cex=2.5)
+    dev.off()
   }
-  # ## Check cell counts standard deviation across images:
-  # tmp = sort(cellCounts[,"areaCount"], decreasing = T)
-  # if(max(tmp) - min(tmp) > min(tmp) ){ #tmp[1] - tmp[2]>tmp[2]
-  #   options(warn=1)
-  #   warning(paste("High standard deviation in number of cells detected across the", length(f), "images."))
-  #   options(warn=0)
-  toExclude <- readline(prompt="Exclude any images (bl, br, tl, tr, none)?")
-  if(nchar(toExclude)>0){
-    toExclude = sapply(strsplit(toExclude,",")[[1]],trimws)
-    toExclude = paste0(as.character(toExclude),".tif")
-    ii = sapply(toExclude, function(x) grep(x, rownames(cellCounts)))
-    if(!isempty(ii)){
-      print(paste("Excluding",rownames(cellCounts)[ii],"from analysis."), quote = F)
-      cellCounts= cellCounts[-ii,, drop=F]
-    }
-    if(length(ii)==length(f)){
-      print("At least one valid image needs to be left. Aborting", quote = F)
-      return()
-    }
-  }
+  
+  # ## User confirms segmentation accuracy:
+  # toExclude <- readline(prompt="Exclude any images (bl, br, tl, tr, none)?")
+  # if(nchar(toExclude)>0){
+  #   toExclude = sapply(strsplit(toExclude,",")[[1]],trimws)
+  #   toExclude = paste0(as.character(toExclude),".tif")
+  #   ii = sapply(toExclude, function(x) grep(x, rownames(cellCounts)))
+  #   if(!isempty(ii)){
+  #     print(paste("Excluding",rownames(cellCounts)[ii],"from analysis."), quote = F)
+  #     cellCounts= cellCounts[-ii,, drop=F]
+  #   }
+  #   if(length(ii)==length(f)){
+  #     print("At least one valid image needs to be left. Aborting", quote = F)
+  #     return()
+  #   }
   # }
+
   area2dish = dishSurfaceArea_cm2 / sum(cellCounts[,"area_cm2"])
   dishCount = round(sum(cellCounts[,"areaCount"]) * area2dish)
   print(paste("Estimated number of cells in entire flask at",dishCount), quote = F)
