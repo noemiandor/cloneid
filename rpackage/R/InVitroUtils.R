@@ -409,12 +409,12 @@ plotLiquidNitrogenBox <- function(rack, row){
     area_cm2 = anno$`Area µm^2`[1]*UM2CM^2
     cellCounts[fileparts(f[i])$name,] = c(areaCount, area_cm2)
     ## Visualize
-    png(paste0(QUPATH_DIR,filesep,"SegmentationMasks",filesep,fileparts(f[i])$name,".png"), width = ROI[2]-ROI[1], height = ROI[4]-ROI[3])
     la=raster::raster(f_i[i])
     region <- as(raster::extent(ROI[1], ROI[2], la@extent@ymax + ROI[3], la@extent@ymax + ROI[4]), 'SpatialPolygons')
     la_ <- raster::crop(la, region)
+    png(paste0(QUPATH_DIR,filesep,"SegmentationMasks",filesep,fileparts(f[i])$name,".png"), width = ROI[2]-ROI[1], height = ROI[4]-ROI[3])
+    par(bty="n")
     raster::plot(la_, ann=FALSE,axes=FALSE, useRaster=T,legend=F)
-    mtext(fileparts(f_i[i])$name, cex=0.45)
     points(dm$`Centroid X µm`,la@extent@ymax - dm$`Centroid Y µm`, col="black", pch=20, cex=2.5)
     dev.off()
   }
