@@ -370,16 +370,19 @@ plotLiquidNitrogenBox <- function(rack, row){
   suppressWarnings(dir.create("~/Downloads/qpscript"))
   suppressWarnings(dir.create(fileparts(QUPATH_PRJ)$pathstr))
   qpversion = list.files("/Applications", pattern = "QuPath")
-  qpversion = gsub(".app","", strsplit(qpversion[length(qpversion)],"-")[[1]][2])
+  qpversion = gsub(".app","", gsub("QuPath","",qpversion))
+  qpversion = qpversion[length(qpversion)]
   
-  
-  write(.QuPathScript(qpdir = QUPATH_DIR, cellLine = cellLine), file=QSCRIPT)
-  f_i = list.files("~/QuPath", pattern = paste0(id,"_10x_ph_"), full.names = T)
+  ## Comy raw images to temporary directory: 
   unlink(TMP_DIR,recursive=T)
   dir.create(TMP_DIR)
   file.copy(f_i, TMP_DIR)
+
+  ## Call QuPath for images inside temp dir:
+  write(.QuPathScript(qpdir = QUPATH_DIR, cellLine = cellLine), file=QSCRIPT)
+  f_i = list.files("~/QuPath", pattern = paste0(id,"_10x_ph_"), full.names = T)
   write(.SaveProject(QUPATH_PRJ, paste0(TMP_DIR,filesep,sapply(f_i, function(x) fileparts(x)$name),".tif")), file=QUPATH_PRJ)
-  cmd = paste0("/Applications/QuPath-",qpversion,".app/Contents/MacOS/QuPath-",qpversion," script ", QSCRIPT, " -p ", QUPATH_PRJ)
+  cmd = paste0("/Applications/QuPath",qpversion,".app/Contents/MacOS/QuPath",qpversion," script ", QSCRIPT, " -p ", QUPATH_PRJ)
   print(cmd, quote = F)
   system(cmd)
   
