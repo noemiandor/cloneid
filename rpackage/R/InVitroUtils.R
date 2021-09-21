@@ -401,7 +401,11 @@ plotLiquidNitrogenBox <- function(rack, row){
   dir.create(TMP_DIR)
   f_i = list.files("~/QuPath", pattern = paste0(id,"_10x_ph_"), full.names = T)
   file.copy(f_i, TMP_DIR)
-  
+  ## Delete output files from prior runs:
+  for(subfolder in c("Annotations","Images","DetectionResults")){
+    f = list.files(paste0(QUPATH_DIR,subfolder), pattern = paste0(id,"_10x_ph_"), full.names = T)
+    file.remove(f)
+  }
   
   ## @TODO: use cellpose for all cell lines 
   if(cellLine!="HGC-27"){
@@ -427,12 +431,11 @@ plotLiquidNitrogenBox <- function(rack, row){
   
   
   ## Wait and look for imaging analysis output
-  print(paste0("Waiting for ",id," to appear under ",CELLPOSE_DIR," ..."), quote = F)
+  print(paste0("Waiting for ",id," to appear under ",QUPATH_DIR," ..."), quote = F)
   f = c()
   while(length(f)<length(f_i)){
     Sys.sleep(3)
-    f = list.files(paste0(CELLPOSE_DIR,"DetectionResults"), pattern = paste0(id,"_10x_ph_"), full.names = T)
-    # f = list.files(paste0(QUPATH_DIR,"DetectionResults"), pattern = paste0(id,"_10x_ph_"), full.names = T)
+    f = list.files(paste0(QUPATH_DIR,"DetectionResults"), pattern = paste0(id,"_10x_ph_"), full.names = T)
   }
   f_a = list.files(paste0(QUPATH_DIR,"Annotations"), pattern = paste0(id,"_10x_ph_"), full.names = T)
   f_o = list.files(paste0(QUPATH_DIR,"Images"), pattern = paste0(id,"_10x_ph_"), full.names = T)
