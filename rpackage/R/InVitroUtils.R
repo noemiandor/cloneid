@@ -369,31 +369,36 @@ plotLiquidNitrogenBox <- function(rack, row){
   QSCRIPT = "~/Downloads/qpscript/runDetectionROI.groovy"
   CELLPOSE_MODEL=list.files(paste0(find.package("cloneid"),filesep,"python"),pattern = "cellpose_residual", full.names=T)
   CELLPOSE_SCRIPT=paste0(find.package("cloneid"),filesep,"python/GetCount_cellPose.py")
-  suppressWarnings(dir.create(paste0(QUPATH_DIR,"DetectionResults"))) ##YY
-  suppressWarnings(dir.create(paste0(QUPATH_DIR,"Annotations"))) ##YY
-  suppressWarnings(dir.create(paste0(QUPATH_DIR,"Images"))); ##XX
+  suppressWarnings(dir.create(paste0(QUPATH_DIR,"DetectionResults"))) 
+  suppressWarnings(dir.create(paste0(QUPATH_DIR,"Annotations"))) 
+  suppressWarnings(dir.create(paste0(QUPATH_DIR,"Images"))); 
   suppressWarnings(dir.create("~/Downloads/qpscript"))
   suppressWarnings(dir.create(fileparts(QUPATH_PRJ)$pathstr))
   qpversion = list.files("/Applications", pattern = "QuPath")
   qpversion = gsub(".app","", gsub("QuPath","",qpversion))
   qpversion = qpversion[length(qpversion)]
   
-  ## Copy raw images to temporary directory: # XX
+  ## Copy raw images to temporary directory:
   unlink(TMP_DIR,recursive=T)
   dir.create(TMP_DIR)
   f_i = list.files("~/QuPath", pattern = paste0(id,"_10x_ph_"), full.names = T)
   file.copy(f_i, TMP_DIR)
+  ## Delete output files from prior runs:
+  for(subfolder in c("Annotations","Images","DetectionResults")){
+    f = list.files(paste0(QUPATH_DIR,subfolder), pattern = paste0(id,"_10x_ph_"), full.names = T)
+    file.remove(f)
+  }
   
   ## @TODO: use cellpose for all cell lines 
   if(cellLine!="HGC-27"){
-    ## Call QuPath for images inside temp dir: # XX -- comment only
+    ## Call QuPath for images inside temp dir: 
     write(.QuPathScript(qpdir = QUPATH_DIR, cellLine = cellLine), file=QSCRIPT)
     write(.SaveProject(QUPATH_PRJ, paste0(TMP_DIR,filesep,sapply(f_i, function(x) fileparts(x)$name),".tif")), file=QUPATH_PRJ)
     cmd = paste0("/Applications/QuPath",qpversion,".app/Contents/MacOS/QuPath",qpversion," script ", QSCRIPT, " -p ", QUPATH_PRJ)
     print(cmd, quote = F)
     system(cmd)
   }else{
-    ## Call CellPose for images inside temp dir # XX
+    ## Call CellPose for images inside temp dir 
     use_condaenv("cellpose")
     # virtualenv_list()
     source_python(CELLPOSE_SCRIPT)
