@@ -215,12 +215,9 @@ public abstract class Clone {
 	
 	private void setCellLineOrPatientFor(String origin2) throws SQLException {
 		
-		if(this.getClass().equals(Identity.class)) {
-			return;
+		if(!this.getClass().equals(Identity.class)) {
+			((Perspective)this).origin = origin2;
 		}
-
-		
-		((Perspective)this).origin = origin2;
 		
 		CLONEID db= new CLONEID();
 		db.connect();

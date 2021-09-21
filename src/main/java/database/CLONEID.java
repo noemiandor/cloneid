@@ -36,7 +36,7 @@ public final class CLONEID {
 
 		String db_password = yamlReader.getConfig().getMysqlConnection().get("password");
 		String db_userid = yamlReader.getConfig().getMysqlConnection().get("user");
-
+				
 		String db_connect_string = "jdbc:mysql://"
 				+ yamlReader.getConfig().getMysqlConnection().get("host") + ":"
 				+ yamlReader.getConfig().getMysqlConnection().get("port")
