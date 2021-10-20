@@ -33,21 +33,6 @@ def vis_overlay(path2Masks,path2Save,ext):
       overlay = mask_overlay(img,msk)
       cv2.imwrite(os.path.join(path2Save,'vis',base_name+'_overlay.png'),overlay)
 
-def variance__of_laplacian(image):
-    vl = cv2.Laplacian(image,cv2.CV_64F).var()
-    return vl 
-
-def FFT(image):
-    (height,width) = image.shape 
-    (cX,cY) = (int(width/2.0),int(height/2.0))
-    fft = np.fft.fft2(image)
-    fftshifted = np.fft.fftshift(fft)
-    fftshifted[cY - 40:cY + 40, cX - 40:cX + 40] = 0
-    fftshifted = np.fft.ifftshift(fftshifted)
-    reconstructed = np.fft.ifft2(fftshifted)
-    magnitude = 20 * np.log(np.abs(reconstructed))
-    mean = np.mean(magnitude)
-    return mean
 
 def get_blob_prop(msk):
   contours,hierarchy = cv2.findContours(msk, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
@@ -63,9 +48,9 @@ def get_blob_prop(msk):
       perimeter = cv2.arcLength(cnt,True)
     except:
       continue  
-    return {'Centroid X µm':x, 'Centroid Y µm':y,'Area µm^2':area,'Perimeter µm':perimeter,'ROI':ROI}
+    return {'Centroid X µm':x, 'Centroid Y µm':y,'Area µm^2':area,'perimeter µm':perimeter,'ROI':ROI}
 
-def get_ROI_cellCount(df,msk,name,image):
+def get_ROI_cellCount(df,msk,name):
   df_total_det = pd.DataFrame()
   total_detection = df.shape[0]
   image_name = name.split('_cp_masks')[0]+'.tif'
@@ -75,17 +60,13 @@ def get_ROI_cellCount(df,msk,name,image):
   Centroid_X = d1/2
   Centroid_Y = d2/2
   ROI = 'rectangle'
-  vl = variance__of_laplacian(image)
-  fft = FFT(image)
   df_total_det['Image Name'] = [image_name]
   df_total_det['ROI'] = [ROI]
   df_total_det['Centroid X µm'] = [Centroid_X]
   df_total_det['Centroid Y µm'] = [Centroid_Y]
   df_total_det['Num Detections'] = [total_detection]
   df_total_det['Area µm^2'] = [area]
-  df_total_det['Perimeter µm'] = [perimeter]
-  df_total_det['Variance of Laplician'] = vl 
-  df_total_det['Fourier Transform'] = fft 
+  df_total_det['perimeter µm'] = [perimeter]
   return df_total_det
 
 def getCount(path2Pred):
@@ -109,11 +90,11 @@ def get_count2csv(list_of_cells_props):
     df['Centroid Y µm'] = [i['Centroid Y µm'] for i in list_of_cells_props]
     df['ROI'] = [i['ROI'] for i in list_of_cells_props]
     df['Area µm^2'] = [i['Area µm^2'] for i in list_of_cells_props]
-    df['Perimeter µm'] = [i['Perimeter µm'] for i in list_of_cells_props]
+    df['perimeter µm'] = [i['perimeter µm'] for i in list_of_cells_props]
     return df
 
 
-def iterate(path2Pred,path2Save,ext):
+def iterate(path2Pred,path2Save):
   #parentPath = os.path.dirname(path2Pred)
   if not os.path.exists(os.path.join(path2Save,'pred')):
     os.makedirs(os.path.join(path2Save,'pred'))
@@ -136,11 +117,9 @@ def iterate(path2Pred,path2Save,ext):
                   prop_dict = get_blob_prop(msk.astype(np.uint8))
                   if prop_dict:
                       list_of_cells_props.append(prop_dict)
-          imageName = maskName.split('_cp_masks')[0]+ext
-          image = cv2.imread(os.path.join(path2Pred,imageName))
-          image = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
+
           df = get_count2csv(list_of_cells_props)
-          df_total = get_ROI_cellCount(df,msk,maskName,image)
+          df_total = get_ROI_cellCount(df,msk,maskName)
           df.to_csv(os.path.join(path2Save,'pred',maskName.split('_cp_masks')[0]+'.csv'),index=False,sep='\t')
           df_total.to_csv(os.path.join(path2Save,'cellpose_count',maskName.split('_cp_masks')[0]+'.csv'),index=False,sep='\t')
           
@@ -149,16 +128,6 @@ def run_cellPose(path2Images,path2Pretrained):
 
 def run(path2Images,path2Pretrained,path2Save,ext):
   run_cellPose(path2Images,path2Pretrained)
-  iterate(path2Images,path2Save,ext)
+  iterate(path2Images,path2Save)
   vis_overlay(path2Images,path2Save,ext)
 
-'''
-if __name__ == "__main__":
-    # execute only if run as a script
-    args = len(sys.argv)
-    print(args)
-    if args == 5:
-      run(sys.argv[1],sys.argv[2],sys.argv[3],sys.argv[4])
-    else:
-      print('Error in number of arguments')
-'''

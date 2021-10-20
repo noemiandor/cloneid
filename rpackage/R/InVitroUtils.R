@@ -387,6 +387,9 @@ plotLiquidNitrogenBox <- function(rack, row){
   QSCRIPT = "~/Downloads/qpscript/runDetectionROI.groovy"
   CELLPOSE_MODEL=list.files(paste0(find.package("cloneid"),filesep,"python"),pattern = "cellpose_residual", full.names=T)
   CELLPOSE_SCRIPT=paste0(find.package("cloneid"),filesep,"python/GetCount_cellPose.py")
+  QCSTATS_SCRIPT=paste0(find.package("cloneid"),filesep,"python/QC_Statistics.py")
+  use_condaenv("cellpose")
+  source_python(QCSTATS_SCRIPT)
   suppressWarnings(dir.create(paste0(QUPATH_DIR,"DetectionResults"))) ##YY
   suppressWarnings(dir.create(paste0(QUPATH_DIR,"Annotations"))) ##YY
   suppressWarnings(dir.create(paste0(QUPATH_DIR,"Images"))); ##XX
@@ -410,25 +413,27 @@ plotLiquidNitrogenBox <- function(rack, row){
   ## @TODO: use cellpose for all cell lines 
   if(cellLine!="HGC-27"){
     ## Call QuPath for images inside temp dir: # XX -- comment only
-    write(.QuPathScript(qpdir = QUPATH_DIR, cellLine = cellLine), file=QSCRIPT)
+    write(.QuPathScript(qpdir = TMP_DIR, cellLine = cellLine), file=QSCRIPT)
     write(.SaveProject(QUPATH_PRJ, paste0(TMP_DIR,filesep,sapply(f_i, function(x) fileparts(x)$name),".tif")), file=QUPATH_PRJ)
     cmd = paste0("/Applications/QuPath",qpversion,".app/Contents/MacOS/QuPath",qpversion," script ", QSCRIPT, " -p ", QUPATH_PRJ)
     print(cmd, quote = F)
     system(cmd)
   }else{
     ## Call CellPose for images inside temp dir # XX
-    use_condaenv("cellpose")
     # virtualenv_list()
     source_python(CELLPOSE_SCRIPT)
     run(TMP_DIR,normalizePath(CELLPOSE_MODEL),TMP_DIR,".tif")
     ## Move files from tempDir to destination:
-    cellPoseOut_csv = list.files(TMP_DIR, recursive = T, pattern = ".csv",full.names = T)
     cellPoseOut_img = list.files(TMP_DIR, recursive = T, pattern = "overlay.png",full.names = T)
     sapply(cellPoseOut_img, function(x) file.copy(x, paste0(QUPATH_DIR,"Images") ))
-    sapply(grep("pred",cellPoseOut_csv,value = T), function(x) file.copy(x, paste0(QUPATH_DIR,"DetectionResults") ))
-    sapply(grep("cellpose_count",cellPoseOut_csv,value = T), function(x) file.copy(x, paste0(QUPATH_DIR,"Annotations") ))
   }
   
+  ## Add QC statistics
+  QC_Statistics(TMP_DIR,paste0(TMP_DIR,filesep,"cellpose_count"),'.tif')
+  ## Move files from tempDir to destination:
+  cellPoseOut_csv = list.files(TMP_DIR, recursive = T, pattern = ".csv",full.names = T)
+  sapply(grep("pred",cellPoseOut_csv,value = T), function(x) file.copy(x, paste0(QUPATH_DIR,"DetectionResults") ))
+  sapply(grep("cellpose_count",cellPoseOut_csv,value = T), function(x) file.copy(x, paste0(QUPATH_DIR,"Annotations") ))
   
   ## Wait and look for imaging analysis output
   print(paste0("Waiting for ",id," to appear under ",QUPATH_DIR," ..."), quote = F)
@@ -550,12 +555,13 @@ plotLiquidNitrogenBox <- function(rack, row){
         "",
         "def filename = entry.getImageName() + '.csv'",
         "selectDetections()",
-        paste0("def pathDetection = buildFilePath('",qpdir,"/DetectionResults');"),
-        paste0("def pathAnnotation = buildFilePath('",qpdir,"/Annotations')"),
+        paste0("def pathDetection = buildFilePath('",qpdir,"/pred');"),
+        paste0("def pathAnnotation = buildFilePath('",qpdir,"/cellpose_count')"),
         "mkdirs(pathDetection);",
         "mkdirs(pathAnnotation);",
-        "pathDetection = buildFilePath(pathDetection, filename);",
-        "pathAnnotation = buildFilePath(pathAnnotation, filename);",
+        "def (basename,ext) = filename.tokenize('.');",
+        "pathDetection = buildFilePath(pathDetection, basename+'.csv');",
+        "pathAnnotation = buildFilePath(pathAnnotation, basename+'.csv');",
         "saveDetectionMeasurements(pathDetection);",
         "saveAnnotationMeasurements(pathAnnotation)", sep="\n" )
 }
