@@ -446,6 +446,25 @@ plotLiquidNitrogenBox <- function(rack, row){
   f_o = list.files(paste0(QUPATH_DIR,"Images"), pattern = paste0(id,"_10x_ph_"), full.names = T)
   print(paste0("QPath output found for ",fileparts(f[1])$name," and ",(length(f)-1)," other image files."), quote = F)
   
+  
+  ## Predict cell count error
+  print("Predicting cell count error...",quote=F)
+  for(i in 1:length(f_a)){
+    anno = read.table(f_a[i],sep="\t", check.names = T, stringsAsFactors = F, header = T)
+    ## use CL-specific model if it exists, otherwise use general model
+    data("General_logErrorModel")
+    ## Loads cell line specific linear model "linM" -- overrides general model loaded above if cell line specific model exists
+    data(paste0(cellLine,"_logErrorModel"))
+    anno$log.error = predict(linM, newdata=anno)
+    ## @TODO: just warn user and ask if he wants to exclude
+    if(anno$log.error>linM$MAXERROR){
+      stop("Low image quality predicted for at least one image", quote = F)
+    }
+  }
+  print("Cell count error predicted as negligible for all images.",quote=F)
+  
+  
+  
   ## Read automated image analysis output
   par(mfrow=c(2,2))
   cellCounts = matrix(NA,length(f),2);
@@ -453,7 +472,7 @@ plotLiquidNitrogenBox <- function(rack, row){
   rownames(cellCounts) = sapply(f, function(x) fileparts(x)$name)
   for(i in 1:length(f)){
     dm = read.table(f[i],sep="\t", check.names = F, stringsAsFactors = F, header = T)
-    anno = read.table(f_a[i],sep="\t", check.names = F, stringsAsFactors = F, header = T)
+    anno = read.table(f_a[i],sep="\t", check.names = T, stringsAsFactors = F, header = T)
     colnames(anno) = tolower(colnames(anno))
     # margins = apply(dm[,c("Centroid X µm","Centroid Y µm")],2,quantile,c(0,1), na.rm=T)
     ## Adjust by cell radius:
@@ -463,7 +482,7 @@ plotLiquidNitrogenBox <- function(rack, row){
     # width_height = (margins[2,]- margins[1,])*UM2CM
     areaCount = nrow(dm)
     # area_cm2 = width_height[1] * width_height[2]; 
-    area_cm2 = anno$`area µm^2`[1]*UM2CM^2
+    area_cm2 = anno$`area.µm.2`[1]*UM2CM^2
     cellCounts[fileparts(f[i])$name,] = c(areaCount, area_cm2)
     ## Visualize
     ## @TODO: region of interest (ROI) should be read from QuPath groovy script
