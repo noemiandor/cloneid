@@ -452,9 +452,9 @@ plotLiquidNitrogenBox <- function(rack, row){
   for(i in 1:length(f_a)){
     anno = read.table(f_a[i],sep="\t", check.names = T, stringsAsFactors = F, header = T)
     ## use CL-specific model if it exists, otherwise use general model
-    data("General_logErrorModel")
+    data(list="General_logErrorModel")
     ## Loads cell line specific linear model "linM" -- overrides general model loaded above if cell line specific model exists
-    data(paste0(cellLine,"_logErrorModel"))
+    data(list=paste0(cellLine,"_logErrorModel"))
     anno$log.error = predict(linM, newdata=anno)
     ## @TODO: just warn user and ask if he wants to exclude
     if(anno$log.error>linM$MAXERROR){
