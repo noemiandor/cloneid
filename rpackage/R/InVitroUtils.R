@@ -447,24 +447,6 @@ plotLiquidNitrogenBox <- function(rack, row){
   print(paste0("QPath output found for ",fileparts(f[1])$name," and ",(length(f)-1)," other image files."), quote = F)
   
   
-  ## Predict cell count error
-  print("Predicting cell count error...",quote=F)
-  for(i in 1:length(f_a)){
-    anno = read.table(f_a[i],sep="\t", check.names = T, stringsAsFactors = F, header = T)
-    ## use CL-specific model if it exists, otherwise use general model
-    data(list="General_logErrorModel")
-    ## Loads cell line specific linear model "linM" -- overrides general model loaded above if cell line specific model exists
-    data(list=paste0(cellLine,"_logErrorModel"))
-    anno$log.error = predict(linM, newdata=anno)
-    ## @TODO: just warn user and ask if he wants to exclude
-    if(anno$log.error>linM$MAXERROR){
-      stop("Low image quality predicted for at least one image", quote = F)
-    }
-  }
-  print("Cell count error predicted as negligible for all images.",quote=F)
-  
-  
-  
   ## Read automated image analysis output
   par(mfrow=c(2,2))
   cellCounts = matrix(NA,length(f),2);
@@ -499,6 +481,39 @@ plotLiquidNitrogenBox <- function(rack, row){
     }
   }
   
+  
+  ## Predict cell count error
+  print("Predicting cell count error...",quote=F)
+  for(i in 1:length(f_a)){
+    anno = read.table(f_a[i],sep="\t", check.names = T, stringsAsFactors = F, header = T)
+    ## use CL-specific model if it exists, otherwise use general model
+    data(list="General_logErrorModel")
+    ## Loads cell line specific linear model "linM" -- overrides general model loaded above if cell line specific model exists
+    data(list=paste0(cellLine,"_logErrorModel"))
+    anno$log.error = predict(linM, newdata=anno)
+    if(anno$log.error>linM$MAXERROR){
+      warning("Low image quality predicted for at least one image")
+      toExclude <- readline(prompt="Exclude any images (bl, br, tl, tr, none)?")
+      if(nchar(toExclude)>0){
+        toExclude = sapply(strsplit(toExclude,",")[[1]],trimws)
+        toExclude = paste0(as.character(toExclude),".tif")
+        ii = sapply(toExclude, function(x) grep(x, rownames(cellCounts)))
+        if(!isempty(ii)){
+          print(paste("Excluding",rownames(cellCounts)[ii],"from analysis."), quote = F)
+          cellCounts= cellCounts[-ii,, drop=F]
+        }
+        if(length(ii)==length(f)){
+          stop("At least one valid image needs to be left. Aborting")
+        }
+      }
+      break;
+    }else{
+      print(paste("Cell count error predicted as negligible for",f_a[i]),quote=F)
+    }
+  }
+  
+  
+  ## Calculate cell count per dish
   area2dish = dishSurfaceArea_cm2 / sum(cellCounts[,"area_cm2"])
   dishCount = round(sum(cellCounts[,"areaCount"]) * area2dish)
   print(paste("Estimated number of cells in entire flask at",dishCount), quote = F)
@@ -509,7 +524,7 @@ plotLiquidNitrogenBox <- function(rack, row){
   return(dishCount)
 }
 
-  
+
 .QuPathScript <- function(qpdir, cellLine){
   # Standard pipeline:
   runPlugin = "runPlugin('qupath.imagej.detect.cells.WatershedCellDetection', '{\"detectionImage\": \"Red\",  \"backgroundRadius\": 15.0,  \"medianRadius\": 0.0,  \"sigma\": 3.0,  \"minArea\": 10.0,  \"maxArea\": 1000.0,  \"threshold\":0.09,  \"watershedPostProcess\": true,  \"cellExpansion\": 5.0,  \"includeNuclei\": true,  \"smoothBoundaries\": false,  \"makeMeasurements\": true}');"
