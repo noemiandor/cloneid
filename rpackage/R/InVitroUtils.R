@@ -452,6 +452,7 @@ plotLiquidNitrogenBox <- function(rack, row){
   cellCounts = matrix(NA,length(f),2);
   colnames(cellCounts) = c("areaCount","area_cm2")
   rownames(cellCounts) = sapply(f, function(x) fileparts(x)$name)
+  pdf(paste0(TMP_DIR,filesep,id,"_segmentations.pdf"))
   for(i in 1:length(f)){
     dm = read.table(f[i],sep="\t", check.names = F, stringsAsFactors = F, header = T)
     anno = read.table(f_a[i],sep="\t", check.names = T, stringsAsFactors = F, header = T)
@@ -480,6 +481,7 @@ plotLiquidNitrogenBox <- function(rack, row){
       plot(img)
     }
   }
+  dev.off()
   
   
   ## Predict cell count error
