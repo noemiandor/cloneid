@@ -498,8 +498,9 @@ plotLiquidNitrogenBox <- function(rack, row){
       toExclude <- readline(prompt="Exclude any images (bl, br, tl, tr, none)?")
       if(nchar(toExclude)>0){
         toExclude = sapply(strsplit(toExclude,",")[[1]],trimws)
-        toExclude = paste0(as.character(toExclude),".tif")
+        toExclude = c(paste0(as.character(toExclude),".tif"), paste0(as.character(toExclude),"$"))
         ii = sapply(toExclude, function(x) grep(x, rownames(cellCounts)))
+        ii=ii[sapply(ii,length)>0]
         if(!isempty(ii)){
           print(paste("Excluding",rownames(cellCounts)[ii],"from analysis."), quote = F)
           cellCounts= cellCounts[-ii,, drop=F]
