@@ -495,12 +495,13 @@ plotLiquidNitrogenBox <- function(rack, row){
     anno$log.error = predict(linM, newdata=anno)
     if(anno$log.error>linM$MAXERROR){
       warning("Low image quality predicted for at least one image")
-      toExclude <- readline(prompt="Exclude any images (bl, br, tl, tr, none)?")
+      toExclude <- readline(prompt="Exclude any images (bl, br, tl, tr)?")
       if(nchar(toExclude)>0){
         toExclude = sapply(strsplit(toExclude,",")[[1]],trimws)
         toExclude = c(paste0(as.character(toExclude),".tif"), paste0(as.character(toExclude),"$"))
         ii = sapply(toExclude, function(x) grep(x, rownames(cellCounts)))
         ii=ii[sapply(ii,length)>0]
+        ii=unlist(ii)
         if(!isempty(ii)){
           print(paste("Excluding",rownames(cellCounts)[ii],"from analysis."), quote = F)
           cellCounts= cellCounts[-ii,, drop=F]
