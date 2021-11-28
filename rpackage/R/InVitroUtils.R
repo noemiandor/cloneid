@@ -7,9 +7,6 @@ harvest <- function(id, from, cellCount, tx = Sys.time(), media=NULL){
   .seed_or_harvest(event = "harvest", id=id, from=from, cellCount = cellCount, tx = tx, flask = NULL, media = media)
 }
 
-#To remove
-flask = NULL
-media=NULL
 
 init <- function(id, cellLine, cellCount, tx = Sys.time(), media=NULL, flask=NULL){
   mydb = connect2DB()
@@ -319,13 +316,13 @@ plotLiquidNitrogenBox <- function(rack, row){
   
   mydb = connect2DB()
   
-  stmt = paste0("select * from QuPathEvaluation where id = '",from,"'");
+  stmt = paste0("select * from Passaging where id = '",from,"'");
   rs = suppressWarnings(dbSendQuery(mydb, stmt))
   kids = fetch(rs, n=-1)
   
   ### Checks
   if(nrow(kids)==0){
-    print(paste(from,"does not exist in table QuPathEvaluation"), quote = F)
+    print(paste(from,"does not exist in table Passaging"), quote = F)
     return()
   }
   if(kids$event !=otherevent){
@@ -363,16 +360,15 @@ plotLiquidNitrogenBox <- function(rack, row){
     passage = passage+1
   }
   ## @TODO: remove
-  stmt = paste0("update QuPathEvaluation set cellCount = ",dishCount," where id='",id,"';")
-  #stmt = paste0("UPDATE QuPathEvaluation set cellCount = ", dishCount
-  #" WHERE id = '",id ,"'"))
+  # stmt = paste0("update Passaging set cellCount = ",dishCount," where id='",id,"';")
+  stmt = paste0("INSERT INTO Passaging (id, passaged_from_id1, event, date, cellCount, passage, flask, media) ",
+                "VALUES ('",id ,"', '",from,"', '",event,"', '",tx,"', ",dishCount,", ", passage,", ",flask,", ", kids$media, ");")
   rs = dbSendQuery(mydb, stmt)
   
   dbClearResult(dbListResults(mydb)[[1]])
   dbDisconnect(mydb)
 }
 
-#cellLine = NULL
 
 .readQuPathOutput <- function(id, cellLine, dishSurfaceArea_cm2, cellCount){
   ## Typical values for dishSurfaceArea_cm2 are: 
@@ -390,16 +386,17 @@ plotLiquidNitrogenBox <- function(rack, row){
   QCSTATS_SCRIPT=paste0(find.package("cloneid"),filesep,"python/QC_Statistics.py")
   use_condaenv("cellpose")
   source_python(QCSTATS_SCRIPT)
-  suppressWarnings(dir.create(paste0(QUPATH_DIR,"DetectionResults"))) ##YY
-  suppressWarnings(dir.create(paste0(QUPATH_DIR,"Annotations"))) ##YY
-  suppressWarnings(dir.create(paste0(QUPATH_DIR,"Images"))); ##XX
+  suppressWarnings(dir.create(paste0(QUPATH_DIR,"DetectionResults")))
+  suppressWarnings(dir.create(paste0(QUPATH_DIR,"Annotations"))) 
+  suppressWarnings(dir.create(paste0(QUPATH_DIR,"Images"))); 
   suppressWarnings(dir.create("~/Downloads/qpscript"))
   suppressWarnings(dir.create(fileparts(QUPATH_PRJ)$pathstr))
   qpversion = list.files("/Applications", pattern = "QuPath")
   qpversion = gsub(".app","", gsub("QuPath","",qpversion))
   qpversion = qpversion[length(qpversion)]
   
-  ## Copy raw images to temporary directory: # XX
+
+  ## Copy raw images to temporary directory:
   unlink(TMP_DIR,recursive=T)
   dir.create(TMP_DIR)
   f_i = list.files("~/QuPath", pattern = paste0(id,"_10x_ph_"), full.names = T)
@@ -412,14 +409,14 @@ plotLiquidNitrogenBox <- function(rack, row){
   
   ## @TODO: use cellpose for all cell lines 
   if(cellLine!="HGC-27"){
-    ## Call QuPath for images inside temp dir: # XX -- comment only
+    ## Call QuPath for images inside temp dir:
     write(.QuPathScript(qpdir = TMP_DIR, cellLine = cellLine), file=QSCRIPT)
     write(.SaveProject(QUPATH_PRJ, paste0(TMP_DIR,filesep,sapply(f_i, function(x) fileparts(x)$name),".tif")), file=QUPATH_PRJ)
     cmd = paste0("/Applications/QuPath",qpversion,".app/Contents/MacOS/QuPath",qpversion," script ", QSCRIPT, " -p ", QUPATH_PRJ)
     print(cmd, quote = F)
     system(cmd)
   }else{
-    ## Call CellPose for images inside temp dir # XX
+    ## Call CellPose for images inside temp dir 
     # virtualenv_list()
     source_python(CELLPOSE_SCRIPT)
     run(TMP_DIR,normalizePath(CELLPOSE_MODEL),TMP_DIR,".tif")
@@ -434,6 +431,7 @@ plotLiquidNitrogenBox <- function(rack, row){
   cellPoseOut_csv = list.files(TMP_DIR, recursive = T, pattern = ".csv",full.names = T)
   sapply(grep("pred",cellPoseOut_csv,value = T), function(x) file.copy(x, paste0(QUPATH_DIR,"DetectionResults") ))
   sapply(grep("cellpose_count",cellPoseOut_csv,value = T), function(x) file.copy(x, paste0(QUPATH_DIR,"Annotations") ))
+  
   
   ## Wait and look for imaging analysis output
   print(paste0("Waiting for ",id," to appear under ",QUPATH_DIR," ..."), quote = F)
@@ -457,14 +455,7 @@ plotLiquidNitrogenBox <- function(rack, row){
     dm = read.table(f[i],sep="\t", check.names = F, stringsAsFactors = F, header = T)
     anno = read.table(f_a[i],sep="\t", check.names = T, stringsAsFactors = F, header = T)
     colnames(anno) = tolower(colnames(anno))
-    # margins = apply(dm[,c("Centroid X µm","Centroid Y µm")],2,quantile,c(0,1), na.rm=T)
-    ## Adjust by cell radius:
-    # cellRad = median(dm$`Cell: Perimeter`)/(2*pi) 
-    # margins[2,] = margins[2,] + cellRad;
-    # margins[1,] = margins[1,] - cellRad
-    # width_height = (margins[2,]- margins[1,])*UM2CM
     areaCount = nrow(dm)
-    # area_cm2 = width_height[1] * width_height[2]; 
     area_cm2 = anno$`area.µm.2`[1]*UM2CM^2
     cellCounts[fileparts(f[i])$name,] = c(areaCount, area_cm2)
     ## Visualize
@@ -500,8 +491,7 @@ plotLiquidNitrogenBox <- function(rack, row){
         toExclude = sapply(strsplit(toExclude,",")[[1]],trimws)
         toExclude = c(paste0(as.character(toExclude),".tif"), paste0(as.character(toExclude),"$"))
         ii = sapply(toExclude, function(x) grep(x, rownames(cellCounts)))
-        ii=ii[sapply(ii,length)>0]
-        ii=unlist(ii)
+        ii = unlist(ii[sapply(ii,length)>0])
         if(!isempty(ii)){
           print(paste("Excluding",rownames(cellCounts)[ii],"from analysis."), quote = F)
           cellCounts= cellCounts[-ii,, drop=F]
