@@ -360,9 +360,9 @@ plotLiquidNitrogenBox <- function(rack, row){
     passage = passage+1
   }
   ## @TODO: remove
-  # stmt = paste0("update Passaging set cellCount = ",dishCount," where id='",id,"';")
-  stmt = paste0("INSERT INTO Passaging (id, passaged_from_id1, event, date, cellCount, passage, flask, media) ",
-                "VALUES ('",id ,"', '",from,"', '",event,"', '",tx,"', ",dishCount,", ", passage,", ",flask,", ", kids$media, ");")
+  stmt = paste0("update Passaging set cellCount = ",dishCount," where id='",id,"';")
+  # stmt = paste0("INSERT INTO Passaging (id, passaged_from_id1, event, date, cellCount, passage, flask, media) ",
+  #               "VALUES ('",id ,"', '",from,"', '",event,"', '",tx,"', ",dishCount,", ", passage,", ",flask,", ", kids$media, ");")
   rs = dbSendQuery(mydb, stmt)
   
   dbClearResult(dbListResults(mydb)[[1]])
@@ -485,7 +485,8 @@ plotLiquidNitrogenBox <- function(rack, row){
     data(list=paste0(cellLine,"_logErrorModel"))
     anno$log.error = predict(linM, newdata=anno)
     if(anno$log.error>linM$MAXERROR){
-      warning("Low image quality predicted for at least one image")
+      ##@TODO: replace with Warning
+      stop("Low image quality predicted for at least one image")
       toExclude <- readline(prompt="Exclude any images (bl, br, tl, tr)?")
       if(nchar(toExclude)>0){
         toExclude = sapply(strsplit(toExclude,",")[[1]],trimws)
