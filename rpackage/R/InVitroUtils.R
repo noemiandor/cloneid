@@ -62,6 +62,20 @@ feed <- function(id, tx=Sys.time()){
   dbDisconnect(mydb)
 }
 
+## Read dishSurfaceArea_cm2 of this flask 
+.readDishSurfaceArea_cm2 <- function(flask, mydb = NULL){
+  if(is.null(mydb)){
+    mydb = connect2DB()
+  }
+  stmt = paste0("select dishSurfaceArea_cm2 from Flask where id = ", flask)
+  rs = suppressWarnings(dbSendQuery(mydb, stmt))
+  dishSurfaceArea_cm2 = fetch(rs, n=-1)
+  if(nrow(dishSurfaceArea_cm2)==0){
+    print("Flask does not exist in database or its surface area is not specified")
+    stopifnot(nrow(dishSurfaceArea_cm2)>0)
+  }
+  return(dishSurfaceArea_cm2[[1]])
+}
 
 getPedigreeTree <- function(cellLine= cellLine, id = NULL, cex = 0.5){
   library(RMySQL)
@@ -369,7 +383,10 @@ plotLiquidNitrogenBox <- function(rack, row){
   QSCRIPT = "~/Downloads/qpscript/runDetectionROI.groovy"
   CELLPOSE_MODEL=list.files(paste0(find.package("cloneid"),filesep,"python"),pattern = "cellpose_residual", full.names=T)
   CELLPOSE_SCRIPT=paste0(find.package("cloneid"),filesep,"python/GetCount_cellPose.py")
-  suppressWarnings(dir.create(paste0(QUPATH_DIR,"DetectionResults"))) 
+  QCSTATS_SCRIPT=paste0(find.package("cloneid"),filesep,"python/QC_Statistics.py")
+  use_condaenv("cellpose")
+  source_python(QCSTATS_SCRIPT)
+  suppressWarnings(dir.create(paste0(QUPATH_DIR,"DetectionResults")))
   suppressWarnings(dir.create(paste0(QUPATH_DIR,"Annotations"))) 
   suppressWarnings(dir.create(paste0(QUPATH_DIR,"Images"))); 
   suppressWarnings(dir.create("~/Downloads/qpscript"))
@@ -378,6 +395,7 @@ plotLiquidNitrogenBox <- function(rack, row){
   qpversion = gsub(".app","", gsub("QuPath","",qpversion))
   qpversion = qpversion[length(qpversion)]
   
+
   ## Copy raw images to temporary directory:
   unlink(TMP_DIR,recursive=T)
   dir.create(TMP_DIR)
@@ -391,25 +409,29 @@ plotLiquidNitrogenBox <- function(rack, row){
   
   ## @TODO: use cellpose for all cell lines 
   if(cellLine!="HGC-27"){
-    ## Call QuPath for images inside temp dir: 
-    write(.QuPathScript(qpdir = QUPATH_DIR, cellLine = cellLine), file=QSCRIPT)
+    ## Call QuPath for images inside temp dir:
+    write(.QuPathScript(qpdir = TMP_DIR, cellLine = cellLine), file=QSCRIPT)
     write(.SaveProject(QUPATH_PRJ, paste0(TMP_DIR,filesep,sapply(f_i, function(x) fileparts(x)$name),".tif")), file=QUPATH_PRJ)
     cmd = paste0("/Applications/QuPath",qpversion,".app/Contents/MacOS/QuPath",qpversion," script ", QSCRIPT, " -p ", QUPATH_PRJ)
     print(cmd, quote = F)
     system(cmd)
   }else{
     ## Call CellPose for images inside temp dir 
-    use_condaenv("cellpose")
     # virtualenv_list()
     source_python(CELLPOSE_SCRIPT)
     run(TMP_DIR,normalizePath(CELLPOSE_MODEL),TMP_DIR,".tif")
     ## Move files from tempDir to destination:
-    cellPoseOut_csv = list.files(TMP_DIR, recursive = T, pattern = ".csv",full.names = T)
     cellPoseOut_img = list.files(TMP_DIR, recursive = T, pattern = "overlay.png",full.names = T)
     sapply(cellPoseOut_img, function(x) file.copy(x, paste0(QUPATH_DIR,"Images") ))
-    sapply(grep("pred",cellPoseOut_csv,value = T), function(x) file.copy(x, paste0(QUPATH_DIR,"DetectionResults") ))
-    sapply(grep("cellpose_count",cellPoseOut_csv,value = T), function(x) file.copy(x, paste0(QUPATH_DIR,"Annotations") ))
   }
+  
+  ## Add QC statistics
+  QC_Statistics(TMP_DIR,paste0(TMP_DIR,filesep,"cellpose_count"),'.tif')
+  ## Move files from tempDir to destination:
+  cellPoseOut_csv = list.files(TMP_DIR, recursive = T, pattern = ".csv",full.names = T)
+  sapply(grep("pred",cellPoseOut_csv,value = T), function(x) file.copy(x, paste0(QUPATH_DIR,"DetectionResults") ))
+  sapply(grep("cellpose_count",cellPoseOut_csv,value = T), function(x) file.copy(x, paste0(QUPATH_DIR,"Annotations") ))
+  
   
   ## Wait and look for imaging analysis output
   print(paste0("Waiting for ",id," to appear under ",QUPATH_DIR," ..."), quote = F)
@@ -422,24 +444,19 @@ plotLiquidNitrogenBox <- function(rack, row){
   f_o = list.files(paste0(QUPATH_DIR,"Images"), pattern = paste0(id,"_10x_ph_"), full.names = T)
   print(paste0("QPath output found for ",fileparts(f[1])$name," and ",(length(f)-1)," other image files."), quote = F)
   
+  
   ## Read automated image analysis output
   par(mfrow=c(2,2))
   cellCounts = matrix(NA,length(f),2);
   colnames(cellCounts) = c("areaCount","area_cm2")
   rownames(cellCounts) = sapply(f, function(x) fileparts(x)$name)
+  pdf(paste0(TMP_DIR,filesep,id,"_segmentations.pdf"))
   for(i in 1:length(f)){
     dm = read.table(f[i],sep="\t", check.names = F, stringsAsFactors = F, header = T)
-    anno = read.table(f_a[i],sep="\t", check.names = F, stringsAsFactors = F, header = T)
+    anno = read.table(f_a[i],sep="\t", check.names = T, stringsAsFactors = F, header = T)
     colnames(anno) = tolower(colnames(anno))
-    # margins = apply(dm[,c("Centroid X µm","Centroid Y µm")],2,quantile,c(0,1), na.rm=T)
-    ## Adjust by cell radius:
-    # cellRad = median(dm$`Cell: Perimeter`)/(2*pi) 
-    # margins[2,] = margins[2,] + cellRad;
-    # margins[1,] = margins[1,] - cellRad
-    # width_height = (margins[2,]- margins[1,])*UM2CM
     areaCount = nrow(dm)
-    # area_cm2 = width_height[1] * width_height[2]; 
-    area_cm2 = anno$`area µm^2`[1]*UM2CM^2
+    area_cm2 = anno$`area.µm.2`[1]*UM2CM^2
     cellCounts[fileparts(f[i])$name,] = c(areaCount, area_cm2)
     ## Visualize
     ## @TODO: region of interest (ROI) should be read from QuPath groovy script
@@ -455,27 +472,42 @@ plotLiquidNitrogenBox <- function(rack, row){
       plot(img)
     }
   }
-  # ## Check cell counts standard deviation across images:
-  # tmp = sort(cellCounts[,"areaCount"], decreasing = T)
-  # if(max(tmp) - min(tmp) > min(tmp) ){ #tmp[1] - tmp[2]>tmp[2]
-  #   options(warn=1)
-  #   warning(paste("High standard deviation in number of cells detected across the", length(f), "images."))
-  #   options(warn=0)
-  toExclude <- readline(prompt="Exclude any images (bl, br, tl, tr, none)?")
-  if(nchar(toExclude)>0){
-    toExclude = sapply(strsplit(toExclude,",")[[1]],trimws)
-    toExclude = paste0(as.character(toExclude),".tif")
-    ii = sapply(toExclude, function(x) grep(x, rownames(cellCounts)))
-    if(!isempty(ii)){
-      print(paste("Excluding",rownames(cellCounts)[ii],"from analysis."), quote = F)
-      cellCounts= cellCounts[-ii,, drop=F]
-    }
-    if(length(ii)==length(f)){
-      print("At least one valid image needs to be left. Aborting", quote = F)
-      return()
+  dev.off()
+  
+  
+  ## Predict cell count error
+  print("Predicting cell count error...",quote=F)
+  for(i in 1:length(f_a)){
+    anno = read.table(f_a[i],sep="\t", check.names = T, stringsAsFactors = F, header = T)
+    ## use CL-specific model if it exists, otherwise use general model
+    data(list="General_logErrorModel")
+    ## Loads cell line specific linear model "linM" -- overrides general model loaded above if cell line specific model exists
+    data(list=paste0(cellLine,"_logErrorModel"))
+    anno$log.error = predict(linM, newdata=anno)
+    if(anno$log.error>linM$MAXERROR){
+      warning("Low image quality predicted for at least one image")
+      toExclude <- readline(prompt="Exclude any images (bl, br, tl, tr)?")
+      if(nchar(toExclude)>0){
+        toExclude = sapply(strsplit(toExclude,",")[[1]],trimws)
+        toExclude = c(paste0(as.character(toExclude),".tif"), paste0(as.character(toExclude),"$"))
+        ii = sapply(toExclude, function(x) grep(x, rownames(cellCounts)))
+        ii = unlist(ii[sapply(ii,length)>0])
+        if(!isempty(ii)){
+          print(paste("Excluding",rownames(cellCounts)[ii],"from analysis."), quote = F)
+          cellCounts= cellCounts[-ii,, drop=F]
+        }
+        if(length(ii)==length(f)){
+          stop("At least one valid image needs to be left. Aborting")
+        }
+      }
+      break;
+    }else{
+      print(paste("Cell count error predicted as negligible for",f_a[i]),quote=F)
     }
   }
-  # }
+  
+  
+  ## Calculate cell count per dish
   area2dish = dishSurfaceArea_cm2 / sum(cellCounts[,"area_cm2"])
   dishCount = round(sum(cellCounts[,"areaCount"]) * area2dish)
   print(paste("Estimated number of cells in entire flask at",dishCount), quote = F)
@@ -486,21 +518,6 @@ plotLiquidNitrogenBox <- function(rack, row){
   return(dishCount)
 }
 
-
-## Read dishSurfaceArea_cm2 of this flask 
-.readDishSurfaceArea_cm2 <- function(flask, mydb = NULL){
-  if(is.null(mydb)){
-    mydb = connect2DB()
-  }
-  stmt = paste0("select dishSurfaceArea_cm2 from Flask where id = ", flask)
-  rs = suppressWarnings(dbSendQuery(mydb, stmt))
-  dishSurfaceArea_cm2 = fetch(rs, n=-1)
-  if(nrow(dishSurfaceArea_cm2)==0){
-    print("Flask does not exist in database or its surface area is not specified")
-    stopifnot(nrow(dishSurfaceArea_cm2)>0)
-  }
-  return(dishSurfaceArea_cm2[[1]])
-}
 
 .QuPathScript <- function(qpdir, cellLine){
   # Standard pipeline:
@@ -566,12 +583,13 @@ plotLiquidNitrogenBox <- function(rack, row){
         "",
         "def filename = entry.getImageName() + '.csv'",
         "selectDetections()",
-        paste0("def pathDetection = buildFilePath('",qpdir,"/DetectionResults');"),
-        paste0("def pathAnnotation = buildFilePath('",qpdir,"/Annotations')"),
+        paste0("def pathDetection = buildFilePath('",qpdir,"/pred');"),
+        paste0("def pathAnnotation = buildFilePath('",qpdir,"/cellpose_count')"),
         "mkdirs(pathDetection);",
         "mkdirs(pathAnnotation);",
-        "pathDetection = buildFilePath(pathDetection, filename);",
-        "pathAnnotation = buildFilePath(pathAnnotation, filename);",
+        "def (basename,ext) = filename.tokenize('.');",
+        "pathDetection = buildFilePath(pathDetection, basename+'.csv');",
+        "pathAnnotation = buildFilePath(pathAnnotation, basename+'.csv');",
         "saveDetectionMeasurements(pathDetection);",
         "saveAnnotationMeasurements(pathAnnotation)", sep="\n" )
 }
