@@ -399,7 +399,7 @@ plotLiquidNitrogenBox <- function(rack, row){
   ## Copy raw images to temporary directory:
   unlink(TMP_DIR,recursive=T)
   dir.create(TMP_DIR)
-  f_i = list.files("~/QuPath", pattern = paste0(id,"_10x_ph_"), full.names = T)
+  f_i = list.files("~/QuPath", pattern = paste0("^",id,"_10x_ph_"), full.names = T)
   file.copy(f_i, TMP_DIR)
   ## Delete output files from prior runs:
   for(subfolder in c("Annotations","Images","DetectionResults")){
