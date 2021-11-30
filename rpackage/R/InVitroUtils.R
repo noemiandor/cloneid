@@ -471,7 +471,7 @@ plotLiquidNitrogenBox <- function(rack, row){
       points(dm$`Centroid X µm`,la@extent@ymax - dm$`Centroid Y µm`, col="black", pch=20, cex=0.3)
     }else{
       img <- magick::image_read(f_o[i])
-      plot(img)
+      plot(img, main=fileparts(f_o[i])$name, cex.main=2)
     }
   }
   dev.off()
