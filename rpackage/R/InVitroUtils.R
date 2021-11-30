@@ -384,6 +384,7 @@ plotLiquidNitrogenBox <- function(rack, row){
   CELLPOSE_MODEL=list.files(paste0(find.package("cloneid"),filesep,"python"),pattern = "cellpose_residual", full.names=T)
   CELLPOSE_SCRIPT=paste0(find.package("cloneid"),filesep,"python/GetCount_cellPose.py")
   QCSTATS_SCRIPT=paste0(find.package("cloneid"),filesep,"python/QC_Statistics.py")
+  OUTSEGF=paste0(QUPATH_DIR,"Images",filesep,id,"_segmentations.pdf")
   use_condaenv("cellpose")
   source_python(QCSTATS_SCRIPT)
   suppressWarnings(dir.create(paste0(QUPATH_DIR,"DetectionResults")))
@@ -400,6 +401,7 @@ plotLiquidNitrogenBox <- function(rack, row){
   unlink(TMP_DIR,recursive=T)
   dir.create(TMP_DIR)
   f_i = list.files("~/QuPath", pattern = paste0("^",id,"_10x_ph_"), full.names = T)
+  f_i = grep(".tif$",f_i,value=T)
   file.copy(f_i, TMP_DIR)
   ## Delete output files from prior runs:
   for(subfolder in c("Annotations","Images","DetectionResults")){
@@ -450,7 +452,7 @@ plotLiquidNitrogenBox <- function(rack, row){
   cellCounts = matrix(NA,length(f),2);
   colnames(cellCounts) = c("areaCount","area_cm2")
   rownames(cellCounts) = sapply(f, function(x) fileparts(x)$name)
-  pdf(paste0(TMP_DIR,filesep,id,"_segmentations.pdf"))
+  pdf(outSegF)
   for(i in 1:length(f)){
     dm = read.table(f[i],sep="\t", check.names = F, stringsAsFactors = F, header = T)
     anno = read.table(f_a[i],sep="\t", check.names = T, stringsAsFactors = F, header = T)
@@ -473,7 +475,7 @@ plotLiquidNitrogenBox <- function(rack, row){
     }
   }
   dev.off()
-  
+  file.copy(OUTSEGF, paste0(TMP_DIR,filesep) )
   
   ## Predict cell count error
   print("Predicting cell count error...",quote=F)
@@ -485,8 +487,7 @@ plotLiquidNitrogenBox <- function(rack, row){
     data(list=paste0(cellLine,"_logErrorModel"))
     anno$log.error = predict(linM, newdata=anno)
     if(anno$log.error>linM$MAXERROR){
-      ##@TODO: replace with Warning
-      stop("Low image quality predicted for at least one image")
+      warning("Low image quality predicted for at least one image")
       toExclude <- readline(prompt="Exclude any images (bl, br, tl, tr)?")
       if(nchar(toExclude)>0){
         toExclude = sapply(strsplit(toExclude,",")[[1]],trimws)
