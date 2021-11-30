@@ -467,11 +467,12 @@ plotLiquidNitrogenBox <- function(rack, row){
       ROI <- as(raster::extent(100, 1900, la@extent@ymax - 1200, la@extent@ymax - 100), 'SpatialPolygons')
       la_ <- raster::crop(la, ROI)
       raster::plot(la_, ann=FALSE,axes=FALSE, useRaster=T,legend=F)
-      mtext(fileparts(f_i[i])$name, cex=0.45)
+      mtext(fileparts(f_i[i])$name, cex=1)
       points(dm$`Centroid X µm`,la@extent@ymax - dm$`Centroid Y µm`, col="black", pch=20, cex=0.3)
     }else{
       img <- magick::image_read(f_o[i])
-      plot(img, main=fileparts(f_o[i])$name, cex.main=2)
+      plot(img)
+      mtext(fileparts(f_o[i])$name, cex=1)
     }
   }
   dev.off()
