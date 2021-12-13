@@ -2,10 +2,10 @@
 \alias{CloneProfiles}
 \docType{data}
 \title{Data formatting example for clonal decompositions}
-\description{Clonal profiles called from scRNA sequencing data of the SNU-16 stomach cancer cell line. Data structure describes input format for function @viewPerspective().}
+\description{Clonal profiles called from single cell sequencing data of the SNU-16 stomach cancer cell line. Data structure describes input format for function @viewPerspective().}
 \usage{data(CloneProfiles)}
 \format{
-List with keys denoting file names and values denoting file contents expected by @viewPerspective(). \cr
+Uppermost layer contains two entries named "GenomePerspective" and "TranscriptomePerspective". Each is a list with keys denoting file names and values denoting file contents expected by @viewPerspective(). The following describes TranscriptomePerspective (but the same structure applies to GenomePerspective): \cr
 
 	Clonal profiles are given at two layers of cellular resolution: first layer contains subpopulations of cells (i.e. clones); second layer contains members (e.g. cells) assigned to each layer 1 subpopulation. Both layers are represented in the list. Entries are as follows:\cr \cr
   \bold{SNU-16.spstats} - layer 1 data.frame with each row denoting a subpopulation and columns denoting their IDs and cellular fractions \cr \cr
@@ -25,9 +25,11 @@ List with keys denoting file names and values denoting file contents expected by
 ## Memory needed to save single-cell data into SQL database
 options(java.parameters = "-Xmx7g")
 
-load('~/Downloads/CloneProfiles.rda');
+data(CloneProfiles)
+## Look at GenomePerspective object:
+CloneProfiles = CloneProfiles$GenomePerspective
 names(CloneProfiles)
-sapply(CloneProfiles, dim)
+sapply(CloneProfiles$, dim)
 print(CloneProfiles$`SNU-16.spstats`)
 
 ## Layer 1:
@@ -52,6 +54,6 @@ for (clone in CloneProfiles$`SNU-16.spstats`$`Mean Weighted`){
 # }
 
 ## Run viewPerspective() to add to SQL database:
-# viewPerspective(pathToSample="~/Downloads/SNU-16.spstats", clonesDIR="~/Downloads", suffix=".sps.cbs", whichP="TranscriptomePerspective")
+# viewPerspective(spstatsFile ="~/Downloads/SNU-16.spstats",  suffix=".sps.cbs", whichP="TranscriptomePerspective")
 
 }
