@@ -14,7 +14,7 @@ init <- function(id, cellLine, cellCount, tx = Sys.time(), media=NULL, flask=NUL
   dishCount = cellCount;
   if(!is.null(flask)){
     dishSurfaceArea_cm2 = .readDishSurfaceArea_cm2(flask, mydb)
-    dishCount = .readQuPathOutput(id= id, cellLine = cellLine, dishSurfaceArea_cm2 = dishSurfaceArea_cm2, cellCount = cellCount);
+    dishCount = .readCellSegmentationsOutput(id= id, cellLine = cellLine, dishSurfaceArea_cm2 = dishSurfaceArea_cm2, cellCount = cellCount);
   }
   if(is.null(media)){
     media = "NULL"
@@ -352,7 +352,7 @@ plotLiquidNitrogenBox <- function(rack, row){
   
   dishSurfaceArea_cm2 = .readDishSurfaceArea_cm2(flask, mydb)
   
-  dishCount = .readQuPathOutput(id= id, cellLine = kids$cellLine, dishSurfaceArea_cm2 = dishSurfaceArea_cm2, cellCount = cellCount);
+  dishCount = .readCellSegmentationsOutput(id= id, cellLine = kids$cellLine, dishSurfaceArea_cm2 = dishSurfaceArea_cm2, cellCount = cellCount);
   
   ### Insert
   passage = kids$passage
@@ -370,26 +370,26 @@ plotLiquidNitrogenBox <- function(rack, row){
 }
 
 
-.readQuPathOutput <- function(id, cellLine, dishSurfaceArea_cm2, cellCount){
+.readCellSegmentationsOutput <- function(id, cellLine, dishSurfaceArea_cm2, cellCount){
   ## Typical values for dishSurfaceArea_cm2 are: 
   ## a) 75 cm^2 = 10.1 cm x 7.30 cm  
   ## b) 25 cm^2 = 5.08 cm x 5.08 cm
   ## c) well from 96-plate = 0.32 cm^2
-  ## QuPath Settings; @TODO: should be set under settings, not here
+  ## CellSegmentations Settings; @TODO: should be set under settings, not here
   UM2CM = 1e-4
   TMP_DIR = normalizePath("~/Downloads/tmp");
-  QUPATH_DIR="~/QuPath/output/"; 
+  CELLSEGMENTATIONS_DIR="~/CellSegmentations/output/"; 
   QUPATH_PRJ = "~/Downloads/qproject/project.qpproj"
   QSCRIPT = "~/Downloads/qpscript/runDetectionROI.groovy"
   CELLPOSE_MODEL=list.files(paste0(find.package("cloneid"),filesep,"python"),pattern = "cellpose_residual", full.names=T)
   CELLPOSE_SCRIPT=paste0(find.package("cloneid"),filesep,"python/GetCount_cellPose.py")
   QCSTATS_SCRIPT=paste0(find.package("cloneid"),filesep,"python/QC_Statistics.py")
-  OUTSEGF=paste0(QUPATH_DIR,"Images",filesep,id,"_segmentations.pdf")
+  OUTSEGF=paste0(CELLSEGMENTATIONS_DIR,"Images",filesep,id,"_segmentations.pdf")
   use_condaenv("cellpose")
   source_python(QCSTATS_SCRIPT)
-  suppressWarnings(dir.create(paste0(QUPATH_DIR,"DetectionResults")))
-  suppressWarnings(dir.create(paste0(QUPATH_DIR,"Annotations"))) 
-  suppressWarnings(dir.create(paste0(QUPATH_DIR,"Images"))); 
+  suppressWarnings(dir.create(paste0(CELLSEGMENTATIONS_DIR,"DetectionResults")))
+  suppressWarnings(dir.create(paste0(CELLSEGMENTATIONS_DIR,"Annotations"))) 
+  suppressWarnings(dir.create(paste0(CELLSEGMENTATIONS_DIR,"Images"))); 
   suppressWarnings(dir.create("~/Downloads/qpscript"))
   suppressWarnings(dir.create(fileparts(QUPATH_PRJ)$pathstr))
   qpversion = list.files("/Applications", pattern = "QuPath")
@@ -400,12 +400,12 @@ plotLiquidNitrogenBox <- function(rack, row){
   ## Copy raw images to temporary directory:
   unlink(TMP_DIR,recursive=T)
   dir.create(TMP_DIR)
-  f_i = list.files("~/QuPath", pattern = paste0("^",id,"_10x_ph_"), full.names = T)
+  f_i = list.files("~/CellSegmentations", pattern = paste0("^",id,"_10x_ph_"), full.names = T)
   f_i = grep(".tif$",f_i,value=T)
   file.copy(f_i, TMP_DIR)
   ## Delete output files from prior runs:
   for(subfolder in c("Annotations","Images","DetectionResults")){
-    f = list.files(paste0(QUPATH_DIR,subfolder), pattern = paste0(id,"_10x_ph_"), full.names = T)
+    f = list.files(paste0(CELLSEGMENTATIONS_DIR,subfolder), pattern = paste0(id,"_10x_ph_"), full.names = T)
     file.remove(f)
   }
   
@@ -424,26 +424,26 @@ plotLiquidNitrogenBox <- function(rack, row){
     run(TMP_DIR,normalizePath(CELLPOSE_MODEL),TMP_DIR,".tif")
     ## Move files from tempDir to destination:
     cellPoseOut_img = list.files(TMP_DIR, recursive = T, pattern = "overlay.png",full.names = T)
-    sapply(cellPoseOut_img, function(x) file.copy(x, paste0(QUPATH_DIR,"Images") ))
+    sapply(cellPoseOut_img, function(x) file.copy(x, paste0(CELLSEGMENTATIONS_DIR,"Images") ))
   }
   
   ## Add QC statistics
   QC_Statistics(TMP_DIR,paste0(TMP_DIR,filesep,"cellpose_count"),'.tif')
   ## Move files from tempDir to destination:
   cellPoseOut_csv = list.files(TMP_DIR, recursive = T, pattern = ".csv",full.names = T)
-  sapply(grep("pred",cellPoseOut_csv,value = T), function(x) file.copy(x, paste0(QUPATH_DIR,"DetectionResults") ))
-  sapply(grep("cellpose_count",cellPoseOut_csv,value = T), function(x) file.copy(x, paste0(QUPATH_DIR,"Annotations") ))
+  sapply(grep("pred",cellPoseOut_csv,value = T), function(x) file.copy(x, paste0(CELLSEGMENTATIONS_DIR,"DetectionResults") ))
+  sapply(grep("cellpose_count",cellPoseOut_csv,value = T), function(x) file.copy(x, paste0(CELLSEGMENTATIONS_DIR,"Annotations") ))
   
   
   ## Wait and look for imaging analysis output
-  print(paste0("Waiting for ",id," to appear under ",QUPATH_DIR," ..."), quote = F)
+  print(paste0("Waiting for ",id," to appear under ",CELLSEGMENTATIONS_DIR," ..."), quote = F)
   f = c()
   while(length(f)<length(f_i)){
     Sys.sleep(3)
-    f = list.files(paste0(QUPATH_DIR,"DetectionResults"), pattern = paste0(id,"_10x_ph_"), full.names = T)
+    f = list.files(paste0(CELLSEGMENTATIONS_DIR,"DetectionResults"), pattern = paste0(id,"_10x_ph_"), full.names = T)
   }
-  f_a = list.files(paste0(QUPATH_DIR,"Annotations"), pattern = paste0(id,"_10x_ph_"), full.names = T)
-  f_o = list.files(paste0(QUPATH_DIR,"Images"), pattern = paste0(id,"_10x_ph_"), full.names = T)
+  f_a = list.files(paste0(CELLSEGMENTATIONS_DIR,"Annotations"), pattern = paste0(id,"_10x_ph_"), full.names = T)
+  f_o = list.files(paste0(CELLSEGMENTATIONS_DIR,"Images"), pattern = paste0(id,"_10x_ph_"), full.names = T)
   print(paste0("QPath output found for ",fileparts(f[1])$name," and ",(length(f)-1)," other image files."), quote = F)
   
   
@@ -482,6 +482,10 @@ plotLiquidNitrogenBox <- function(rack, row){
   print("Predicting cell count error...",quote=F)
   for(i in 1:length(f_a)){
     anno = read.table(f_a[i],sep="\t", check.names = T, stringsAsFactors = F, header = T)
+    ## No cells detected
+    if(is.null(anno$Num.Detections)){
+      anno$Num.Detections=0;
+    }
     ## use CL-specific model if it exists, otherwise use general model
     data(list="General_logErrorModel")
     ## Loads cell line specific linear model "linM" -- overrides general model loaded above if cell line specific model exists
