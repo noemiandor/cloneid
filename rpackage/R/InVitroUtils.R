@@ -1,10 +1,10 @@
-seed <- function(id, from, cellCount, flask, tx = Sys.time(), media=NULL){ 
-  .seed_or_harvest(event = "seeding", id=id, from = from, cellCount = cellCount, tx = tx, flask = flask, media = media)
+seed <- function(id, from, cellCount, flask, tx = Sys.time(), media=NULL, excludeOption=F){ 
+  .seed_or_harvest(event = "seeding", id=id, from = from, cellCount = cellCount, tx = tx, flask = flask, media = media, excludeOption=excludeOption)
 }
 
 
-harvest <- function(id, from, cellCount, tx = Sys.time(), media=NULL){
-  .seed_or_harvest(event = "harvest", id=id, from=from, cellCount = cellCount, tx = tx, flask = NULL, media = media)
+harvest <- function(id, from, cellCount, tx = Sys.time(), media=NULL, excludeOption=F){
+  .seed_or_harvest(event = "harvest", id=id, from=from, cellCount = cellCount, tx = tx, flask = NULL, media = media, excludeOption=excludeOption)
 }
 
 
@@ -307,7 +307,7 @@ plotLiquidNitrogenBox <- function(rack, row){
 }
 
 
-.seed_or_harvest <- function(event, id, from, cellCount, tx, flask, media){
+.seed_or_harvest <- function(event, id, from, cellCount, tx, flask, media, excludeOption){
   library(RMySQL)
   library(matlab)
   
@@ -352,7 +352,7 @@ plotLiquidNitrogenBox <- function(rack, row){
   
   dishSurfaceArea_cm2 = .readDishSurfaceArea_cm2(flask, mydb)
   
-  dishCount = .readCellSegmentationsOutput(id= id, cellLine = kids$cellLine, dishSurfaceArea_cm2 = dishSurfaceArea_cm2, cellCount = cellCount);
+  dishCount = .readCellSegmentationsOutput(id= id, cellLine = kids$cellLine, dishSurfaceArea_cm2 = dishSurfaceArea_cm2, cellCount = cellCount, excludeOption=excludeOption);
   
   ### Insert
   passage = kids$passage
@@ -370,7 +370,7 @@ plotLiquidNitrogenBox <- function(rack, row){
 }
 
 
-.readCellSegmentationsOutput <- function(id, cellLine, dishSurfaceArea_cm2, cellCount){
+.readCellSegmentationsOutput <- function(id, cellLine, dishSurfaceArea_cm2, cellCount, excludeOption){
   ## Typical values for dishSurfaceArea_cm2 are: 
   ## a) 75 cm^2 = 10.1 cm x 7.30 cm  
   ## b) 25 cm^2 = 5.08 cm x 5.08 cm
@@ -493,23 +493,28 @@ plotLiquidNitrogenBox <- function(rack, row){
     anno$log.error = predict(linM, newdata=anno)
     if(anno$log.error>linM$MAXERROR){
       warning("Low image quality predicted for at least one image")
-      toExclude <- readline(prompt="Exclude any images (bl, br, tl, tr)?")
-      if(nchar(toExclude)>0){
-        toExclude = sapply(strsplit(toExclude,",")[[1]],trimws)
-        toExclude = c(paste0(as.character(toExclude),".tif"), paste0(as.character(toExclude),"$"))
-        ii = sapply(toExclude, function(x) grep(x, rownames(cellCounts)))
-        ii = unlist(ii[sapply(ii,length)>0])
-        if(!isempty(ii)){
-          print(paste("Excluding",rownames(cellCounts)[ii],"from analysis."), quote = F)
-          cellCounts= cellCounts[-ii,, drop=F]
-        }
-        if(length(ii)==length(f)){
-          stop("At least one valid image needs to be left. Aborting")
-        }
-      }
+      excludeOption=T
       break;
     }else{
       print(paste("Cell count error predicted as negligible for",f_a[i]),quote=F)
+    }
+  }
+  
+  ## Provide option to exclude subset of images
+  if(excludeOption){
+    toExclude <- readline(prompt="Exclude any images (bl, br, tl, tr)?")
+    if(nchar(toExclude)>0){
+      toExclude = sapply(strsplit(toExclude,",")[[1]],trimws)
+      toExclude = c(paste0(as.character(toExclude),".tif"), paste0(as.character(toExclude),"$"))
+      ii = sapply(toExclude, function(x) grep(x, rownames(cellCounts)))
+      ii = unlist(ii[sapply(ii,length)>0])
+      if(!isempty(ii)){
+        print(paste("Excluding",rownames(cellCounts)[ii],"from analysis."), quote = F)
+        cellCounts= cellCounts[-ii,, drop=F]
+      }
+      if(length(ii)==length(f)){
+        stop("At least one valid image needs to be left. Aborting")
+      }
     }
   }
   
