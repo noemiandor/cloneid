@@ -289,7 +289,7 @@ plotLiquidNitrogenBox <- function(rack, row){
   ## Visualize
   rc = apply(kids, 2, unique)
   par(mfrow=c(2,2), mai=c(0,0.5,0.5,0))
-  plot(c(1,length(rc$BoxColumn)),c(1,length(rc$BoxRow)), col="white", yaxt="n", xaxt="n", xlab="",ylab="", main=paste("Rack",rack,"; Row",row))
+  plot(c(1,length(rc$BoxColumn)),c(1,length(rc$BoxRow)), col="white", yaxt="n", xaxt="n", xlab="",ylab="", main=paste("Rack",rack,"; Row",row),ylim = rev(range(c(1,length(rc$BoxRow)))) )
   axis(1, at=1:length(rc$BoxColumn), labels=rc$BoxColumn, las=1)
   axis(2, at=1:length(rc$BoxRow), labels=rc$BoxRow, las=2)
   cols = gray.colors(length(rc$id)*1.2)[1:length(rc$id)]
@@ -543,67 +543,104 @@ plotLiquidNitrogenBox <- function(rack, row){
     runPlugin = "runPlugin('qupath.imagej.detect.cells.WatershedCellDetection', '{\"detectionImageBrightfield\": \"Hematoxylin OD\",  \"requestedPixelSizeMicrons\": 0.5,  \"backgroundRadiusMicrons\": 8.0,  \"medianRadiusMicrons\": 0.0,  \"sigmaMicrons\": 1.5,  \"minAreaMicrons\": 90.0,  \"maxAreaMicrons\": 1200.0,  \"threshold\": 0.1,  \"maxBackground\": 2.0,  \"watershedPostProcess\": false,  \"cellExpansionMicrons\": 5.0,  \"includeNuclei\": false,  \"smoothBoundaries\": true,  \"makeMeasurements\": true}');"
   }
   qpdir = normalizePath(qpdir)
-  paste("import static qupath.lib.gui.scripting.QPEx.*",
-        "import qupath.lib.gui.tools.MeasurementExporter",
-        "import qupath.lib.objects.PathCellObject",
-        "import qupath.lib.objects.PathDetectionObject",
-        "",
-        "",
-        "//  User enter these information for every project.",
-        "//*************************************************",
-        "def PixelWidth_new = 1.000;",
-        "def PixelHeight_new = 1.000;",
-        "def x_left = 100;",
-        "def y_left = 100;",
-        "def w_ROI =  1900;",
-        "def h_ROI = 1100;",
-        "//*************************************************",
-        "",
-        "",
-        "def project = getProject()",
-        "def entry = getProjectEntry()",
-        "def imageData = entry.readImageData()",
-        "def CurrentImageData = getCurrentImageData()",
-        "def hierarchy = imageData.getHierarchy()",
-        "def annotations = hierarchy.getAnnotationObjects()",
-        "",
-        "def server = CurrentImageData.getServer()",
-        "def path = server.getPath()",
-        "def cal = server.getPixelCalibration();",
-        "double pixelWidth = cal.getPixelWidthMicrons();",
-        "double pixelHeight = cal.getPixelHeightMicrons();",
-        "",
-        "print(pixelWidth);",
-        "print(pixelHeight);",
-        "if(pixelWidth == Double.NaN){",
-        "    setPixelSizeMicrons(PixelWidth_new, PixelWidth_new);",
-        " ",
-        "}",
-        "",
-        "",
-        "setImageType('BRIGHTFIELD_H_E');",
-        "setColorDeconvolutionStains('{\"Name\" : \"H&E default\", \"Stain 1\" : \"Hematoxylin\", \"Values 1\" : \"0.65111 0.70119 0.29049 \", \"Stain 2\" : \"Eosin\", \"Values 2\" : \"0.2159 0.8012 0.5581 \", \"Background\" : \" 255 255 255 \"}');",
-        "def plane = ImagePlane.getPlane(0,0);",
-        "def rectangle = ROIs.createRectangleROI(x_left,y_left,w_ROI,h_ROI,plane);",
-        "def rectangleAnnotation = PathObjects.createAnnotationObject(rectangle);",
-        "QPEx.addObjects(rectangleAnnotation);",
-        "println \"Success\";",
-        "//createSelectAllObject(true);",
-        "selectAnnotations();",
-        runPlugin,
-        "",
-        "",
-        "def filename = entry.getImageName() + '.csv'",
-        "selectDetections()",
-        paste0("def pathDetection = buildFilePath('",qpdir,"/pred');"),
-        paste0("def pathAnnotation = buildFilePath('",qpdir,"/cellpose_count')"),
-        "mkdirs(pathDetection);",
-        "mkdirs(pathAnnotation);",
-        "def (basename,ext) = filename.tokenize('.');",
-        "pathDetection = buildFilePath(pathDetection, basename+'.csv');",
-        "pathAnnotation = buildFilePath(pathAnnotation, basename+'.csv');",
-        "saveDetectionMeasurements(pathDetection);",
-        "saveAnnotationMeasurements(pathAnnotation)", sep="\n" )
+  paste(" import static qupath.lib.gui.scripting.QPEx.*"
+        ," import qupath.lib.gui.tools.MeasurementExporter"
+        ," import qupath.lib.objects.PathCellObject"
+        ," import qupath.lib.objects.PathDetectionObject"
+        ," import qupath.lib.gui.viewer.OverlayOptions"
+        ," import qupath.lib.gui.viewer.overlays.HierarchyOverlay"
+        ," import qupath.lib.gui.images.servers.RenderedImageServer"
+        ," "
+        ," import qupath.lib.gui.viewer.overlays.BufferedImageOverlay"
+        ," import qupath.opencv.tools.OpenCVTools"
+        ," "
+        ," "
+        ," //  User enter these information for every project."
+        ," //*************************************************"
+        ," def PixelWidth_new = 1.000;"
+        ," def PixelHeight_new = 1.000;"
+        ," def x_left = 100;"
+        ," def y_left = 100;"
+        ," def w_ROI =  1900;"
+        ," def h_ROI = 1100;"
+        ," //*************************************************"
+        ," "
+        ," Path2SaveResults = '/Volumes/WD Element/Collaboration/Moffitt_Noemi/QuPath/NCI_evaluation2022/NCI-2021Images-QuPath';"
+        ," "
+        ," def project = getProject();"
+        ," def entry = getProjectEntry();"
+        ," def imageData = entry.readImageData();"
+        ," def CurrentImageData = getCurrentImageData();"
+        ," def hierarchy = imageData.getHierarchy();"
+        ," def annotations = hierarchy.getAnnotationObjects();"
+        ," "
+        ," def server = CurrentImageData.getServer();"
+        ," def path = server.getPath();"
+        ," def cal = server.getPixelCalibration();"
+        ," double pixelWidth = cal.getPixelWidthMicrons();"
+        ," double pixelHeight = cal.getPixelHeightMicrons();"
+        ," "
+        ," print(pixelWidth);"
+        ," print(pixelHeight);"
+        ," "
+        ," "
+        ," // The base directory of the project "
+        ," //Path2SaveResults = project.getBaseDirectory().toString();"
+        ," if(pixelWidth == Double.NaN){"
+        ,"     setPixelSizeMicrons(PixelWidth_new, PixelWidth_new);"
+        ,"  "
+        ," }"
+        ," "
+        ," "
+        ," setImageType('BRIGHTFIELD_H_E');"
+        ," setColorDeconvolutionStains('{\"Name\" : \"H&E default\", \"Stain 1\" : \"Hematoxylin\", \"Values 1\" : \"0.65111 0.70119 0.29049 \", \"Stain 2\" : \"Eosin\", \"Values 2\" : \"0.2159 0.8012 0.5581 \", \"Background\" : \" 255 255 255 \"}');"
+        ," def plane = ImagePlane.getPlane(0,0);"
+        ," def rectangle = ROIs.createRectangleROI(x_left,y_left,w_ROI,h_ROI,plane);"
+        ," def rectangleAnnotation = PathObjects.createAnnotationObject(rectangle);"
+        ," QPEx.addObjects(rectangleAnnotation);"
+        ," println \"Success\";"
+        ," //createSelectAllObject(true);"
+        ," selectAnnotations();"
+        , runPlugin
+        ," "
+        ," def filename = entry.getImageName() + '.csv'"
+        ," selectDetections()"
+        , paste0("def pathDetection = buildFilePath('",qpdir,"/pred');")
+        , paste0("def pathAnnotation = buildFilePath('",qpdir,"/cellpose_count')")
+        ," mkdirs(pathDetection);"
+        ," mkdirs(pathAnnotation);"
+        ," def (basename,ext) = filename.tokenize('.');"
+        ," pathDetection = buildFilePath(pathDetection, basename+'.csv');"
+        ," pathAnnotation = buildFilePath(pathAnnotation, basename+'.csv');"
+        ," saveDetectionMeasurements(pathDetection);"
+        ," saveAnnotationMeasurements(pathAnnotation)"
+        ," "
+        ," // Saving Image to file "
+        , paste0("def vis_path = buildFilePath('",qpdir,"/vis');")
+        ," mkdirs(vis_path);"
+        ," vis_path_instance = buildFilePath(vis_path,basename+'.tif');"
+        ," "
+        ," //*********************** Save Labeled Image ****************************"
+        ," def downsample = 1"
+        ," def viewer = getCurrentViewer()"
+        ," def labelServer_rendered = new RenderedImageServer.Builder(CurrentImageData)"
+        ,"    .downsamples(downsample)"
+        ,"    .layers(new HierarchyOverlay(null, new OverlayOptions(), imageData))"
+        ,"    .build()"
+        ," writeImage(labelServer_rendered, vis_path_instance)"
+        ," print('Saved Results in ' + Path2SaveResults + 'directory');"
+        ," "
+        ," "
+        ," //*********************** Save Labeled Image Updated Beacuse of the error Noemi Encountered with viewer *********"
+        ," //def downsample = 1"
+        ," //def labelServer = new LabeledImageServer.Builder(CurrentImageData)"
+        ," //  .backgroundLabel(0, ColorTools.BLACK) // Specify background label (usually 0 or 255)"
+        ," //  .downsample(downsample)    // Choose server resolution; this should match the resolution at which tiles are exported"
+        ," //  .useCells()"
+        ," //  .useInstanceLabels()"
+        ," //  .setBoundaryLabel('Ignore', 1) "
+        ," //  .multichannelOutput(false) // If true, each label refers to the channel of a multichannel binary image (required for multiclass probability)"
+        ," //  .build()", sep="\n" )
 }
 
 
