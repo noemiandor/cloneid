@@ -385,7 +385,6 @@ plotLiquidNitrogenBox <- function(rack, row){
   CELLPOSE_SCRIPT=paste0(find.package("cloneid"),filesep,"python/GetCount_cellPose.py")
   QCSTATS_SCRIPT=paste0(find.package("cloneid"),filesep,"python/QC_Statistics.py")
   OUTSEGF=paste0(CELLSEGMENTATIONS_DIR,"Images",filesep,id,"_segmentations.pdf")
-  use_condaenv("cellpose")
   source_python(QCSTATS_SCRIPT)
   suppressWarnings(dir.create(paste0(CELLSEGMENTATIONS_DIR,"DetectionResults")))
   suppressWarnings(dir.create(paste0(CELLSEGMENTATIONS_DIR,"Annotations"))) 
@@ -418,6 +417,7 @@ plotLiquidNitrogenBox <- function(rack, row){
     print(cmd, quote = F)
     system(cmd)
   }else{
+    use_condaenv("cellpose")
     ## Call CellPose for images inside temp dir 
     # virtualenv_list()
     source_python(CELLPOSE_SCRIPT)
