@@ -384,8 +384,7 @@ plotLiquidNitrogenBox <- function(rack, row){
   CELLPOSE_MODEL=list.files(paste0(find.package("cloneid"),filesep,"python"),pattern = "cellpose_residual", full.names=T)
   CELLPOSE_SCRIPT=paste0(find.package("cloneid"),filesep,"python/GetCount_cellPose.py")
   QCSTATS_SCRIPT=paste0(find.package("cloneid"),filesep,"python/QC_Statistics.py")
-  OUTSEGF=paste0(CELLSEGMENTATIONS_DIR,"Images",filesep,id,"_segmentations.pdf")
-  source_python(QCSTATS_SCRIPT)
+  # OUTSEGF=paste0(CELLSEGMENTATIONS_DIR,"Images",filesep,id,"_segmentations.pdf")
   suppressWarnings(dir.create(paste0(CELLSEGMENTATIONS_DIR,"DetectionResults")))
   suppressWarnings(dir.create(paste0(CELLSEGMENTATIONS_DIR,"Annotations"))) 
   suppressWarnings(dir.create(paste0(CELLSEGMENTATIONS_DIR,"Images"))); 
@@ -394,8 +393,11 @@ plotLiquidNitrogenBox <- function(rack, row){
   qpversion = list.files("/Applications", pattern = "QuPath")
   qpversion = gsub(".app","", gsub("QuPath","",qpversion))
   qpversion = qpversion[length(qpversion)]
+  LOADEDENV='cellpose' %in% conda_list()$name
+  if(LOADEDENV){
+    use_condaenv("cellpose")
+  }
   
-
   ## Copy raw images to temporary directory:
   unlink(TMP_DIR,recursive=T)
   dir.create(TMP_DIR)
@@ -417,23 +419,23 @@ plotLiquidNitrogenBox <- function(rack, row){
     print(cmd, quote = F)
     system(cmd)
   }else{
-    use_condaenv("cellpose")
     ## Call CellPose for images inside temp dir 
     # virtualenv_list()
     source_python(CELLPOSE_SCRIPT)
     run(TMP_DIR,normalizePath(CELLPOSE_MODEL),TMP_DIR,".tif")
-    ## Move files from tempDir to destination:
-    cellPoseOut_img = list.files(TMP_DIR, recursive = T, pattern = "overlay.png",full.names = T)
-    sapply(cellPoseOut_img, function(x) file.copy(x, paste0(CELLSEGMENTATIONS_DIR,"Images") ))
   }
   
   ## Add QC statistics
-  QC_Statistics(TMP_DIR,paste0(TMP_DIR,filesep,"cellpose_count"),'.tif')
+  if(LOADEDENV){
+    source_python(QCSTATS_SCRIPT)
+    QC_Statistics(TMP_DIR,paste0(TMP_DIR,filesep,"cellpose_count"),'.tif')
+  }
   ## Move files from tempDir to destination:
   cellPoseOut_csv = list.files(TMP_DIR, recursive = T, pattern = ".csv",full.names = T)
   sapply(grep("pred",cellPoseOut_csv,value = T), function(x) file.copy(x, paste0(CELLSEGMENTATIONS_DIR,"DetectionResults") ))
   sapply(grep("cellpose_count",cellPoseOut_csv,value = T), function(x) file.copy(x, paste0(CELLSEGMENTATIONS_DIR,"Annotations") ))
-  
+  cellPoseOut_img = list.files(TMP_DIR, recursive = T, pattern = "overlay.",full.names = T)
+  sapply(cellPoseOut_img, function(x) file.copy(x, paste0(CELLSEGMENTATIONS_DIR,"Images") ))
   
   ## Wait and look for imaging analysis output
   print(paste0("Waiting for ",id," to appear under ",CELLSEGMENTATIONS_DIR," ..."), quote = F)
@@ -448,11 +450,10 @@ plotLiquidNitrogenBox <- function(rack, row){
   
   
   ## Read automated image analysis output
-  par(mfrow=c(2,2))
   cellCounts = matrix(NA,length(f),2);
   colnames(cellCounts) = c("areaCount","area_cm2")
   rownames(cellCounts) = sapply(f, function(x) fileparts(x)$name)
-  pdf(OUTSEGF)
+  # pdf(OUTSEGF)
   for(i in 1:length(f)){
     dm = read.table(f[i],sep="\t", check.names = F, stringsAsFactors = F, header = T)
     anno = read.table(f_a[i],sep="\t", check.names = T, stringsAsFactors = F, header = T)
@@ -460,23 +461,23 @@ plotLiquidNitrogenBox <- function(rack, row){
     areaCount = nrow(dm)
     area_cm2 = anno$`area.µm.2`[1]*UM2CM^2
     cellCounts[fileparts(f[i])$name,] = c(areaCount, area_cm2)
-    ## Visualize
-    ## @TODO: region of interest (ROI) should be read from QuPath groovy script
-    if(!file.exists(f_o[i])){
-      la=raster::raster(f_i[i])
-      ROI <- as(raster::extent(100, 1900, la@extent@ymax - 1200, la@extent@ymax - 100), 'SpatialPolygons')
-      la_ <- raster::crop(la, ROI)
-      raster::plot(la_, ann=FALSE,axes=FALSE, useRaster=T,legend=F)
-      mtext(fileparts(f_i[i])$name, cex=1)
-      points(dm$`Centroid X µm`,la@extent@ymax - dm$`Centroid Y µm`, col="black", pch=20, cex=0.3)
-    }else{
-      img <- magick::image_read(f_o[i])
-      plot(img)
-      mtext(fileparts(f_o[i])$name, cex=1)
-    }
+    # ## Visualize
+    # ## @TODO: Delete
+    # if(!file.exists(f_o[i])){
+    #   la=raster::raster(f_i[i])
+    #   ROI <- as(raster::extent(100, 1900, la@extent@ymax - 1200, la@extent@ymax - 100), 'SpatialPolygons')
+    #   la_ <- raster::crop(la, ROI)
+    #   raster::plot(la_, ann=FALSE,axes=FALSE, useRaster=T,legend=F)
+    #   mtext(fileparts(f_i[i])$name, cex=1)
+    #   points(dm$`Centroid X µm`,la@extent@ymax - dm$`Centroid Y µm`, col="black", pch=20, cex=0.3)
+    # }else{
+    #   img <- magick::image_read(f_o[i])
+    #   plot(img)
+    #   mtext(fileparts(f_o[i])$name, cex=1)
+    # }
   }
-  dev.off()
-  file.copy(OUTSEGF, paste0(TMP_DIR,filesep) )
+  # dev.off()
+  # file.copy(OUTSEGF, paste0(TMP_DIR,filesep) )
   
   ## Predict cell count error
   print("Predicting cell count error...",quote=F)
@@ -490,6 +491,11 @@ plotLiquidNitrogenBox <- function(rack, row){
     data(list="General_logErrorModel")
     ## Loads cell line specific linear model "linM" -- overrides general model loaded above if cell line specific model exists
     data(list=paste0(cellLine,"_logErrorModel"))
+    if(!any(c("Variance.of.Laplician","fft") %in% colnames(anno))){
+      warning("No features for error prediction available", immediate. = T)
+      excludeOption=T
+      break;
+    }
     anno$log.error = predict(linM, newdata=anno)
     if(anno$log.error>linM$MAXERROR){
       warning("Low image quality predicted for at least one image")
@@ -565,7 +571,6 @@ plotLiquidNitrogenBox <- function(rack, row){
         ," def h_ROI = 1100;"
         ," //*************************************************"
         ," "
-        ," Path2SaveResults = '/Volumes/WD Element/Collaboration/Moffitt_Noemi/QuPath/NCI_evaluation2022/NCI-2021Images-QuPath';"
         ," "
         ," def project = getProject();"
         ," def entry = getProjectEntry();"
@@ -584,11 +589,8 @@ plotLiquidNitrogenBox <- function(rack, row){
         ," print(pixelHeight);"
         ," "
         ," "
-        ," // The base directory of the project "
-        ," //Path2SaveResults = project.getBaseDirectory().toString();"
         ," if(pixelWidth == Double.NaN){"
         ,"     setPixelSizeMicrons(PixelWidth_new, PixelWidth_new);"
-        ,"  "
         ," }"
         ," "
         ," "
@@ -618,7 +620,7 @@ plotLiquidNitrogenBox <- function(rack, row){
         ," // Saving Image to file "
         , paste0("def vis_path = buildFilePath('",qpdir,"/vis');")
         ," mkdirs(vis_path);"
-        ," vis_path_instance = buildFilePath(vis_path,basename+'.tif');"
+        ," vis_path_instance = buildFilePath(vis_path,basename+'_overlay.tif');"
         ," "
         ," //*********************** Save Labeled Image ****************************"
         ," def downsample = 1"
@@ -628,7 +630,6 @@ plotLiquidNitrogenBox <- function(rack, row){
         ,"    .layers(new HierarchyOverlay(null, new OverlayOptions(), imageData))"
         ,"    .build()"
         ," writeImage(labelServer_rendered, vis_path_instance)"
-        ," print('Saved Results in ' + Path2SaveResults + 'directory');"
         ," "
         ," "
         ," //*********************** Save Labeled Image Updated Beacuse of the error Noemi Encountered with viewer *********"
