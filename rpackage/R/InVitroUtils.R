@@ -11,10 +11,10 @@ harvest <- function(id, from, cellCount, tx = Sys.time(), media=NULL, excludeOpt
 init <- function(id, cellLine, cellCount, tx = Sys.time(), media=NULL, flask=NULL){
   mydb = connect2DB()
   
-  dishCount = cellCount;
+  dish = list(dishCount=cellCount, dishAreaOccupied=NULL)
   if(!is.null(flask)){
     dishSurfaceArea_cm2 = .readDishSurfaceArea_cm2(flask, mydb)
-    dishCount = .readCellSegmentationsOutput(id= id, cellLine = cellLine, dishSurfaceArea_cm2 = dishSurfaceArea_cm2, cellCount = cellCount);
+    dish = .readCellSegmentationsOutput(id= id, cellLine = cellLine, dishSurfaceArea_cm2 = dishSurfaceArea_cm2, cellCount = cellCount);
   }
   if(is.null(media)){
     media = "NULL"
@@ -23,7 +23,7 @@ init <- function(id, cellLine, cellCount, tx = Sys.time(), media=NULL, flask=NUL
     flask = "NULL"
   }
   stmt = paste0("INSERT INTO Passaging (id, cellLine, event, date, cellCount, passage, flask, media) ",
-                "VALUES ('",id ,"', '",cellLine,"', 'harvest', '",tx,"', ",dishCount,", ", 1,", ",flask,", ", media, ");")
+                "VALUES ('",id ,"', '",cellLine,"', 'harvest', '",tx,"', ",dish$dishCount,", ", 1,", ",flask,", ", media, ");")
   rs = dbSendQuery(mydb, stmt)
   
   dbClearResult(dbListResults(mydb)[[1]])
@@ -352,7 +352,7 @@ plotLiquidNitrogenBox <- function(rack, row){
   
   dishSurfaceArea_cm2 = .readDishSurfaceArea_cm2(flask, mydb)
   
-  dishCount = .readCellSegmentationsOutput(id= id, cellLine = kids$cellLine, dishSurfaceArea_cm2 = dishSurfaceArea_cm2, cellCount = cellCount, excludeOption=excludeOption);
+  dish = .readCellSegmentationsOutput(id= id, cellLine = kids$cellLine, dishSurfaceArea_cm2 = dishSurfaceArea_cm2, cellCount = cellCount, excludeOption=excludeOption);
   
   ### Insert
   passage = kids$passage
@@ -360,9 +360,11 @@ plotLiquidNitrogenBox <- function(rack, row){
     passage = passage+1
   }
   ## @TODO: remove
-  # stmt = paste0("update Passaging set cellCount = ",dishCount," where id='",id,"';")
-  stmt = paste0("INSERT INTO Passaging (id, passaged_from_id1, event, date, cellCount, passage, flask, media) ",
-                "VALUES ('",id ,"', '",from,"', '",event,"', '",tx,"', ",dishCount,", ", passage,", ",flask,", ", kids$media, ");")
+  stmt = paste0("update Passaging set correctedCount = ",dish$dishCount," where id='",id,"';")
+  rs = dbSendQuery(mydb, stmt)
+  stmt = paste0("update Passaging set areaOccupied_cm2 = ",dish$dishAreaOccupied," where id='",id,"';")
+  # stmt = paste0("INSERT INTO Passaging (id, passaged_from_id1, event, date, cellCount, passage, flask, media, areaOccupied_cm2) ",
+  #               "VALUES ('",id ,"', '",from,"', '",event,"', '",tx,"', ",dish$dishCount,", ", passage,", ",flask,", ", kids$media,", ",dish$dishAreaOccupied, ");")
   rs = dbSendQuery(mydb, stmt)
   
   dbClearResult(dbListResults(mydb)[[1]])
@@ -450,32 +452,21 @@ plotLiquidNitrogenBox <- function(rack, row){
   
   
   ## Read automated image analysis output
-  cellCounts = matrix(NA,length(f),2);
-  colnames(cellCounts) = c("areaCount","area_cm2")
+  
+  cellCounts = matrix(NA,length(f),7);
+  colnames(cellCounts) = c("areaCount","area_cm2","areaOccupied","correctedCount","notFilteredCells","filteredFrac","meanSize")
   rownames(cellCounts) = sapply(f, function(x) fileparts(x)$name)
   # pdf(OUTSEGF)
   for(i in 1:length(f)){
-    dm = read.table(f[i],sep="\t", check.names = F, stringsAsFactors = F, header = T)
     anno = read.table(f_a[i],sep="\t", check.names = T, stringsAsFactors = F, header = T)
     colnames(anno) = tolower(colnames(anno))
-    areaCount = nrow(dm)
     area_cm2 = anno$`area.µm.2`[1]*UM2CM^2
-    cellCounts[fileparts(f[i])$name,] = c(areaCount, area_cm2)
-    # ## Visualize
-    # ## @TODO: Delete
-    # if(!file.exists(f_o[i])){
-    #   la=raster::raster(f_i[i])
-    #   ROI <- as(raster::extent(100, 1900, la@extent@ymax - 1200, la@extent@ymax - 100), 'SpatialPolygons')
-    #   la_ <- raster::crop(la, ROI)
-    #   raster::plot(la_, ann=FALSE,axes=FALSE, useRaster=T,legend=F)
-    #   mtext(fileparts(f_i[i])$name, cex=1)
-    #   points(dm$`Centroid X µm`,la@extent@ymax - dm$`Centroid Y µm`, col="black", pch=20, cex=0.3)
-    # }else{
-    #   img <- magick::image_read(f_o[i])
-    #   plot(img)
-    #   mtext(fileparts(f_o[i])$name, cex=1)
-    # }
+    cellCounts[fileparts(f[i])$name,"area_cm2"] = area_cm2
+    ## Use cell features to postprocess results
+    tmp=.postprocessSegmentationOutput(fileparts(f[i])$pathstr, fileparts(f[i])$name)
+    cellCounts[fileparts(f[i])$name,names(tmp)]=unlist(tmp)
   }
+  print(cellCounts)
   # dev.off()
   # file.copy(OUTSEGF, paste0(TMP_DIR,filesep) )
   
@@ -524,16 +515,25 @@ plotLiquidNitrogenBox <- function(rack, row){
     }
   }
   
+  ## @TODO: fix and include
+  ## @TODO: only for NCI-N87: run correction
+  # Exclude images with unsuccessful filtering
+  # cellCounts=cellCounts[apply(!is.na(cellCounts), 1,all),]
   
   ## Calculate cell count per dish
   area2dish = dishSurfaceArea_cm2 / sum(cellCounts[,"area_cm2"])
-  dishCount = round(sum(cellCounts[,"areaCount"]) * area2dish)
+  dishCount = round(sum(cellCounts[,"correctedCount"]) * area2dish)
+  dishAreaOccupied = sum(cellCounts[,"areaOccupied"]) * UM2CM^2 * area2dish
   print(paste("Estimated number of cells in entire flask at",dishCount), quote = F)
   
   if(!is.na(cellCount) && (dishCount/cellCount > 2 || dishCount/cellCount <0.5)){
     warning(paste0("Automated image analysis deviates from input cell count by more than a factor of 2. CellCount set to the former (",dishCount," cells)"))
   }
-  return(dishCount)
+  
+  ## @TODO: remove
+  print(unlist(list(dishCount=dishCount, dishAreaOccupied=dishAreaOccupied)))
+  
+  return(list(dishCount=dishCount, dishAreaOccupied=dishAreaOccupied))
 }
 
 
@@ -727,4 +727,59 @@ plotLiquidNitrogenBox <- function(rack, row){
               "  ]",
               "}", sep="\n" )
   return(prj)
+}
+
+.postprocessSegmentationOutput <- function(SEGDIR, fileid, eps=0.15, minPts=2, MAXSIZE=22^2, MINSIZE=8^2){
+  dm=read.csv(paste0(SEGDIR, filesep, fileid,".csv"),sep="\t",check.names = F)
+  dm=dm[,sapply(colnames(dm), function(x) is.numeric(dm[,x]))]
+  # sapply(colnames(dm),  function(x) try(hist(dm[,x],xlab=x)))
+  
+  ## Z-score
+  la=apply(dm, 2, function(x) (x - mean(x,na.rm=T))/sd(x,na.rm=T))
+  la=as.data.frame(la)
+  
+  ## UMAP
+  pdf(paste0(SEGDIR,filesep,"../Images/",fileid,"_overlay.pdf"))
+  a=umap::umap(la)
+  la$col=round(1+la[,'Cell: Area']-min(la[,'Cell: Area']))
+  ## Unsupervissed clustering
+  cl=dbscan::dbscan(a$layout, eps = eps, minPts = minPts)
+  col=rainbow(max(cl$cluster)*1.2)
+  cl$cluster=cl$cluster+1
+  plot(a$layout,pch=20, col=col[cl$cluster])
+  dm$cluster=cl$cluster
+  boxplot(dm$`Cell: Area`~dm$cluster)
+  ## cells to highlight
+  stats1=.grpstats(dm,dm$cluster,"quantile",0.9)$quantile
+  stats2=.grpstats(dm,dm$cluster,"quantile",0.1)$quantile
+  cte=stats1[stats1[,"Cell: Area"]>MAXSIZE ,"cluster"]
+  cte=c(cte, stats2[stats2[,"Cell: Area"]>MAXSIZE,"cluster"])
+  
+  ## Correct cell count
+  dm$filtered=dm$cluster %in% cte
+  Z = dm[!dm$filtered,]; ## Cells not filtered
+  A_z = sum(Z$`Cell: Area`);	## These Z unfiltered cells occupy an area A_z 
+  A_e = sum(dm[dm$filtered,"Cell: Area"]); ##	Filtered cells occupy an area A_e 
+  S=mean(Z$`Cell: Area`) ## calculate average size of unfiltered cells: S
+  correctedCount = A_e/S # estimate how many cells there are in A_e as A_e/S
+  correctedCount = correctedCount+nrow(Z) ##	Record total number of cells Z+A_e/S 
+  areaOccupied = sum(dm$`Cell: Area`)
+  
+  ## Overlay on image segmentation
+  dm_=dm[dm$filtered,]; #Filtered cells
+  ia=raster::raster(paste0(SEGDIR,filesep,"../Images/",fileid,"_overlay.tif"))
+  ROI <- as(raster::extent(100, 1900, ia@extent@ymax - 1200, ia@extent@ymax - 100), 'SpatialPolygons')
+  ia_ <- raster::crop(ia, ROI)
+  raster::plot(ia_, ann=FALSE,axes=FALSE, useRaster=T,legend=F)
+  points(dm_$`Centroid X µm`,ia@extent@ymax - dm_$`Centroid Y µm`, col="black", pch=20, cex=0.63)
+  # replot umap
+  tmp=a$layout[rownames(la) %in% rownames(dm_),]
+  col=rainbow(max(la$col))
+  plot(a$layout,pch=20, col=col[la$col])
+  points(tmp)
+  legend("topright", as.character(1:length(col)),fill=col)
+  dev.off()
+  o=list(areaCount=nrow(dm), correctedCount=correctedCount, areaOccupied=areaOccupied, notFilteredCells=nrow(Z),filteredFrac=sum(dm$filtered)/nrow(dm),meanSize=S)
+  print(unlist(o))
+  return(o)
 }
