@@ -464,7 +464,9 @@ plotLiquidNitrogenBox <- function(rack, row){
     cellCounts[fileparts(f[i])$name,"area_cm2"] = area_cm2
     ## Use cell features to postprocess results
     tmp=.postprocessSegmentationOutput(fileparts(f[i])$pathstr, fileparts(f[i])$name)
-    cellCounts[fileparts(f[i])$name,names(tmp)]=unlist(tmp)
+    cellCounts[fileparts(f[i])$name, names(tmp$stats)]=unlist(tmp$stats)
+    ## Re-save detections to include filter status
+    write.table(tmp$dm, f[i], quote=F,sep="\t")
   }
   print(cellCounts)
   # dev.off()
@@ -781,5 +783,5 @@ plotLiquidNitrogenBox <- function(rack, row){
   dev.off()
   o=list(areaCount=nrow(dm), correctedCount=correctedCount, areaOccupied=areaOccupied, notFilteredCells=nrow(Z),filteredFrac=sum(dm$filtered)/nrow(dm),meanSize=S)
   print(unlist(o))
-  return(o)
+  return(list(stats=o,dm=dm))
 }
