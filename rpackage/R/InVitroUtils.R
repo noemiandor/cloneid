@@ -401,12 +401,14 @@ plotLiquidNitrogenBox <- function(rack, row){
   ## Copy raw images to temporary directory:
   unlink(TMP_DIR,recursive=T)
   dir.create(TMP_DIR)
-  f_i = list.files("~/CellSegmentations", pattern = paste0("^",id,"_10x_ph_"), full.names = T)
+  f_i = list.files("~/CellSegmentations", pattern = paste0("^",id,"_"), full.names = T)
+  f_i = grep("x_ph_",f_i,value=T)
   f_i = grep(".tif$",f_i,value=T)
   file.copy(f_i, TMP_DIR)
   ## Delete output files from prior runs:
   for(subfolder in c("Annotations","Images","DetectionResults")){
-    f = list.files(paste0(CELLSEGMENTATIONS_DIR,subfolder), pattern = paste0(id,"_10x_ph_"), full.names = T)
+    f = list.files(paste0(CELLSEGMENTATIONS_DIR,subfolder), pattern = paste0(id,"_"), full.names = T)
+    f = grep("x_ph_",f,value=T)
     file.remove(f)
   }
   
@@ -442,10 +444,11 @@ plotLiquidNitrogenBox <- function(rack, row){
   f = c()
   while(length(f)<length(f_i)){
     Sys.sleep(3)
-    f = list.files(paste0(CELLSEGMENTATIONS_DIR,"DetectionResults"), pattern = paste0(id,"_10x_ph_"), full.names = T)
+    f = list.files(paste0(CELLSEGMENTATIONS_DIR,"DetectionResults"), pattern = paste0(id,"_"), full.names = T)
+    f = grep("x_ph_",f,value=T)
   }
-  f_a = list.files(paste0(CELLSEGMENTATIONS_DIR,"Annotations"), pattern = paste0(id,"_10x_ph_"), full.names = T)
-  f_o = list.files(paste0(CELLSEGMENTATIONS_DIR,"Images"), pattern = paste0(id,"_10x_ph_"), full.names = T)
+  f_a = list.files(paste0(CELLSEGMENTATIONS_DIR,"Annotations"), pattern = paste0(id,"_"), full.names = T)
+  f_o = list.files(paste0(CELLSEGMENTATIONS_DIR,"Images"), pattern = paste0(id,"_"), full.names = T)
   print(paste0("QPath output found for ",fileparts(f[1])$name," and ",(length(f)-1)," other image files."), quote = F)
   
   
@@ -542,7 +545,7 @@ plotLiquidNitrogenBox <- function(rack, row){
   runPlugin = "runPlugin('qupath.imagej.detect.cells.WatershedCellDetection', '{\"detectionImage\": \"Red\",  \"backgroundRadius\": 15.0,  \"medianRadius\": 0.0,  \"sigma\": 3.0,  \"minArea\": 10.0,  \"maxArea\": 1000.0,  \"threshold\":0.09,  \"watershedPostProcess\": true,  \"cellExpansion\": 5.0,  \"includeNuclei\": true,  \"smoothBoundaries\": false,  \"makeMeasurements\": true}');"
   # # NCI-N87 pipeline:
   if(cellLine=="NCI-N87"){
-    runPlugin = "runPlugin('qupath.imagej.detect.cells.WatershedCellDetection', '{\"detectionImageBrightfield\": \"Hematoxylin OD\",  \"requestedPixelSizeMicrons\": 0.5,  \"backgroundRadiusMicrons\": 8.0,  \"medianRadiusMicrons\": 0.0,  \"sigmaMicrons\": 1.5,  \"minAreaMicrons\": 50.0,  \"maxAreaMicrons\": 1200.0,  \"threshold\": 0.09,  \"maxBackground\": 2.0,  \"watershedPostProcess\": false,  \"cellExpansionMicrons\": 5.0,  \"includeNuclei\": false,  \"smoothBoundaries\": true,  \"makeMeasurements\": true}');"
+    runPlugin = "runPlugin('qupath.imagej.detect.cells.WatershedCellDetection', '{\"detectionImageBrightfield\": \"Hematoxylin OD\",  \"requestedPixelSizeMicrons\": 0.5,  \"backgroundRadiusMicrons\": 8.0,  \"medianRadiusMicrons\": 0.0,  \"sigmaMicrons\": 1.5,  \"minAreaMicrons\": 40.0,  \"maxAreaMicrons\": 400.0,  \"threshold\": 0.09,  \"maxBackground\": 3.0,  \"watershedPostProcess\": false,  \"cellExpansionMicrons\": 5.0,  \"includeNuclei\": false,  \"smoothBoundaries\": true,  \"makeMeasurements\": true}');"
   }
   # HGC-27 pipeline:
   if(cellLine=="HGC-27"){
