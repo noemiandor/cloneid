@@ -385,6 +385,7 @@ plotLiquidNitrogenBox <- function(rack, row){
   QSCRIPT = "~/Downloads/qpscript/runDetectionROI.groovy"
   CELLPOSE_MODEL=list.files(paste0(find.package("cloneid"),filesep,"python"),pattern = "cellpose_residual", full.names=T)
   CELLPOSE_SCRIPT=paste0(find.package("cloneid"),filesep,"python/GetCount_cellPose.py")
+  PREPROCESS_SCRIPT=paste0(find.package("cloneid"),filesep,"python/preprocessing.py")
   QCSTATS_SCRIPT=paste0(find.package("cloneid"),filesep,"python/QC_Statistics.py")
   # OUTSEGF=paste0(CELLSEGMENTATIONS_DIR,"Images",filesep,id,"_segmentations.pdf")
   suppressWarnings(dir.create(paste0(CELLSEGMENTATIONS_DIR,"DetectionResults")))
@@ -412,6 +413,13 @@ plotLiquidNitrogenBox <- function(rack, row){
     file.remove(f)
   }
   
+  
+  ## Preprocessing
+  for(x in list.files(TMP_DIR, pattern = ".tif", full.names = T)){
+    cmd = paste0("python3",PREPROCESS_SCRIPT, x, cellLine)
+    system(cmd)
+  }
+  
   ## @TODO: use cellpose for all cell lines 
   if(cellLine!="HGC-27"){
     ## Call QuPath for images inside temp dir:
@@ -420,8 +428,8 @@ plotLiquidNitrogenBox <- function(rack, row){
     cmd = paste0("/Applications/QuPath",qpversion,".app/Contents/MacOS/QuPath",qpversion," script ", QSCRIPT, " -p ", QUPATH_PRJ)
     print(cmd, quote = F)
     system(cmd)
-  }else{
-    ## Call CellPose for images inside temp dir 
+  } else{
+    ## Call CellPose for images inside temp dir
     # virtualenv_list()
     source_python(CELLPOSE_SCRIPT)
     run(TMP_DIR,normalizePath(CELLPOSE_MODEL),TMP_DIR,".tif")
@@ -452,7 +460,6 @@ plotLiquidNitrogenBox <- function(rack, row){
   
   
   ## Read automated image analysis output
-  
   cellCounts = matrix(NA,length(f),7);
   colnames(cellCounts) = c("areaCount","area_cm2","areaOccupied","correctedCount","notFilteredCells","filteredFrac","meanSize")
   rownames(cellCounts) = sapply(f, function(x) fileparts(x)$name)
@@ -468,7 +475,6 @@ plotLiquidNitrogenBox <- function(rack, row){
     ## Re-save detections to include filter status
     write.table(tmp$dm, f[i], quote=F,sep="\t")
   }
-  print(cellCounts)
   # dev.off()
   # file.copy(OUTSEGF, paste0(TMP_DIR,filesep) )
   
@@ -520,7 +526,7 @@ plotLiquidNitrogenBox <- function(rack, row){
   ## @TODO: fix and include
   ## @TODO: only for NCI-N87: run correction
   # Exclude images with unsuccessful filtering
-  # cellCounts=cellCounts[apply(!is.na(cellCounts), 1,all),]
+  cellCounts=cellCounts[apply(!is.na(cellCounts), 1,all),,drop=F]
   
   ## Calculate cell count per dish
   area2dish = dishSurfaceArea_cm2 / sum(cellCounts[,"area_cm2"])
@@ -541,14 +547,18 @@ plotLiquidNitrogenBox <- function(rack, row){
 
 .QuPathScript <- function(qpdir, cellLine){
   # Standard pipeline:
-  runPlugin = "runPlugin('qupath.imagej.detect.cells.WatershedCellDetection', '{\"detectionImage\": \"Red\",  \"backgroundRadius\": 15.0,  \"medianRadius\": 0.0,  \"sigma\": 3.0,  \"minArea\": 10.0,  \"maxArea\": 1000.0,  \"threshold\":0.09,  \"watershedPostProcess\": true,  \"cellExpansion\": 5.0,  \"includeNuclei\": true,  \"smoothBoundaries\": false,  \"makeMeasurements\": true}');"
+  runPlugin = "runPlugin('qupath.imagej.detect.cells.WatershedCellDetection', '{\"detectionImageBrightfield\": \"Hematoxylin OD\",  \"requestedPixelSizeMicrons\": 1.0,  \"backgroundRadiusMicrons\": 15.0,  \"medianRadiusMicrons\": 0.0,  \"sigmaMicrons\": 1.5,  \"minAreaMicrons\": 2.0,  \"maxAreaMicrons\": 1000.0,  \"threshold\": 0.1,  \"maxBackground\": 2.9,  \"watershedPostProcess\": false,  \"cellExpansionMicrons\": 2.5,  \"includeNuclei\": false,  \"smoothBoundaries\": true,  \"makeMeasurements\": true}');"
   # # NCI-N87 pipeline:
   if(cellLine=="NCI-N87"){
-    runPlugin = "runPlugin('qupath.imagej.detect.cells.WatershedCellDetection', '{\"detectionImageBrightfield\": \"Hematoxylin OD\",  \"requestedPixelSizeMicrons\": 0.5,  \"backgroundRadiusMicrons\": 8.0,  \"medianRadiusMicrons\": 0.0,  \"sigmaMicrons\": 1.5,  \"minAreaMicrons\": 50.0,  \"maxAreaMicrons\": 1200.0,  \"threshold\": 0.09,  \"maxBackground\": 2.0,  \"watershedPostProcess\": false,  \"cellExpansionMicrons\": 5.0,  \"includeNuclei\": false,  \"smoothBoundaries\": true,  \"makeMeasurements\": true}');"
-  }
-  # HGC-27 pipeline:
-  if(cellLine=="HGC-27"){
+    runPlugin = "runPlugin('qupath.imagej.detect.cells.WatershedCellDetection', '{\"detectionImageBrightfield\": \"Hematoxylin OD\",  \"requestedPixelSizeMicrons\": 0.5,  \"backgroundRadiusMicrons\": 8.0,  \"medianRadiusMicrons\": 0.0,  \"sigmaMicrons\": 1.5,  \"minAreaMicrons\": 40.0,  \"maxAreaMicrons\": 400.0,  \"threshold\": 0.09,  \"maxBackground\": 3.0,  \"watershedPostProcess\": false,  \"cellExpansionMicrons\": 5.0,  \"includeNuclei\": false,  \"smoothBoundaries\": true,  \"makeMeasurements\": true}');"
+  }else if(cellLine=="HGC-27"){
     runPlugin = "runPlugin('qupath.imagej.detect.cells.WatershedCellDetection', '{\"detectionImageBrightfield\": \"Hematoxylin OD\",  \"requestedPixelSizeMicrons\": 0.5,  \"backgroundRadiusMicrons\": 8.0,  \"medianRadiusMicrons\": 0.0,  \"sigmaMicrons\": 1.5,  \"minAreaMicrons\": 90.0,  \"maxAreaMicrons\": 1200.0,  \"threshold\": 0.1,  \"maxBackground\": 2.0,  \"watershedPostProcess\": false,  \"cellExpansionMicrons\": 5.0,  \"includeNuclei\": false,  \"smoothBoundaries\": true,  \"makeMeasurements\": true}');"
+  }else if (cellLine=="SNU-16"){
+    runPlugin = "runPlugin('qupath.imagej.detect.cells.WatershedCellDetection', '{\"detectionImageBrightfield\": \"Hematoxylin OD\",  \"requestedPixelSizeMicrons\": 0.5,  \"backgroundRadiusMicrons\": 8.0,  \"medianRadiusMicrons\": 0.0,  \"sigmaMicrons\": 3.5,  \"minAreaMicrons\": 40.0,  \"maxAreaMicrons\": 800.0,  \"threshold\": 0.1,  \"maxBackground\": 2.0,  \"watershedPostProcess\": false,  \"cellExpansionMicrons\": 5.0,  \"includeNuclei\": false,  \"smoothBoundaries\": true,  \"makeMeasurements\": true}');"
+  }else if (cellLine=="NUGC-4"){
+    runPlugin = "runPlugin('qupath.imagej.detect.cells.WatershedCellDetection', '{\"detectionImageBrightfield\": \"Hematoxylin OD\",  \"requestedPixelSizeMicrons\": 1.0,  \"backgroundRadiusMicrons\": 15.0,  \"medianRadiusMicrons\": 0.0,  \"sigmaMicrons\": 1.5,  \"minAreaMicrons\": 2.0,  \"maxAreaMicrons\": 1000.0,  \"threshold\": 0.1,  \"maxBackground\": 2.9,  \"watershedPostProcess\": false,  \"cellExpansionMicrons\": 2.5,  \"includeNuclei\": false,  \"smoothBoundaries\": true,  \"makeMeasurements\": true}');"
+  }else if(cellLine=="KATOIII"){
+    runPlugin = "runPlugin('qupath.imagej.detect.cells.WatershedCellDetection', '{\"detectionImageBrightfield\": \"Hematoxylin OD\",  \"requestedPixelSizeMicrons\": 0.5,  \"backgroundRadiusMicrons\": 8.0,  \"medianRadiusMicrons\": 0.0,  \"sigmaMicrons\": 1.5,  \"minAreaMicrons\": 40.0,  \"maxAreaMicrons\": 1200.0,  \"threshold\": 0.09,  \"maxBackground\": 3.0,  \"watershedPostProcess\": true,  \"cellExpansionMicrons\": 5.0,  \"includeNuclei\": false,  \"smoothBoundaries\": true,  \"makeMeasurements\": true}');"
   }
   qpdir = normalizePath(qpdir)
   paste(" import static qupath.lib.gui.scripting.QPEx.*"
@@ -731,14 +741,25 @@ plotLiquidNitrogenBox <- function(rack, row){
   return(prj)
 }
 
-.postprocessSegmentationOutput <- function(SEGDIR, fileid, eps=0.15, minPts=2, MAXSIZE=22^2, MINSIZE=8^2){
+.postprocessSegmentationOutput <- function(SEGDIR, fileid, eps=0.15, minPts=2, MAXSIZE=22^2){
   dm=read.csv(paste0(SEGDIR, filesep, fileid,".csv"),sep="\t",check.names = F)
   dm=dm[,sapply(colnames(dm), function(x) is.numeric(dm[,x]))]
   # sapply(colnames(dm),  function(x) try(hist(dm[,x],xlab=x)))
+  if(ncol(dm)<10){
+    warning("Not enough cell detection features for unsupervised clustering", immediate. = T)
+    o=list(areaCount=nrow(dm), correctedCount=nrow(dm), areaOccupied=sum(dm[,"Area µm^2"]), 
+           notFilteredCells=nrow(dm),filteredFrac=0)
+    o$meanSize = o$areaOccupied/o$areaCount
+    print(unlist(o))
+    return(list(stats=o,dm=dm))
+  }
+  
   
   ## Z-score
   la=apply(dm, 2, function(x) (x - mean(x,na.rm=T))/sd(x,na.rm=T))
   la=as.data.frame(la)
+  # la=la[,!colnames(la) %in% c("Centroid X µm", "Centroid Y µm")]
+  la=la[,apply(!is.na(la),2,all)]
   
   ## UMAP
   pdf(paste0(SEGDIR,filesep,"../Images/",fileid,"_overlay.pdf"))
@@ -769,7 +790,9 @@ plotLiquidNitrogenBox <- function(rack, row){
   
   ## Overlay on image segmentation
   dm_=dm[dm$filtered,]; #Filtered cells
-  ia=raster::raster(paste0(SEGDIR,filesep,"../Images/",fileid,"_overlay.tif"))
+  tmp=list.files(paste0(SEGDIR,filesep,"../Images/"), pattern=paste0(fileid,"_overlay*"),full.names = T)
+  tmp = grep(".pdf$", tmp, invert = T, value = T)
+  ia=raster::raster(tmp)
   ROI <- as(raster::extent(100, 1900, ia@extent@ymax - 1200, ia@extent@ymax - 100), 'SpatialPolygons')
   ia_ <- raster::crop(ia, ROI)
   raster::plot(ia_, ann=FALSE,axes=FALSE, useRaster=T,legend=F)

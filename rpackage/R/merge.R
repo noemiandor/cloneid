@@ -1,10 +1,10 @@
-merge<-function(perspectives, specimens, simM="euclidean",t=4){
+merge<-function(perspectives, specimens, simM="euclidean",t=4, mutType="CNV"){
   ##merges either 2 different perspectives on the same specimen OR
   ##the same perspective on 2 or more different specimens
   
   #@TODO: check in database if merge involving these specimens already happened before attempting a new merge
   if(length(perspectives)==1 && length(specimens)>=2){
-    out=.onePerspectiveOnManySpecimens(perspective=perspectives[1], sampleNames=specimens, simM=simM, t=t)
+    out=.onePerspectiveOnManySpecimens(perspective=perspectives[1], sampleNames=specimens, simM=simM, t=t, mutType=mutType)
   }else if(length(perspectives)==2 && (length(specimens)==1 || length(specimens)==2)){
     if(length(specimens)==1){
       specimens=rep(specimens,2)
@@ -17,32 +17,13 @@ merge<-function(perspectives, specimens, simM="euclidean",t=4){
   return(out)
 }
 
-.onePerspectiveOnManySpecimens<-function(perspective="GenomePerspective", sampleNames, simM="hyper", t=4){
-  ##Get xy coordinates, mutated loci & count clones
-  coord=matrix(NA,length(sampleNames),2); 
-  rownames(coord)=sampleNames; colnames(coord)=c("x","y")
-  allMut=c(); allClones=c()
-  patientName=strsplit(sampleNames[1],"*")[[1]]
-  for(s in sampleNames){
-    clones=getSubclones(s,whichP=perspective)
-    coord[s,]=clones[[1]]$getCoordinates(); 
-    for(clone in unlist(clones)){
-      allClones=c(allClones,paste(s,clone$toString()))
-      allMut=c(allMut,clone$getProfile()$getLoci())
-    }
-    patientName=LCS(patientName,strsplit(s,"*")[[1]])$LCS
-  }
-  coord=as.data.frame(coord)
-  allMut=unique(allMut)
-  
-  
-  ##Gather allP: rows:=SPs, cols:=SNVs
-  allP=matrix(0,length(allClones),length(allMut)); rownames(allP)=allClones; colnames(allP)=allMut
-  for(s in sampleNames){
-    p=getSubProfiles(s,perspective) 
-    allP[paste(s, colnames(p)),rownames(p)]=t(p)
-  }
-  # allP=allP[,apply(allP!=0,2,sum,na.rm=T)>1]
+
+.onePerspectiveOnManySpecimens<-function(perspective="GenomePerspective", sampleNames, simM="hyper", t=4, mutType="SNV"){
+  tmp=.gatherGenomicAlterationsAcrossSpecimens(sampleNames, perspective, mutType)
+  allP=tmp$allP
+  allMut=tmp$allMut
+  patientName=tmp$patientName
+  coord=tmp$coord
   
   ###################################
   ####Hierarchical cluster params ###  
@@ -55,7 +36,7 @@ merge<-function(perspectives, specimens, simM="euclidean",t=4){
     DFUN=function(x) dist(x,method=simM)
   }
   
-
+  
   ##########################################
   ####Group into k clusters using simM>=t ##
   sNames=sapply(sapply(rownames(allP),strsplit," "),"[[",1)
@@ -79,7 +60,6 @@ merge<-function(perspectives, specimens, simM="euclidean",t=4){
     spNames=sapply(sapply(ii,strsplit," "),"[[",2)
     sp2clone[c,match(sNames,colnames(sp2clone))]=spNames
   }
-  out=.calculateConsensusProfile(sp2clone,allMut,perspective = perspective)
   
   
   ###################################
@@ -120,6 +100,7 @@ merge<-function(perspectives, specimens, simM="euclidean",t=4){
   return(out)
   
 }
+
 
 .twoPerspectivesOn1Or2Specimens<-function(perspective1="GenomePerspective", perspective2="TranscriptomePerspective", sampleNames, simM="euclidean", t=4){
   # make sure perspective 1 is always genome while 2 is always transcriptome
@@ -338,3 +319,44 @@ merge<-function(perspectives, specimens, simM="euclidean",t=4){
   }
   return(TC)
 }
+
+
+.gatherGenomicAlterationsAcrossSpecimens<-function(sampleNames, perspective, mutType="SNV"){
+  
+  patientName=strsplit(sampleNames[1],"*")[[1]]
+  ##Get xy coordinates, mutated loci & count clones
+  coord=matrix(NA,length(sampleNames),2); 
+  rownames(coord)=sampleNames; colnames(coord)=c("x","y")
+  
+  allMut=c(); allClones=c()
+  for(s in sampleNames){
+    clones=getSubclones(s,whichP=perspective)
+    coord[s,]=clones[[1]]$getCoordinates(); 
+    for(clone in unlist(clones)){
+      allClones=c(allClones,paste(s,clone$toString()))
+      allMut=c(allMut,clone$getProfile()$getLoci())
+    }
+    patientName=LCS(patientName,strsplit(s,"*")[[1]])$LCS
+  }
+  coord=as.data.frame(coord)
+  if(mutType=="SNV"){
+    allMut=unique(allMut)
+  }else{
+    allMut=plyr::count(allMut)
+    allMut=allMut$x[allMut$freq==max(allMut$freq)]
+  }
+  
+  ##Gather allP: rows:=SPs, cols:=SNVs
+  allP=matrix(0,length(allClones),length(allMut)); rownames(allP)=allClones; colnames(allP)=allMut
+  for(s in sampleNames){
+    p=getSubProfiles(s,perspective) 
+    if(mutType=="SNV"){
+      allP[paste(s, colnames(p)),rownames(p)]=t(p)
+    }else{
+      allP[paste(s, colnames(p)),]=t(p[colnames(allP),])
+    }
+  }
+  # allP=allP[,apply(allP!=0,2,sum,na.rm=T)>1]
+  return(list(allP=allP, allMut=allMut, patientName=patientName, coord=coord))
+}
+

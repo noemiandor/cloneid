@@ -33,7 +33,7 @@ getRootID<-function(sampleName, whichP){
   
   whichP_ = gsub("Exome", "", gsub("Genome", "", gsub("Transcriptome", "", whichP)))
   stmt = paste0("select cloneID from ", whichP_, " where whichPerspective='",
-                whichP, "' AND sampleSource='", sampleName, "' AND parent IS NULL")
+                whichP, "' AND origin='", sampleName, "' AND parent IS NULL")
   rs = dbSendQuery(mydb, stmt)
   root = fetch(rs, n = -1)
   return (as.numeric(root$cloneID))
@@ -47,7 +47,7 @@ getCloneColors<-function(sName, whichP = "TranscriptomePerspective",cmap=NULL){
   cloneID = getRootID(sName, whichP)
   
   stmt = paste0("select cloneID from ",whichP_," where parent =",cloneID);
-  # stmt=paste0("select children from ",whichP_," where whichPerspective='",whichP,"' AND sampleSource='",sName,"' AND parent IS NULL")
+  # stmt=paste0("select children from ",whichP_," where whichPerspective='",whichP,"' AND origin='",sName,"' AND parent IS NULL")
   
   mydb = connect2DB()
   rs = dbSendQuery(mydb, stmt)

@@ -43,7 +43,6 @@ public final class CLONEID {
 				+ "?serverTimezone=UTC";
 
 
-		
 		con = DriverManager.getConnection(db_connect_string, db_userid, db_password);
 		stmt = con.createStatement();
 		stmt.executeQuery("USE CLONEID");

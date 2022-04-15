@@ -50,7 +50,7 @@ public final class Manager {
 
 	public static Map<String, Profile> profiles(String sampleName, Perspectives which, boolean includeRoot) throws Exception {
 		String tN = CLONEID.getTableNameForClass(which.name());
-		String selstmt="SELECT size,cloneID from "+tN+" where hasChildren=true AND sampleSource=\'"+sampleName+"\' AND whichPerspective=\'"+which+"\' ORDER BY size DESC;"; 
+		String selstmt="SELECT size,cloneID from "+tN+" where hasChildren=true AND origin=\'"+sampleName+"\' AND whichPerspective=\'"+which+"\' ORDER BY size DESC;"; 
 		return(gatherProfiles(selstmt,which,includeRoot));
 	}
 
@@ -104,7 +104,7 @@ public final class Manager {
 
 	public static Map<String, Clone> display(String sampleName, Perspectives which) throws Exception{
 		String tN = CLONEID.getTableNameForClass(which.name());
-		String selstmt="SELECT cloneID,size from "+tN+" where parent IS NULL AND hasChildren=true AND sampleSource=\'"+sampleName+"\' AND whichPerspective=\'"+which+"\' ORDER BY size DESC;";
+		String selstmt="SELECT cloneID,size from "+tN+" where parent IS NULL AND hasChildren=true AND origin=\'"+sampleName+"\' AND whichPerspective=\'"+which+"\' ORDER BY size DESC;";
 		Map<String, Clone> cloneSizes=gatherForDisplay(selstmt,sampleName, which);
 		return(cloneSizes);
 	}
@@ -148,10 +148,16 @@ public final class Manager {
 	}
 
 	public static void main(String[] args) {
+//		try {
+//			display("GSE117988_MCC_Pre", Perspectives.TranscriptomePerspective);
+//			System.out.println("tmp");
+//		} catch (Exception e2) {
+//			e2.printStackTrace();
+//		}
 		/*
 			String[] sName=args[0].split("\\.");
 			try {
-				display("Rand1_NCI-N87NCI-N87", Perspectives.Identity);
+				display("GSE117988_MCC_Pre", Perspectives.Identity);
 				System.out.println("tmp");
 			} catch (Exception e2) {
 				e2.printStackTrace();
@@ -212,10 +218,10 @@ public final class Manager {
 //			System.out.println(p2.getChildrensSizes());
 			//			p2.save2DB();
 //			display("HGC-27", Perspectives.Identity);
-//			profiles(119963, Perspectives.TranscriptomePerspective, false);
-			TranscriptomePerspective tmp = new TranscriptomePerspective(new File("/Users/4470246/Projects/PMO/MeasuringGIperClone/data/GastricCancerCLs/scRNAseq/C07_190610_LIAYSON//SNU-16_3.sps.cbs"), "CN_Estimate");
-//			TranscriptomePerspective tmp = new TranscriptomePerspective(new File("/Users/4470246/Projects/PMO/MeasuringGIperClone/data/GastricCancerCLs/scRNAseq/C07_190610_LIAYSON//SNU-16_3.0.1914997.sps.cbs"), "Clone_0.191499695181847");
-tmp.save2DB();
+			profiles(144159, Perspectives.TranscriptomePerspective, false);
+			// LAST update(03/21/22)
+//			TranscriptomePerspective tmp = new TranscriptomePerspective(new File("/Users/4470246/Projects/PMO/MeasuringGIperClone/data/GastricCancerCLs/scRNAseq/C07_190610_LIAYSON//SNU-16_3.sps.cbs"), "CN_Estimate");
+//			tmp.save2DB();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
