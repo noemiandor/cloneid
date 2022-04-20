@@ -383,6 +383,7 @@ plotLiquidNitrogenBox <- function(rack, row){
   QSCRIPT = "~/Downloads/qpscript/runDetectionROI.groovy"
   CELLPOSE_MODEL=list.files(paste0(find.package("cloneid"),filesep,"python"),pattern = "cellpose_residual", full.names=T)
   CELLPOSE_SCRIPT=paste0(find.package("cloneid"),filesep,"python/GetCount_cellPose.py")
+  PREPROCESS_SCRIPT=paste0(find.package("cloneid"),filesep,"python/preprocessing.py")
   QCSTATS_SCRIPT=paste0(find.package("cloneid"),filesep,"python/QC_Statistics.py")
   # OUTSEGF=paste0(CELLSEGMENTATIONS_DIR,"Images",filesep,id,"_segmentations.pdf")
   suppressWarnings(dir.create(paste0(CELLSEGMENTATIONS_DIR,"DetectionResults")))
@@ -410,6 +411,12 @@ plotLiquidNitrogenBox <- function(rack, row){
     f = list.files(paste0(CELLSEGMENTATIONS_DIR,subfolder), pattern = paste0(id,"_"), full.names = T)
     f = grep("x_ph_",f,value=T)
     file.remove(f)
+  }
+  
+  ## Preprocessing
+  for(x in list.files(TMP_DIR, pattern = ".tif", full.names = T)){
+    cmd = paste("python3",PREPROCESS_SCRIPT, x, cellLine)
+    system(cmd)
   }
   
   ## @TODO: use cellpose for all cell lines 
@@ -598,7 +605,6 @@ plotLiquidNitrogenBox <- function(rack, row){
         ," "
         ," def filename = entry.getImageName() + '.csv'"
         , "// @TODO: read this info directly from .tif metadata"
-        ,"if(pixelWidth == Double.NaN){"
         ," if (filename.contains('_20x_')){"
         ,"   print('20x data');"
         ,"   PixelWidth_new = 200/433.77;"
@@ -615,7 +621,6 @@ plotLiquidNitrogenBox <- function(rack, row){
         ,"   print(PixelWidth_new);"
         ,"   setPixelSizeMicrons(PixelWidth_new, PixelWidth_new);"
         ," }"
-        ,"}"
         ," "
         ," setImageType('BRIGHTFIELD_H_E');"
         ," setColorDeconvolutionStains('{\"Name\" : \"H&E default\", \"Stain 1\" : \"Hematoxylin\", \"Values 1\" : \"0.65111 0.70119 0.29049 \", \"Stain 2\" : \"Eosin\", \"Values 2\" : \"0.2159 0.8012 0.5581 \", \"Background\" : \" 255 255 255 \"}');"
