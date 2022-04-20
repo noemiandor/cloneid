@@ -404,19 +404,21 @@ plotLiquidNitrogenBox <- function(rack, row){
   ## Copy raw images to temporary directory:
   unlink(TMP_DIR,recursive=T)
   dir.create(TMP_DIR)
-  f_i = list.files("~/CellSegmentations", pattern = paste0("^",id,"_10x_ph_"), full.names = T)
+  f_i = list.files("~/CellSegmentations", pattern = paste0("^",id,"_"), full.names = T)
+  f_i = grep("x_ph_",f_i,value=T)
   f_i = grep(".tif$",f_i,value=T)
   file.copy(f_i, TMP_DIR)
   ## Delete output files from prior runs:
   for(subfolder in c("Annotations","Images","DetectionResults")){
-    f = list.files(paste0(CELLSEGMENTATIONS_DIR,subfolder), pattern = paste0(id,"_10x_ph_"), full.names = T)
+    f = list.files(paste0(CELLSEGMENTATIONS_DIR,subfolder), pattern = paste0(id,"_"), full.names = T)
+    f = grep("x_ph_",f,value=T)
     file.remove(f)
   }
   
   
   ## Preprocessing
   for(x in list.files(TMP_DIR, pattern = ".tif", full.names = T)){
-    cmd = paste0("python3",PREPROCESS_SCRIPT, x, cellLine)
+    cmd = paste("python3",PREPROCESS_SCRIPT, x, cellLine)
     system(cmd)
   }
   
@@ -452,10 +454,13 @@ plotLiquidNitrogenBox <- function(rack, row){
   f = c()
   while(length(f)<length(f_i)){
     Sys.sleep(3)
-    f = list.files(paste0(CELLSEGMENTATIONS_DIR,"DetectionResults"), pattern = paste0(id,"_10x_ph_"), full.names = T)
+    f = list.files(paste0(CELLSEGMENTATIONS_DIR,"DetectionResults"), pattern = paste0(id,"_"), full.names = T)
+    f = grep("x_ph_",f,value=T)
   }
-  f_a = list.files(paste0(CELLSEGMENTATIONS_DIR,"Annotations"), pattern = paste0(id,"_10x_ph_"), full.names = T)
-  f_o = list.files(paste0(CELLSEGMENTATIONS_DIR,"Images"), pattern = paste0(id,"_10x_ph_"), full.names = T)
+  f_a = list.files(paste0(CELLSEGMENTATIONS_DIR,"Annotations"), pattern = paste0(id,"_"), full.names = T)
+  f_a = grep("x_ph_",f_a,value=T)
+  f_o = list.files(paste0(CELLSEGMENTATIONS_DIR,"Images"), pattern = paste0(id,"_"), full.names = T)
+  f_o = grep("x_ph_",f_o,value=T)
   print(paste0("QPath output found for ",fileparts(f[1])$name," and ",(length(f)-1)," other image files."), quote = F)
   
   
@@ -601,7 +606,6 @@ plotLiquidNitrogenBox <- function(rack, row){
         ," "
         ," def filename = entry.getImageName() + '.csv'"
         , "// @TODO: read this info directly from .tif metadata"
-        ,"if(pixelWidth == Double.NaN){"
         ," if (filename.contains('_20x_')){"
         ,"   print('20x data');"
         ,"   PixelWidth_new = 200/433.77;"
@@ -618,7 +622,6 @@ plotLiquidNitrogenBox <- function(rack, row){
         ,"   print(PixelWidth_new);"
         ,"   setPixelSizeMicrons(PixelWidth_new, PixelWidth_new);"
         ," }"
-        ,"}"
         ," "
         ," setImageType('BRIGHTFIELD_H_E');"
         ," setColorDeconvolutionStains('{\"Name\" : \"H&E default\", \"Stain 1\" : \"Hematoxylin\", \"Values 1\" : \"0.65111 0.70119 0.29049 \", \"Stain 2\" : \"Eosin\", \"Values 2\" : \"0.2159 0.8012 0.5581 \", \"Background\" : \" 255 255 255 \"}');"
