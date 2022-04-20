@@ -550,13 +550,14 @@ plotLiquidNitrogenBox <- function(rack, row){
   runPlugin = "runPlugin('qupath.imagej.detect.cells.WatershedCellDetection', '{\"detectionImageBrightfield\": \"Hematoxylin OD\",  \"requestedPixelSizeMicrons\": 1.0,  \"backgroundRadiusMicrons\": 15.0,  \"medianRadiusMicrons\": 0.0,  \"sigmaMicrons\": 1.5,  \"minAreaMicrons\": 2.0,  \"maxAreaMicrons\": 1000.0,  \"threshold\": 0.1,  \"maxBackground\": 2.9,  \"watershedPostProcess\": false,  \"cellExpansionMicrons\": 2.5,  \"includeNuclei\": false,  \"smoothBoundaries\": true,  \"makeMeasurements\": true}');"
   # # NCI-N87 pipeline:
   if(cellLine=="NCI-N87"){
-    runPlugin = "runPlugin('qupath.imagej.detect.cells.WatershedCellDetection', '{\"detectionImageBrightfield\": \"Hematoxylin OD\",  \"requestedPixelSizeMicrons\": 0.5,  \"backgroundRadiusMicrons\": 8.0,  \"medianRadiusMicrons\": 0.0,  \"sigmaMicrons\": 1.5,  \"minAreaMicrons\": 40.0,  \"maxAreaMicrons\": 400.0,  \"threshold\": 0.09,  \"maxBackground\": 3.0,  \"watershedPostProcess\": false,  \"cellExpansionMicrons\": 5.0,  \"includeNuclei\": false,  \"smoothBoundaries\": true,  \"makeMeasurements\": true}');"
+    # runPlugin = "runPlugin('qupath.imagej.detect.cells.WatershedCellDetection', '{\"detectionImageBrightfield\": \"Hematoxylin OD\",  \"requestedPixelSizeMicrons\": 0.5,  \"backgroundRadiusMicrons\": 8.0,  \"medianRadiusMicrons\": 0.0,  \"sigmaMicrons\": 1.5,  \"minAreaMicrons\": 40.0,  \"maxAreaMicrons\": 400.0,  \"threshold\": 0.09,  \"maxBackground\": 3.0,  \"watershedPostProcess\": false,  \"cellExpansionMicrons\": 5.0,  \"includeNuclei\": false,  \"smoothBoundaries\": true,  \"makeMeasurements\": true}');"
+    runPlugin = "runPlugin('qupath.imagej.detect.cells.WatershedCellDetection', '{\"detectionImageBrightfield\": \"Hematoxylin OD\",  \"requestedPixelSizeMicrons\": 0.461,  \"backgroundRadiusMicrons\": 12.0,  \"medianRadiusMicrons\": 0.0,  \"sigmaMicrons\": 1,  \"minAreaMicrons\": 5,  \"maxAreaMicrons\": 200.0,  \"threshold\": 0.2,  \"maxBackground\": 3.0,  \"watershedPostProcess\": true,  \"cellExpansionMicrons\": 1.0,  \"includeNuclei\": false,  \"smoothBoundaries\": true,  \"makeMeasurements\": true}');"
   }else if(cellLine=="HGC-27"){
     runPlugin = "runPlugin('qupath.imagej.detect.cells.WatershedCellDetection', '{\"detectionImageBrightfield\": \"Hematoxylin OD\",  \"requestedPixelSizeMicrons\": 0.5,  \"backgroundRadiusMicrons\": 8.0,  \"medianRadiusMicrons\": 0.0,  \"sigmaMicrons\": 1.5,  \"minAreaMicrons\": 90.0,  \"maxAreaMicrons\": 1200.0,  \"threshold\": 0.1,  \"maxBackground\": 2.0,  \"watershedPostProcess\": false,  \"cellExpansionMicrons\": 5.0,  \"includeNuclei\": false,  \"smoothBoundaries\": true,  \"makeMeasurements\": true}');"
   }else if (cellLine=="SNU-16"){
     runPlugin = "runPlugin('qupath.imagej.detect.cells.WatershedCellDetection', '{\"detectionImageBrightfield\": \"Hematoxylin OD\",  \"requestedPixelSizeMicrons\": 0.5,  \"backgroundRadiusMicrons\": 8.0,  \"medianRadiusMicrons\": 0.0,  \"sigmaMicrons\": 3.5,  \"minAreaMicrons\": 40.0,  \"maxAreaMicrons\": 800.0,  \"threshold\": 0.1,  \"maxBackground\": 2.0,  \"watershedPostProcess\": false,  \"cellExpansionMicrons\": 5.0,  \"includeNuclei\": false,  \"smoothBoundaries\": true,  \"makeMeasurements\": true}');"
-  }else if (cellLine=="NUGC-4"){
-    runPlugin = "runPlugin('qupath.imagej.detect.cells.WatershedCellDetection', '{\"detectionImageBrightfield\": \"Hematoxylin OD\",  \"requestedPixelSizeMicrons\": 1.0,  \"backgroundRadiusMicrons\": 15.0,  \"medianRadiusMicrons\": 0.0,  \"sigmaMicrons\": 1.5,  \"minAreaMicrons\": 2.0,  \"maxAreaMicrons\": 1000.0,  \"threshold\": 0.1,  \"maxBackground\": 2.9,  \"watershedPostProcess\": false,  \"cellExpansionMicrons\": 2.5,  \"includeNuclei\": false,  \"smoothBoundaries\": true,  \"makeMeasurements\": true}');"
+  }else  if(cellLine=="NUGC-4"){
+    runPlugin = "runPlugin('qupath.imagej.detect.cells.WatershedCellDetection', '{\"detectionImageBrightfield\": \"Hematoxylin OD\",  \"requestedPixelSizeMicrons\": 0.922,  \"backgroundRadiusMicrons\": 8.0,  \"medianRadiusMicrons\": 2.0,  \"sigmaMicrons\": 1.5,  \"minAreaMicrons\": 10.0,  \"maxAreaMicrons\": 200.0,  \"threshold\": 0.1,  \"maxBackground\": 2.9,  \"watershedPostProcess\": true,  \"cellExpansionMicrons\": 2.5,  \"includeNuclei\": false,  \"smoothBoundaries\": true,  \"makeMeasurements\": true}');"
   }else if(cellLine=="KATOIII"){
     runPlugin = "runPlugin('qupath.imagej.detect.cells.WatershedCellDetection', '{\"detectionImageBrightfield\": \"Hematoxylin OD\",  \"requestedPixelSizeMicrons\": 0.5,  \"backgroundRadiusMicrons\": 8.0,  \"medianRadiusMicrons\": 0.0,  \"sigmaMicrons\": 1.5,  \"minAreaMicrons\": 40.0,  \"maxAreaMicrons\": 1200.0,  \"threshold\": 0.09,  \"maxBackground\": 3.0,  \"watershedPostProcess\": true,  \"cellExpansionMicrons\": 5.0,  \"includeNuclei\": false,  \"smoothBoundaries\": true,  \"makeMeasurements\": true}');"
   }
@@ -597,14 +598,27 @@ plotLiquidNitrogenBox <- function(rack, row){
         ," double pixelWidth = cal.getPixelWidthMicrons();"
         ," double pixelHeight = cal.getPixelHeightMicrons();"
         ," "
-        ," print(pixelWidth);"
-        ," print(pixelHeight);"
         ," "
-        ," "
-        ," if(pixelWidth == Double.NaN){"
-        ,"     setPixelSizeMicrons(PixelWidth_new, PixelWidth_new);"
+        ," def filename = entry.getImageName() + '.csv'"
+        , "// @TODO: read this info directly from .tif metadata"
+        ,"if(pixelWidth == Double.NaN){"
+        ," if (filename.contains('_20x_')){"
+        ,"   print('20x data');"
+        ,"   PixelWidth_new = 200/433.77;"
+        ,"   print(PixelWidth_new);"
+        ,"   setPixelSizeMicrons(PixelWidth_new, PixelWidth_new);"
+        ," }else if (filename.contains('_10x_')){"
+        ,"   print('10x data');"
+        ,"   PixelWidth_new = 400/433.77;"
+        ,"   print(PixelWidth_new);"
+        ,"   setPixelSizeMicrons(PixelWidth_new, PixelWidth_new);"
+        ," }else if (filename.contains('_40x_')){"
+        ,"   print('40x data');"
+        ,"   PixelWidth_new = 100/433.77;"
+        ,"   print(PixelWidth_new);"
+        ,"   setPixelSizeMicrons(PixelWidth_new, PixelWidth_new);"
         ," }"
-        ," "
+        ,"}"
         ," "
         ," setImageType('BRIGHTFIELD_H_E');"
         ," setColorDeconvolutionStains('{\"Name\" : \"H&E default\", \"Stain 1\" : \"Hematoxylin\", \"Values 1\" : \"0.65111 0.70119 0.29049 \", \"Stain 2\" : \"Eosin\", \"Values 2\" : \"0.2159 0.8012 0.5581 \", \"Background\" : \" 255 255 255 \"}');"
@@ -617,7 +631,6 @@ plotLiquidNitrogenBox <- function(rack, row){
         ," selectAnnotations();"
         , runPlugin
         ," "
-        ," def filename = entry.getImageName() + '.csv'"
         ," selectDetections()"
         , paste0("def pathDetection = buildFilePath('",qpdir,"/pred');")
         , paste0("def pathAnnotation = buildFilePath('",qpdir,"/cellpose_count')")
