@@ -547,26 +547,30 @@ plotLiquidNitrogenBox <- function(rack, row){
 }
 
 
+
+
 .QuPathScript <- function(qpdir, cellLine){
   # Standard pipeline:
-  runPlugin = "runPlugin('qupath.imagej.detect.cells.WatershedCellDetection', '{\"detectionImage\": \"Red\",  \"backgroundRadius\": 15.0,  \"medianRadius\": 0.0,  \"sigma\": 3.0,  \"minArea\": 10.0,  \"maxArea\": 1000.0,  \"threshold\":0.09,  \"watershedPostProcess\": true,  \"cellExpansion\": 5.0,  \"includeNuclei\": true,  \"smoothBoundaries\": false,  \"makeMeasurements\": true}');"
+  runPlugin = "runPlugin('qupath.imagej.detect.cells.WatershedCellDetection', '{\"detectionImageBrightfield\": \"Hematoxylin OD\",  \"requestedPixelSizeMicrons\": 1.0,  \"backgroundRadiusMicrons\": 15.0,  \"medianRadiusMicrons\": 0.0,  \"sigmaMicrons\": 1.5,  \"minAreaMicrons\": 2.0,  \"maxAreaMicrons\": 1000.0,  \"threshold\": 0.1,  \"maxBackground\": 2.9,  \"watershedPostProcess\": false,  \"cellExpansionMicrons\": 2.5,  \"includeNuclei\": false,  \"smoothBoundaries\": true,  \"makeMeasurements\": true}');"
   # # NCI-N87 pipeline:
   if(cellLine=="NCI-N87"){
     # runPlugin = "runPlugin('qupath.imagej.detect.cells.WatershedCellDetection', '{\"detectionImageBrightfield\": \"Hematoxylin OD\",  \"requestedPixelSizeMicrons\": 0.5,  \"backgroundRadiusMicrons\": 8.0,  \"medianRadiusMicrons\": 0.0,  \"sigmaMicrons\": 1.5,  \"minAreaMicrons\": 40.0,  \"maxAreaMicrons\": 400.0,  \"threshold\": 0.09,  \"maxBackground\": 3.0,  \"watershedPostProcess\": false,  \"cellExpansionMicrons\": 5.0,  \"includeNuclei\": false,  \"smoothBoundaries\": true,  \"makeMeasurements\": true}');"
-    runPlugin = "runPlugin('qupath.imagej.detect.cells.WatershedCellDetection', '{\"detectionImageBrightfield\": \"Hematoxylin OD\",  \"requestedPixelSizeMicrons\": 0.461,  \"backgroundRadiusMicrons\": 12.0,  \"medianRadiusMicrons\": 0.0,  \"sigmaMicrons\": 1,  \"minAreaMicrons\": 5,  \"maxAreaMicrons\": 200.0,  \"threshold\": 0.2,  \"maxBackground\": 3.0,  \"watershedPostProcess\": true,  \"cellExpansionMicrons\": 1.0,  \"includeNuclei\": false,  \"smoothBoundaries\": true,  \"makeMeasurements\": true}');"
-  }
-  # HGC-27 pipeline:
-  if(cellLine=="HGC-27"){
+    runPlugin = "runPlugin('qupath.imagej.detect.cells.WatershedCellDetection', '{\"detectionImageBrightfield\": \"Hematoxylin OD\",  \"requestedPixelSizeMicrons\": 0.461,  \"backgroundRadiusMicrons\": 12.0,  \"medianRadiusMicrons\": 0.0,  \"sigmaMicrons\": 1,  \"minAreaMicrons\": 15,  \"maxAreaMicrons\": 200.0,  \"threshold\": 0.2,  \"maxBackground\": 3.0,  \"watershedPostProcess\": true,  \"cellExpansionMicrons\": 3.0,  \"includeNuclei\": false,  \"smoothBoundaries\": true,  \"makeMeasurements\": true}');"
+  }else if(cellLine=="HGC-27"){
     runPlugin = "runPlugin('qupath.imagej.detect.cells.WatershedCellDetection', '{\"detectionImageBrightfield\": \"Hematoxylin OD\",  \"requestedPixelSizeMicrons\": 0.5,  \"backgroundRadiusMicrons\": 8.0,  \"medianRadiusMicrons\": 0.0,  \"sigmaMicrons\": 1.5,  \"minAreaMicrons\": 90.0,  \"maxAreaMicrons\": 1200.0,  \"threshold\": 0.1,  \"maxBackground\": 2.0,  \"watershedPostProcess\": false,  \"cellExpansionMicrons\": 5.0,  \"includeNuclei\": false,  \"smoothBoundaries\": true,  \"makeMeasurements\": true}');"
-  }
-  # NUGC-4 pipeline:
-  if(cellLine=="NUGC-4"){
+  }else if (cellLine=="SNU-16"){
+    runPlugin = "runPlugin('qupath.imagej.detect.cells.WatershedCellDetection', '{\"detectionImageBrightfield\": \"Hematoxylin OD\",  \"requestedPixelSizeMicrons\": 0.5,  \"backgroundRadiusMicrons\": 8.0,  \"medianRadiusMicrons\": 0.0,  \"sigmaMicrons\": 3.5,  \"minAreaMicrons\": 40.0,  \"maxAreaMicrons\": 800.0,  \"threshold\": 0.1,  \"maxBackground\": 2.0,  \"watershedPostProcess\": false,  \"cellExpansionMicrons\": 5.0,  \"includeNuclei\": false,  \"smoothBoundaries\": true,  \"makeMeasurements\": true}');"
+  }else  if(cellLine=="NUGC-4"){
     runPlugin = "runPlugin('qupath.imagej.detect.cells.WatershedCellDetection', '{\"detectionImageBrightfield\": \"Hematoxylin OD\",  \"requestedPixelSizeMicrons\": 0.922,  \"backgroundRadiusMicrons\": 8.0,  \"medianRadiusMicrons\": 2.0,  \"sigmaMicrons\": 1.5,  \"minAreaMicrons\": 10.0,  \"maxAreaMicrons\": 200.0,  \"threshold\": 0.1,  \"maxBackground\": 2.9,  \"watershedPostProcess\": true,  \"cellExpansionMicrons\": 2.5,  \"includeNuclei\": false,  \"smoothBoundaries\": true,  \"makeMeasurements\": true}');"
+  }else if(cellLine=="KATOIII"){
+    runPlugin = "runPlugin('qupath.imagej.detect.cells.WatershedCellDetection', '{\"detectionImageBrightfield\": \"Hematoxylin OD\",  \"requestedPixelSizeMicrons\": 0.5,  \"backgroundRadiusMicrons\": 8.0,  \"medianRadiusMicrons\": 0.0,  \"sigmaMicrons\": 1.5,  \"minAreaMicrons\": 40.0,  \"maxAreaMicrons\": 1200.0,  \"threshold\": 0.09,  \"maxBackground\": 3.0,  \"watershedPostProcess\": true,  \"cellExpansionMicrons\": 5.0,  \"includeNuclei\": false,  \"smoothBoundaries\": true,  \"makeMeasurements\": true}');"
   }
   qpdir = normalizePath(qpdir)
   paste(" import static qupath.lib.gui.scripting.QPEx.*"
         ," import qupath.lib.gui.tools.MeasurementExporter"
         ," import qupath.lib.objects.PathCellObject"
+        ," import java.awt.Color"
+        ," import java.awt.*"
         ," import qupath.lib.objects.PathDetectionObject"
         ," import qupath.lib.gui.viewer.OverlayOptions"
         ," import qupath.lib.gui.viewer.overlays.HierarchyOverlay"
@@ -600,8 +604,6 @@ plotLiquidNitrogenBox <- function(rack, row){
         ," double pixelWidth = cal.getPixelWidthMicrons();"
         ," double pixelHeight = cal.getPixelHeightMicrons();"
         ," "
-        ," print(pixelWidth);"
-        ," print(pixelHeight);"
         ," "
         ," def filename = entry.getImageName() + '.csv'"
         , "// @TODO: read this info directly from .tif metadata"
@@ -657,7 +659,33 @@ plotLiquidNitrogenBox <- function(rack, row){
         ,"    .layers(new HierarchyOverlay(null, new OverlayOptions(), imageData))"
         ,"    .build()"
         ," writeImage(labelServer_rendered, vis_path_instance)"
-        ," "
+        , " "
+        ," //------------------------- Save Masks   ----------------------------------"
+        , "def SaveBinaryMasks4(server,downsample,basename,Path2SaveResults){" 
+        ," int w = (server.getWidth() / downsample) as int" 
+        ," int h = (server.getHeight() / downsample) as int" 
+        ," def img = new BufferedImage(w, h, BufferedImage.TYPE_BYTE_GRAY)" 
+        ," def g2d = img.createGraphics()" 
+        ," g2d.scale(1.0/downsample, 1.0/downsample)" 
+        ," g2d.setColor(Color.WHITE)" 
+        ," for (detection in getDetectionObjects()) {" 
+        ,"  roi = detection.getROI()" 
+        ,"  def shape = roi.getShape()" 
+        ,"  g2d.setPaint(Color.white);" 
+        ,"  g2d.fill(shape)" 
+        ,"  g2d.setStroke(new BasicStroke(4)); // 8-pixel wide pen" 
+        ,"  g2d.setPaint(Color.black);" 
+        ,"  g2d.draw(shape)" 
+        ," }"   
+        ,"   g2d.dispose()"
+        ," "  
+        ,"   // Write the image" 
+        ," def masks_path = buildFilePath(Path2SaveResults,'masks');" 
+        ," mkdirs(masks_path);" 
+        ," mask_path_instance = buildFilePath(masks_path,basename+'.tif');" 
+        ," writeImage(img, mask_path_instance)" 
+        ,"}"
+        , paste0("   SaveBinaryMasks4(server,downsample,basename,'",qpdir,"');") 
         ," "
         ," //*********************** Save Labeled Image Updated Beacuse of the error Noemi Encountered with viewer *********"
         ," //def downsample = 1"
