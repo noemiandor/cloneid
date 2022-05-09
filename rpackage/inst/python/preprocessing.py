@@ -47,9 +47,9 @@ def ApplyGammaCorrection(path2Image,cellLine,th=40):
                 img = gammaCorrection(img)
                 img = equalize_img(img)   
                 img = cv.GaussianBlur(img,(5,5),0) 
-            elif cellLine.startswith('NCI'):
-                img = gammaCorrection(img)
-                img = np.invert(img)
+        #    elif cellLine.startswith('NCI'):
+        #        img = gammaCorrection(img)
+        #        img = np.invert(img)
         # apply inverstion of KATOIII without the need for thresholding         
         if cellLine.startswith('KATO'):
             img = np.invert(img)
