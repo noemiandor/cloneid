@@ -420,7 +420,7 @@ plotLiquidNitrogenBox <- function(rack, row){
   }
   
   ## @TODO: use cellpose for all cell lines 
-  if(cellLine!="HGC-27"){
+  if(!cellLine %in% c("HGC-27","SUM-159")){
     ## Call QuPath for images inside temp dir:
     write(.QuPathScript(qpdir = TMP_DIR, cellLine = cellLine), file=QSCRIPT)
     write(.SaveProject(QUPATH_PRJ, paste0(TMP_DIR,filesep,sapply(f_i, function(x) fileparts(x)$name),".tif")), file=QUPATH_PRJ)
