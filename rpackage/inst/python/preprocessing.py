@@ -43,7 +43,7 @@ def ApplyGammaCorrection(path2Image,cellLine,th=40):
         imgName=ntpath.basename(path2Image) 
         print(np.mean(img))
         if np.mean(img) < th:
-            if cellLine.startswith('HGC'):
+            if cellLine.startswith('HGC') or cellLine.startswith('SUM'):
                 img = gammaCorrection(img)
                 img = equalize_img(img)   
                 img = cv.GaussianBlur(img,(5,5),0) 
