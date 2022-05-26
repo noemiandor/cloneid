@@ -384,11 +384,13 @@ plotLiquidNitrogenBox <- function(rack, row){
   CELLPOSE_MODEL=list.files(paste0(find.package("cloneid"),filesep,"python"),pattern = "cellpose_residual", full.names=T)
   CELLPOSE_SCRIPT=paste0(find.package("cloneid"),filesep,"python/GetCount_cellPose.py")
   PREPROCESS_SCRIPT=paste0(find.package("cloneid"),filesep,"python/preprocessing.py")
+  TISSUESEG_SCRIPT=paste0(find.package("cloneid"),filesep,"python/tissue_seg.py")
   QCSTATS_SCRIPT=paste0(find.package("cloneid"),filesep,"python/QC_Statistics.py")
   # OUTSEGF=paste0(CELLSEGMENTATIONS_DIR,"Images",filesep,id,"_segmentations.pdf")
   suppressWarnings(dir.create(paste0(CELLSEGMENTATIONS_DIR,"DetectionResults")))
   suppressWarnings(dir.create(paste0(CELLSEGMENTATIONS_DIR,"Annotations"))) 
   suppressWarnings(dir.create(paste0(CELLSEGMENTATIONS_DIR,"Images"))); 
+  suppressWarnings(dir.create(paste0(CELLSEGMENTATIONS_DIR,"Confluency"))); 
   suppressWarnings(dir.create("~/Downloads/qpscript"))
   suppressWarnings(dir.create(fileparts(QUPATH_PRJ)$pathstr))
   qpversion = list.files("/Applications", pattern = "QuPath")
@@ -407,7 +409,7 @@ plotLiquidNitrogenBox <- function(rack, row){
   f_i = grep(".tif$",f_i,value=T)
   file.copy(f_i, TMP_DIR)
   ## Delete output files from prior runs:
-  for(subfolder in c("Annotations","Images","DetectionResults")){
+  for(subfolder in c("Annotations","Images","DetectionResults","Confluency")){
     f = list.files(paste0(CELLSEGMENTATIONS_DIR,subfolder), pattern = paste0(id,"_"), full.names = T)
     f = grep("x_ph_",f,value=T)
     file.remove(f)
@@ -419,6 +421,7 @@ plotLiquidNitrogenBox <- function(rack, row){
     system(cmd)
   }
   
+  ## Cell segmentation
   ## @TODO: use cellpose for all cell lines 
   if(!cellLine %in% c("HGC-27","SUM-159")){
     ## Call QuPath for images inside temp dir:
@@ -434,6 +437,15 @@ plotLiquidNitrogenBox <- function(rack, row){
     run(TMP_DIR,normalizePath(CELLPOSE_MODEL),TMP_DIR,".tif")
   }
   
+  ## Tissue segmentation
+  for(x in f_i){
+    tmp=paste0(TMP_DIR,filesep,fileparts(x)$name,".tif")
+    cmd=paste("python3",TISSUESEG_SCRIPT, "-imgPath", tmp," -resultsPath",paste0(TMP_DIR,filesep,"Confluency"))
+    print(cmd, quote = F)
+    system(cmd)
+  }
+  
+  
   ## Add QC statistics
   if(LOADEDENV){
     source_python(QCSTATS_SCRIPT)
@@ -443,8 +455,11 @@ plotLiquidNitrogenBox <- function(rack, row){
   cellPoseOut_csv = list.files(TMP_DIR, recursive = T, pattern = ".csv",full.names = T)
   sapply(grep("pred",cellPoseOut_csv,value = T), function(x) file.copy(x, paste0(CELLSEGMENTATIONS_DIR,"DetectionResults") ))
   sapply(grep("cellpose_count",cellPoseOut_csv,value = T), function(x) file.copy(x, paste0(CELLSEGMENTATIONS_DIR,"Annotations") ))
+  sapply(grep("Confluency",cellPoseOut_csv,value = T), function(x) file.copy(x, paste0(CELLSEGMENTATIONS_DIR,"Confluency") ))
   cellPoseOut_img = list.files(TMP_DIR, recursive = T, pattern = "overlay.",full.names = T)
+  tissuesegOut_img = list.files(TMP_DIR, recursive = T, pattern = "mask.",full.names = T)
   sapply(cellPoseOut_img, function(x) file.copy(x, paste0(CELLSEGMENTATIONS_DIR,"Images") ))
+  sapply(tissuesegOut_img, function(x) file.copy(x, paste0(CELLSEGMENTATIONS_DIR,"Confluency") ))
   
   ## Wait and look for imaging analysis output
   print(paste0("Waiting for ",id," to appear under ",CELLSEGMENTATIONS_DIR," ..."), quote = F)
@@ -456,6 +471,8 @@ plotLiquidNitrogenBox <- function(rack, row){
   }
   f_a = list.files(paste0(CELLSEGMENTATIONS_DIR,"Annotations"), pattern = paste0(id,"_"), full.names = T)
   f_o = list.files(paste0(CELLSEGMENTATIONS_DIR,"Images"), pattern = paste0(id,"_"), full.names = T)
+  f_c = list.files(paste0(CELLSEGMENTATIONS_DIR,"Confluency"), pattern = ".csv", full.names = T)
+  f_c = grep(paste0(id,"_"), f_c, value=T)
   print(paste0("QPath output found for ",fileparts(f[1])$name," and ",(length(f)-1)," other image files."), quote = F)
   
   
@@ -467,8 +484,10 @@ plotLiquidNitrogenBox <- function(rack, row){
   for(i in 1:length(f)){
     dm = read.table(f[i],sep="\t", check.names = F, stringsAsFactors = F, header = T)
     anno = read.table(f_a[i],sep="\t", check.names = T, stringsAsFactors = F, header = T)
+    conf = read.csv(f_c[i])
     colnames(anno) = tolower(colnames(anno))
-    areaCount = nrow(dm)
+    # areaCount = nrow(dm)
+    areaCount = sum(conf$`Area.in.um`)/median(dm$`Cell: Area`)
     area_cm2 = anno$`area.µm.2`[1]*UM2CM^2
     cellCounts[fileparts(f[i])$name,] = c(areaCount, area_cm2)
     # ## Visualize
