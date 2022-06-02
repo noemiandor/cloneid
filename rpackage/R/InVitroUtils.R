@@ -14,7 +14,7 @@ init <- function(id, cellLine, cellCount, tx = Sys.time(), media=NULL, flask=NUL
   dishCount = cellCount;
   if(!is.null(flask)){
     dishSurfaceArea_cm2 = .readDishSurfaceArea_cm2(flask, mydb)
-    dishCount = .readCellSegmentationsOutput(id= id, cellLine = cellLine, dishSurfaceArea_cm2 = dishSurfaceArea_cm2, cellCount = cellCount);
+    dishCount = .readCellSegmentationsOutput(id= id, cellLine = cellLine, dishSurfaceArea_cm2 = dishSurfaceArea_cm2, cellCount = cellCount)$dishCount;
   }
   if(is.null(media)){
     media = "NULL"
@@ -352,7 +352,7 @@ plotLiquidNitrogenBox <- function(rack, row){
   
   dishSurfaceArea_cm2 = .readDishSurfaceArea_cm2(flask, mydb)
   
-  dishCount = .readCellSegmentationsOutput(id= id, cellLine = kids$cellLine, dishSurfaceArea_cm2 = dishSurfaceArea_cm2, cellCount = cellCount, excludeOption=excludeOption);
+  dish = .readCellSegmentationsOutput(id= id, cellLine = kids$cellLine, dishSurfaceArea_cm2 = dishSurfaceArea_cm2, cellCount = cellCount, excludeOption=excludeOption);
   
   ### Insert
   passage = kids$passage
@@ -360,10 +360,15 @@ plotLiquidNitrogenBox <- function(rack, row){
     passage = passage+1
   }
   ## @TODO: remove
-  # stmt = paste0("update Passaging set cellCount = ",dishCount," where id='",id,"';")
+  # stmt = paste0("update Passaging set correctedCount = ",dish$dishCount," where id='",id,"';")
+  # rs = dbSendQuery(mydb, stmt)
   stmt = paste0("INSERT INTO Passaging (id, passaged_from_id1, event, date, cellCount, passage, flask, media) ",
-                "VALUES ('",id ,"', '",from,"', '",event,"', '",tx,"', ",dishCount,", ", passage,", ",flask,", ", kids$media, ");")
-  rs = dbSendQuery(mydb, stmt)
+                "VALUES ('",id ,"', '",from,"', '",event,"', '",tx,"', ",dish$dishCount,", ", passage,", ",flask,", ", kids$media, ");")
+  # stmt = paste0("update Passaging set areaOccupied_um2 = ",dish$dishAreaOccupied," where id='",id,"';")
+  # rs = dbSendQuery(mydb, stmt)
+  # stmt = paste0("update Passaging set cellSize_um2 = ",dish$cellSize," where id='",id,"';")
+  # rs = dbSendQuery(mydb, stmt)
+  
   
   dbClearResult(dbListResults(mydb)[[1]])
   dbDisconnect(mydb)
@@ -423,7 +428,7 @@ plotLiquidNitrogenBox <- function(rack, row){
   
   ## Cell segmentation
   ## @TODO: use cellpose for all cell lines 
-  if(!cellLine %in% c("HGC-27","SUM-159")){
+  if(!cellLine %in% c("HGC-27","SUM-159","SNU-668")){
     ## Call QuPath for images inside temp dir:
     write(.QuPathScript(qpdir = TMP_DIR, cellLine = cellLine), file=QSCRIPT)
     write(.SaveProject(QUPATH_PRJ, paste0(TMP_DIR,filesep,sapply(f_i, function(x) fileparts(x)$name),".tif")), file=QUPATH_PRJ)
@@ -440,7 +445,7 @@ plotLiquidNitrogenBox <- function(rack, row){
   ## Tissue segmentation
   for(x in f_i){
     tmp=paste0(TMP_DIR,filesep,fileparts(x)$name,".tif")
-    cmd=paste("python3",TISSUESEG_SCRIPT, "-imgPath", tmp," -resultsPath",paste0(TMP_DIR,filesep,"Confluency"))
+    cmd=paste("python3",TISSUESEG_SCRIPT, "-imgPath", tmp," -resultsPath",paste0(TMP_DIR,filesep,"Confluency"),"-cellType", cellLine)
     print(cmd, quote = F)
     system(cmd)
   }
@@ -477,19 +482,20 @@ plotLiquidNitrogenBox <- function(rack, row){
   
   
   ## Read automated image analysis output
-  cellCounts = matrix(NA,length(f),2);
-  colnames(cellCounts) = c("areaCount","area_cm2")
+  cellCounts = matrix(NA,length(f),4);
+  colnames(cellCounts) = c("areaCount","area_cm2","dishAreaOccupied", "cellSize_um2")
   rownames(cellCounts) = sapply(f, function(x) fileparts(x)$name)
   # pdf(OUTSEGF)
   for(i in 1:length(f)){
     dm = read.table(f[i],sep="\t", check.names = F, stringsAsFactors = F, header = T)
+    colnames(dm)[colnames(dm)=="Area µm^2"]="Cell: Area"; ## Replace cellPose column name -- @TODO: saeed fix directly in cellposeScript
     anno = read.table(f_a[i],sep="\t", check.names = T, stringsAsFactors = F, header = T)
     conf = read.csv(f_c[i])
     colnames(anno) = tolower(colnames(anno))
-    # areaCount = nrow(dm)
-    areaCount = sum(conf$`Area.in.um`)/median(dm$`Cell: Area`)
+    areaCount = nrow(dm)
+    # areaCount = sum(conf$`Area.in.um`)/median(dm$`Cell: Area`)
     area_cm2 = anno$`area.µm.2`[1]*UM2CM^2
-    cellCounts[fileparts(f[i])$name,] = c(areaCount, area_cm2)
+    cellCounts[fileparts(f[i])$name,] = c(areaCount, area_cm2, sum(conf$`Area.in.um`), median(dm$`Cell: Area`))
     # ## Visualize
     # ## @TODO: Delete
     # if(!file.exists(f_o[i])){
@@ -557,12 +563,14 @@ plotLiquidNitrogenBox <- function(rack, row){
   ## Calculate cell count per dish
   area2dish = dishSurfaceArea_cm2 / sum(cellCounts[,"area_cm2"])
   dishCount = round(sum(cellCounts[,"areaCount"]) * area2dish)
+  dishConfluency = sum(cellCounts[,"dishAreaOccupied"]) * area2dish
+  cellSize = mean(cellCounts[,"cellSize_um2"],na.rm=T)
   print(paste("Estimated number of cells in entire flask at",dishCount), quote = F)
   
   if(!is.na(cellCount) && (dishCount/cellCount > 2 || dishCount/cellCount <0.5)){
     warning(paste0("Automated image analysis deviates from input cell count by more than a factor of 2. CellCount set to the former (",dishCount," cells)"))
   }
-  return(dishCount)
+  return(list(dishCount=dishCount,dishAreaOccupied=dishConfluency, cellSize=cellSize))
 }
 
 

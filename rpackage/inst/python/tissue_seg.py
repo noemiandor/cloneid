@@ -2,7 +2,7 @@
 # Created By Saeed Alahmari, May 26th, 2022  aalahmari.saeed@gmail.com 
 # This code aims to segment tissues in micrscopy images, and provide the area of the segmented tissue in microns.
 #How to run this code: 
-#Type on terminal: python3 tissue_seg.py -imgPath <path2Image> -ResultsPath <path2SaveResults>
+#Type on terminal: python3 tissue_seg.py -imgPath <path2Image> -ResultsPath <path2SaveResults> -cellType NUGC
 from calendar import c
 from imp import C_EXTENSION
 import os 
@@ -13,6 +13,7 @@ from PIL.TiffTags import TAGS
 import numpy as np 
 import pandas as pd 
 import argparse
+from tqdm import tqdm
 
 #path2Images = '.'
 #path2Images = 'NCI-N87_A59_seedT9_20x_ph_tr.tif'
@@ -24,14 +25,17 @@ def fill_holes(image_result):
     h, w = image_result.shape[:2]
     mask = np.zeros((h+2, w+2), np.uint8)
     # Floodfill from point (0, 0)
-    cv2.floodFill(im_floodfill, mask, (0,0), 255)
+    #print(image_result[60,60])
+    cv2.floodFill(im_floodfill, mask, (60,60), 255,flags=8)
+    #plot_image(im_floodfill,'im_floodfill')
     # Invert floodfilled image
     im_floodfill_inv = cv2.bitwise_not(im_floodfill)
+    #plot_image(im_floodfill_inv,'imfloodfill_inv')
     # Combine the two images to get the foreground.
     im_out = image_result | im_floodfill_inv
     return im_out
 
-def get_connected_components(image,mask,pixel_size,ImageName,path2SaveResults):
+def get_connected_components(image,mask,pixel_size,ImageName,path2SaveResults,saveVis):
     ImageName = ImageName.split('.')[0]
     image = cv2.rectangle(image, (100,100), (1900,1200), (0,0,255), 4)
     output = cv2.connectedComponentsWithStats(mask,8,cv2.CV_32S)
@@ -57,7 +61,8 @@ def get_connected_components(image,mask,pixel_size,ImageName,path2SaveResults):
         cv2.circle(vis_image,(int(cX),int(cY)),4,(0,0,255),-1)
         vis_image = cv2.putText(vis_image, 'Area of segmented island in px is '+str(area), (50,50), 3, 
                    1, (0,0,255), 1, cv2.LINE_AA)
-        cv2.imwrite(os.path.join(path2SaveResults,ImageName+'_island_'+str(i)+'_vis.png'),vis_image)
+        if saveVis:
+            cv2.imwrite(os.path.join(path2SaveResults,ImageName+'_island_'+str(i)+'_vis.png'),vis_image)
     df['island_index'] = island_list
     df['Area in um'] = area_list
     df.to_csv(os.path.join(path2SaveResults,ImageName+'.csv'),index=False)
@@ -88,9 +93,10 @@ def get_metadata(path2Image):
                 objective_lens = '40x'
     return objective_lens
 
-def get_mask(path2Images,path2Results):
+def get_mask(path2Images,path2Results,cellType,saveVis):
     image = cv2.imread(path2Images,-1)
     ImageName = path2Images.split('/')[-1]
+    #print(ImageName)
     if ImageName == '':
         ImageName = path2Images
     objectiveLens = get_metadata(path2Images)
@@ -102,16 +108,28 @@ def get_mask(path2Images,path2Results):
         pixel_size = 0.922 / float(2)
     elif objectiveLens == '40x':
         pixel_size = 0.922 / float(4) 
-    
+    name_no_ext = ImageName.split('.tif')[0]
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     blur = cv2.GaussianBlur(gray,(3,3),0.5)
     #cv2.imwrite(ImageName+'_blur.png',blur)
     otsu_threshold, image_result = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-    #cv2.imwrite(ImageName+'_seg_OTSU.png',image_result)
-    kernel = np.ones((9,9),np.uint8)
+    #cv2.imwrite(os.path.join(path2Results,ImageName.split('.tif')[0],name_no_ext+'_seg_OTSU.png'),image_result)
+    
     mask = np.zeros(blur.shape,np.uint8)
-    image_result = cv2.morphologyEx(image_result, cv2.MORPH_CLOSE, kernel,iterations=5)
     mask[100:1200,100:1900] = image_result[100:1200,100:1900]
+    
+    if cellType.startswith('NUGC') or cellType.startswith('KAT'):
+        #kernel = np.ones((2,2),np.uint8)
+        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(2,2))
+        filled_image = fill_holes(mask)
+        mask = cv2.morphologyEx(filled_image, cv2.MORPH_CLOSE, kernel,iterations=11)
+        #cv2.imwrite(os.path.join(path2Results,ImageName.split('.tif')[0],name_no_ext+'_closed_mask.png'),mask)
+        #cv2.imwrite(os.path.join(path2Results,ImageName.split('.tif')[0],name_no_ext+'_filled_mask.png'),filled_image)
+    else:
+        kernel = np.ones((9,9),np.uint8)
+        mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel,iterations=5)
+
+    #mask[100:1200,100:1900] = image_result[100:1200,100:1900]
     #cv2.imwrite(ImageName+'_seg_OTSU_closed.png',image_result)
     
     #cv2.imwrite(ImageName+'_seg_OTSU_holefilled.png',im_out)
@@ -121,18 +139,36 @@ def get_mask(path2Images,path2Results):
         os.makedirs(os.path.join(path2Results,ImageName.split('.')[0]))
     path2SaveResults = os.path.join(path2Results,ImageName.split('.')[0])
     cv2.imwrite(os.path.join(path2SaveResults,ImageName.split('.')[0]+'_mask.png'),mask)
-    get_connected_components(image,mask,pixel_size, ImageName,path2SaveResults)
+    get_connected_components(image,mask,pixel_size, ImageName,path2SaveResults,saveVis)
 #get_mask(path2Images)
+
+
+def loopTroughImages(path2Images,path2Results,cellType,saveVis):
+    for item in tqdm(os.listdir(path2Images)):
+        if not os.path.isfile(os.path.join(path2Images,item)):
+            continue
+        elif item.startswith('.'):
+            continue
+        elif not item.startswith(cellType):
+            continue
+        else:
+            get_mask(os.path.join(path2Images,item),path2Results,cellType,saveVis)
 
 
 def main(parser):
     args = parser.parse_args()
-    get_mask(args.imgPath,args.resultsPath)
+    if os.path.isfile(args.imgPath) and args.imgPath.endswith('.tif'):
+        get_mask(args.imgPath,args.resultsPath,args.cellType.upper(),args.saveVis)
+    elif os.path.isdir(args.imgPath):
+        loopTroughImages(args.imgPath,args.resultsPath,args.cellType.upper(),args.saveVis)
+    
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-
+    # todo add argument for cell-line
     parser.add_argument('-imgPath',required=True,help='Path to an image including image name')
     parser.add_argument('-resultsPath',required=False,default='.',help='Path to save the results')
+    parser.add_argument('-cellType',required=True,help='name of cell type for the images example NUGC, NCI-N87, SNU, etc')
+    parser.add_argument('--saveVis',action='store_true',help='Flag for saving all the visualization for detected tissues, default is False')
     main(parser)
