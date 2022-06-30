@@ -139,6 +139,14 @@ public final class CLONEID {
 	}
 	
 	
+	/**
+	 * 
+	 * @param cloneID
+	 * @param which
+	 * @param onlywithkids -- setting this to true ensures no single cells are returned
+	 * @return
+	 * @throws SQLException
+	 */
 	public int[] getChildrenForParent(int cloneID, Perspectives which, boolean onlywithkids) throws SQLException{
 		String selstmt0="SELECT count(*) from "+CLONEID.getTableNameForClass(which.name())+" where parent="+cloneID;
 		if(onlywithkids) {
