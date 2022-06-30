@@ -79,13 +79,13 @@ public abstract class Clone {
 	 * True if the clone was already found in the database when trying to save it, false otherwise.
 	 */
 	private boolean redundant = false;
-	
-	
+
+
 	/**
 	 * The cell cycle state of the clone
 	 */
 	private String state;
-	
+
 	/**
 	 * Nickname of the clone
 	 */
@@ -150,7 +150,7 @@ public abstract class Clone {
 				cloneI.add(sI);
 				String[] hfeatures=header[sI].split("_");
 				float size=Float.parseFloat(hfeatures[1]); //@TODO: save "_" as part of EXPANDS/LIAYSON interface class
-//				size=(float) Math.min(1-PRECISION, size); //Size 1 should be exclusive to root
+				//				size=(float) Math.min(1-PRECISION, size); //Size 1 should be exclusive to root
 				Clone p_=Clone.getInstance(size, sampleName,whichPerspective,loci);
 				if(hfeatures.length>2){
 					p_.state=hfeatures[2];	
@@ -212,24 +212,24 @@ public abstract class Clone {
 		return profile;
 	}
 
-	
+
 	private void setCellLineOrPatientFor(String origin2) throws SQLException {
-		
+
 		if(!this.getClass().equals(Identity.class)) {
 			((Perspective)this).origin = origin2;
 		}
-		
+
 		CLONEID db= new CLONEID();
 		db.connect();
-		
+
 		String selstmt="SELECT cellLine from Passaging where id = '"+origin2+"';";
 		ResultSet rs =db.getStatement().executeQuery(selstmt);
 		rs.next();
 		this.sampleSource = rs.getString("cellLine");
-		
+
 		db.close();
 	} 
-	
+
 	/**
 	 * Retrieves the properties of this clone to be saved in the database.
 	 * @return a map of the attribute values in a database-compatible format, with keys naming the table columns in the database.
@@ -244,15 +244,15 @@ public abstract class Clone {
 		}
 
 		if(children.size()>0){
-//			String kids="\'";
-//			for (Clone kid: children){
-//				kids+=kid.cloneID+",";
-//			}
-//			kids=Helper.replaceLast(kids, ",", "\'");
-//			map.put( "children", kids);
+			//			String kids="\'";
+			//			for (Clone kid: children){
+			//				kids+=kid.cloneID+",";
+			//			}
+			//			kids=Helper.replaceLast(kids, ",", "\'");
+			//			map.put( "children", kids);
 			map.put( "hasChildren", "true");
 		}else{
-//			map.put( "children", null);
+			//			map.put( "children", null);
 			map.put( "hasChildren", "false");
 		}
 
@@ -290,10 +290,10 @@ public abstract class Clone {
 		if(!c.sampleSource.equals(sampleSource)){
 			throw new IllegalArgumentException();
 		}
-//		//child can't be larger than parent
-//		if(c.size>=this.size){
-//			throw new IllegalArgumentException("Child clone has to be smaller than parent!");
-//		}
+		//		//child can't be larger than parent
+		//		if(c.size>=this.size){
+		//			throw new IllegalArgumentException("Child clone has to be smaller than parent!");
+		//		}
 		c.parent=this; //Counting on call-by-reference effect here to ensure every child has this clone as parent
 		children.add(c);
 	}
@@ -354,13 +354,13 @@ public abstract class Clone {
 						+ this.cloneID+ ", rootID="+this.getRoot().cloneID+" WHERE cloneID=" + c.cloneID;
 				cloneid.getStatement().executeUpdate(updateSTmt);
 			}
-//			String updateSTmt = "UPDATE " + tableName + " SET children="+ map.get("children")+" WHERE cloneID=" + cloneID;
+			//			String updateSTmt = "UPDATE " + tableName + " SET children="+ map.get("children")+" WHERE cloneID=" + cloneID;
 			String updateSTmt = "UPDATE " + tableName + " SET hasChildren=true WHERE cloneID=" + cloneID;
 			cloneid.getStatement().executeUpdate(updateSTmt);
 		}
 
 		cloneid.close();
-		
+
 		//How many clones were not saved:
 		if(this.parent==null && countRedundant()>0){
 			System.out.println(countRedundant()+" clones already existed in database and were not saved again.");
@@ -436,7 +436,12 @@ public abstract class Clone {
 		if(!sampleSource.equals(clone.sampleSource)){
 			throw new IllegalArgumentException();
 		}
-		this.parent=clone;
+		// clone can't have itself as parent
+		if(this.cloneID==clone.cloneID) {
+			this.parent=null;
+		}else {
+			this.parent=clone;
+		}
 	}
 
 	public Clone getParent() {
@@ -489,7 +494,7 @@ public abstract class Clone {
 
 	public void setCoordinates(double x,double y) throws Exception {
 		this.coordinates = new double[]{x,y};
-		
+
 		CLONEID cloneid= new CLONEID();
 		cloneid.connect();
 		try{
@@ -498,7 +503,7 @@ public abstract class Clone {
 			e.printStackTrace();
 		}
 		cloneid.close();
-		
+
 		for(Clone c : children){
 			c.setCoordinates(x, y);
 		}
