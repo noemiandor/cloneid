@@ -359,16 +359,15 @@ plotLiquidNitrogenBox <- function(rack, row){
   if(event=="seeding"){
     passage = passage+1
   }
-  # ## @TODO: remove
+  ## @TODO: remove
   # stmt = paste0("update Passaging set correctedCount = ",dish$dishCount," where id='",id,"';")
   # rs = dbSendQuery(mydb, stmt)
+  stmt = paste0("INSERT INTO Passaging (id, passaged_from_id1, event, date, cellCount, passage, flask, media) ",
+                "VALUES ('",id ,"', '",from,"', '",event,"', '",tx,"', ",dish$dishCount,", ", passage,", ",flask,", ", kids$media, ");")
   # stmt = paste0("update Passaging set areaOccupied_um2 = ",dish$dishAreaOccupied," where id='",id,"';")
   # rs = dbSendQuery(mydb, stmt)
   # stmt = paste0("update Passaging set cellSize_um2 = ",dish$cellSize," where id='",id,"';")
   # rs = dbSendQuery(mydb, stmt)
-  stmt = paste0("INSERT INTO Passaging (id, passaged_from_id1, event, date, cellCount, passage, flask, media) ",
-                "VALUES ('",id ,"', '",from,"', '",event,"', '",tx,"', ",dish$dishCount,", ", passage,", ",flask,", ", kids$media, ");")
-  rs = dbSendQuery(mydb, stmt)
   
   
   dbClearResult(dbListResults(mydb)[[1]])

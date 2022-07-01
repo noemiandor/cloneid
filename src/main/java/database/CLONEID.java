@@ -41,6 +41,8 @@ public final class CLONEID {
 				+ yamlReader.getConfig().getMysqlConnection().get("host") + ":"
 				+ yamlReader.getConfig().getMysqlConnection().get("port")
 				+ "?serverTimezone=UTC";
+
+
 		
 		con = DriverManager.getConnection(db_connect_string, db_userid, db_password);
 		stmt = con.createStatement();
@@ -135,24 +137,14 @@ public final class CLONEID {
 	}
 
 	public int[] getChildrenForParent(int cloneID, Perspectives which) throws SQLException{
-		return(getChildrenForParent(cloneID, which, false));
-	}
-	
-	
-	public int[] getChildrenForParent(int cloneID, Perspectives which, boolean onlywithkids) throws SQLException{
-		String selstmt0="SELECT count(*) from "+CLONEID.getTableNameForClass(which.name())+" where parent="+cloneID;
-		if(onlywithkids) {
-			selstmt0=selstmt0+" AND hasChildren=true;";
-		}else {
-			selstmt0=selstmt0+";";
-		}
+		String selstmt0="SELECT count(*) from "+CLONEID.getTableNameForClass(which.name())+" where parent="+cloneID+";";
 		ResultSet rs0 =stmt.executeQuery(selstmt0);
 		rs0.next();
 		int n = rs0.getInt("count(*)");
 
 		if(n>0){
 			int[] childrenIDs= new int[n];
-			String selstmt2=selstmt0.replace("count(*)", "cloneID"); //"SELECT cloneID from "+CLONEID.getTableNameForClass(which.name())+" where parent="+cloneID;
+			String selstmt2="SELECT cloneID from "+CLONEID.getTableNameForClass(which.name())+" where parent="+cloneID+";";
 			ResultSet rs2 =stmt.executeQuery(selstmt2);
 			for(int i = 0; i<n; i++){
 				rs2.next();
