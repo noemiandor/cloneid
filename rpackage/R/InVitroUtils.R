@@ -6,7 +6,7 @@ seed <- function(id, from, cellCount, flask, tx = Sys.time(), media=NULL, exclud
 harvest <- function(id, from, cellCount, tx = Sys.time(), media=NULL, excludeOption=F){
   .seed_or_harvest(event = "harvest", id=id, from=from, cellCount = cellCount, tx = tx, flask = NULL, media = media, excludeOption=excludeOption)
 }
-
+ 
 
 init <- function(id, cellLine, cellCount, tx = Sys.time(), media=NULL, flask=NULL){
   mydb = connect2DB()
@@ -367,7 +367,7 @@ plotLiquidNitrogenBox <- function(rack, row){
   # stmt = paste0("update Passaging set areaOccupied_um2 = ",dish$dishAreaOccupied," where id='",id,"';")
   # rs = dbSendQuery(mydb, stmt)
   # stmt = paste0("update Passaging set cellSize_um2 = ",dish$cellSize," where id='",id,"';")
-  # rs = dbSendQuery(mydb, stmt)
+  rs = dbSendQuery(mydb, stmt)
   
   
   dbClearResult(dbListResults(mydb)[[1]])
