@@ -22,6 +22,6 @@ dependencies:
     - setuptools
     - six
     - tifffile
-    - torch>1.12
+    - torch>1.1
     - tqdm
     - typing-extensions
