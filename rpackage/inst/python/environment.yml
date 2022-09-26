@@ -1,22 +1,27 @@
 name: cellpose
+channels:
+  - conda-forge
+  - defaults
 dependencies:
-  - python>3.4,<3.8
+  - python>3.10
   - pip
+  - imagecodecs
   - pip:
-    - PyQt4
-    - PyQt4.sip
-    - numpy>1.14.6,<1.19.4
-    - numba>=0.43.1
-    - scipy
-    - torch>=1.6
-    - opencv-python-headless
-    - pyqtgraph>=0.11.0rc0
-    - natsort
-    - google-cloud-storage
-    - tqdm
-    - tifffile
     - cellpose
-    - pandas 
+    - fastremap
+    - llvmlite
+    - natsort
+    - numba>0.5
     - opencv-python
-    - argparse
+    - opencv-python-headless
+    - pandas
+    - pillow
+    - python-dateutil
+    - pytz
+    - scipy
+    - setuptools
+    - six
+    - tifffile
+    - torch>1.12
     - tqdm
+    - typing-extensions
