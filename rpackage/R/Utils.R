@@ -53,3 +53,56 @@ getState<-function (cloneID,whichP = "TranscriptomePerspective") {
 getAlias<-function (cloneID, whichP = "TranscriptomePerspective") {
   return(getAttribute(cloneID, whichP, attr="alias"))
 }
+
+
+assignQuantityToMutation<-function(dm,cbs,quantityColumnLabel="CN_Estimate",verbose=T){
+##Add column segmentID to CBS
+cols=c("quantityID",quantityColumnLabel,"segmentLength");
+if (!any(colnames(cbs)==cols[1])){
+    cbs=.addColumn(cbs,cols[1],NA);
+    if (any(colnames(cbs)=="Count")){
+        cbs[,"quantityID"]=cbs[,"Count"];
+    }else{
+        cbs[,"quantityID"]=t(1:nrow(cbs));
+    }
+}
+
+##First add columns to input data if necessary
+for (k in 1:length(cols)){
+    dm=.addColumn(dm,cols[k],NA);
+}
+if (!any(colnames(cbs)=="segmentLength")){
+    cbs=.addColumn(cbs,"segmentLength",NA);
+    cbs[,"segmentLength"]=cbs[,"endpos"]-cbs[,"startpos"];
+}
+
+dm=.assignCBSToMutation(dm,cbs,cols,verbose=verbose);
+
+return(dm);
+}
+
+
+.assignCBSToMutation<-function(dm,cbs,cols,verbose){
+print("Assigning copy number to mutations...")
+##Assign copy numbers in cbs to mutations in dm
+for (k in 1:nrow(cbs)){
+    if (mod(k,100)==0){
+        .notifyUser(paste("Finding overlaps for CBS segment", k,"out of ",nrow(cbs),"..."),verbose=verbose);
+    }
+    idx=which(dm[,"chr"]==cbs[k,"chr"] & dm[,"startpos"]>=cbs[k,"startpos"] & dm[,"startpos"]<=cbs[k,"endpos"]);
+    if (length(idx)==0){
+        next;
+    }
+    ok=which(is.na(dm[idx,"segmentLength"]) | dm[idx,"segmentLength"]>cbs[k,"segmentLength"]);
+    if (length(ok)==0){
+        next;
+    }
+    dm[idx[ok],cols]=repmat(cbs[k,cols],length(ok),1);
+}
+dm=dm[,colnames(dm)!="segmentLength",drop=F];
+.notifyUser("... Done.",verbose=verbose)
+
+return(dm);
+}
+
+
