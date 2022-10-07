@@ -1,5 +1,5 @@
-\name{editCloneidConfig}
-\alias{editCloneidConfig}
+\name{setupCLONEID}
+\alias{setupCLONEID}
 
 \title{
 Edit CloneID Configuration Yaml
@@ -8,7 +8,7 @@ Edit CloneID Configuration Yaml
 Function to take user input to set CloneID's MySQL connection: host, port, user, password, database and schema build script location
 }
 \usage{
-editCloneidConfig(host = 'localhost', port = '3306', user = NA, password = NA, database="CLONEID", schemaScript = "CLONEID_schema.sql")
+setupCLONEID(host = 'localhost', port = '3306', user = NA, password = NA, database="CLONEID", schemaScript = "CLONEID_schema.sql")
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -34,14 +34,14 @@ string path to SQL script to build the CLONEID database
 \examples{
 
 # To see current yaml configuration values:
-editCloneidConfig()
+setupCLONEID()
 
 # To set all values:
-editCloneidConfig('localhost', '3306', 'user1', 'password1', 'CLONEID', 'CLONEID_schema.sql')
+setupCLONEID('localhost', '3306', 'user1', 'password1', 'CLONEID', 'CLONEID_schema.sql')
 
 # To set select values:
-editCloneidConfig(host='localhost')
+setupCLONEID(host='localhost')
 
-editCloneidConfig(port='3306', user='user1')
+setupCLONEID(port='3306', user='user1')
 
 }

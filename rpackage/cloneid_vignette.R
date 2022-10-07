@@ -1,5 +1,5 @@
 library(cloneid)
-cloneid::editCloneidConfig(host='localhost',  user='XX', password='YY'); 
+cloneid::setupCLONEID(host='localhost',  user='XX', password='YY'); 
 
 ## Add cellLine & sample(s) to SQL database:
 cellLine <- lineageId <- "SNU-16"

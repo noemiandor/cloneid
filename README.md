@@ -148,7 +148,7 @@ $ R CMD INSTALL cloneid_1.1.0.tar.gz
 - To test the installation, in an R terminal run this command:
 ```r 
 > library(cloneid)
-> editCloneidConfig()
+> setupCLONEID()
 ```
 
 - Output: 
@@ -178,7 +178,7 @@ $mysqlConnection$schemaScript
 
 - Run this command, in an R terminal, to see the current yaml configuration settings for the CloneID Schema:
 ```r 
-> editCloneidConfig()
+> setupCLONEID()
 ```
 
 - Run this command, in an R temrinal, to edit the yaml configuration file for the CloneID Schema:
@@ -189,7 +189,7 @@ $mysqlConnection$schemaScript
 	
 ```r 
 > library(cloneid)
-> editCloneidConfig(host='localhost', port='3306', user='USER', password='PASSWORD', database='CLONEID', schemaScript='CLONEID_schema.sql')
+> setupCLONEID(host='localhost', port='3306', user='USER', password='PASSWORD', database='CLONEID', schemaScript='CLONEID_schema.sql')
 ``` 
 
 - Run this command, in an R terminal, to create the MySQL CloneID Schema:

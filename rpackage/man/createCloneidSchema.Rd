@@ -5,7 +5,7 @@
 Create CLONEID Schema in MySQL
 }
 \description{
-Function to create the CLONEID Schema in MySQL defined by the connection configuration yaml set in editCloneidConfig()
+Function to create the CLONEID Schema in MySQL defined by the connection configuration yaml set in setupCLONEID()
 }
 \usage{
 createCloneidSchema(forceCreateSchema = FALSE)
