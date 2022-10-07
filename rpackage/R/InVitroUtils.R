@@ -387,6 +387,11 @@ plotLiquidNitrogenBox <- function(rack, row){
   QUPATH_PRJ = "~/Downloads/qproject/project.qpproj"
   QSCRIPT = "~/Downloads/qpscript/runDetectionROI.groovy"
   CELLPOSE_MODEL=list.files(paste0(find.package("cloneid"),filesep,"python"),pattern = "cellpose_residual", full.names=T)
+  if(isempty(grep(cellLine,CELLPOSE_MODEL))){
+    CELLPOSE_MODEL=grep("default",CELLPOSE_MODEL,value = T)
+  }else{
+    CELLPOSE_MODEL=grep(cellLine,CELLPOSE_MODEL,value = T)
+  }
   CELLPOSE_SCRIPT=paste0(find.package("cloneid"),filesep,"python/GetCount_cellPose.py")
   PREPROCESS_SCRIPT=paste0(find.package("cloneid"),filesep,"python/preprocessing.py")
   TISSUESEG_SCRIPT=paste0(find.package("cloneid"),filesep,"python/tissue_seg.py")
@@ -428,7 +433,7 @@ plotLiquidNitrogenBox <- function(rack, row){
   
   ## Cell segmentation
   ## @TODO: use cellpose for all cell lines 
-  if(!cellLine %in% c("HGC-27","SUM-159","SNU-668")){
+  if(!cellLine %in% c("HGC-27","SUM-159","SNU-668","NCI-N87")){
     ## Call QuPath for images inside temp dir:
     write(.QuPathScript(qpdir = TMP_DIR, cellLine = cellLine), file=QSCRIPT)
     write(.SaveProject(QUPATH_PRJ, paste0(TMP_DIR,filesep,sapply(f_i, function(x) fileparts(x)$name),".tif")), file=QUPATH_PRJ)
