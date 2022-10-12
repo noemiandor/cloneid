@@ -4,7 +4,7 @@
 #How to run this code: 
 #Type on terminal: python3 tissue_seg.py -imgPath <path2Image> -ResultsPath <path2SaveResults> -cellType NUGC
 from calendar import c
-from imp import C_EXTENSION
+#from imp import C_EXTENSION
 import os 
 import sys 
 import cv2 
@@ -55,7 +55,9 @@ def get_connected_components(image,mask,pixel_size,ImageName,path2SaveResults,sa
             continue
         (cX,cY) = centroids[i]
         island_list.append(i)
-        area_list.append(area * pixel_size)
+
+        area_list.append(area * pixel_size * pixel_size)
+        
         vis_image = image.copy()
         cv2.rectangle(vis_image,(x,y),(x+w,y+h),(0,255,0),3)
         cv2.circle(vis_image,(int(cX),int(cY)),4,(0,0,255),-1)
@@ -73,7 +75,8 @@ def get_metadata(path2Image):
     #print(meta_dict)
     try:
         objective_lens = meta_dict['ImageDescription'][0].split(' ')[1]
-        objectiveLens = objectiveLens.split('"')[1]
+        objective_lens = objective_lens.split('"')[1]
+        #print('objectivelens from meta data {}'.format(objective_lens))
     except:
         if len(path2Image.split('/')) > 1:
             imageName = path2Image.split('/')[-1]
@@ -91,15 +94,18 @@ def get_metadata(path2Image):
                 objective_lens = '20x'
             elif '40x' in imageName:
                 objective_lens = '40x'
+        #print('objectivelens from filename {}'.format(objective_lens))
     return objective_lens
 
 def get_mask(path2Images,path2Results,cellType,saveVis):
     image = cv2.imread(path2Images,-1)
+    image = cv2.cvtColor(image,cv2.COLOR_BGR2RGB)
     ImageName = path2Images.split('/')[-1]
     #print(ImageName)
     if ImageName == '':
         ImageName = path2Images
     objectiveLens = get_metadata(path2Images)
+    #sys.exit()
     #objectiveLens = objectiveLens.split('"')[1]
     
     if objectiveLens == '10x':
@@ -118,14 +124,26 @@ def get_mask(path2Images,path2Results,cellType,saveVis):
     mask = np.zeros(blur.shape,np.uint8)
     mask[100:1200,100:1900] = image_result[100:1200,100:1900]
     
-    if cellType.startswith('NUGC') or cellType.startswith('KAT'):
+    if cellType.startswith('NUGC'):
         #kernel = np.ones((2,2),np.uint8)
         kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(2,2))
         filled_image = fill_holes(mask)
         mask = cv2.morphologyEx(filled_image, cv2.MORPH_CLOSE, kernel,iterations=11)
         #cv2.imwrite(os.path.join(path2Results,ImageName.split('.tif')[0],name_no_ext+'_closed_mask.png'),mask)
         #cv2.imwrite(os.path.join(path2Results,ImageName.split('.tif')[0],name_no_ext+'_filled_mask.png'),filled_image)
+    elif cellType.startswith('KAT'):
+        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(2,2))
+        
+        hsv_image = cv2.cvtColor(image,cv2.COLOR_RGB2HSV)
+        light_green = (0,50,0)
+        dark_green = (175,255,150)  
+        mask_res = cv2.inRange(hsv_image, light_green, dark_green)
+        mask[100:1200,100:1900] = mask_res[100:1200,100:1900]
+        mask = fill_holes(mask)
+        #mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel,iterations=5)
+        mask = cv2.dilate(mask, kernel, iterations=5)
     else:
+        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(2,2))
         kernel = np.ones((9,9),np.uint8)
         mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel,iterations=5)
 
