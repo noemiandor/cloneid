@@ -41,7 +41,6 @@ def ApplyGammaCorrection(path2Image,cellLine,th=40):
         sys.exit()
     else:
         imgName=ntpath.basename(path2Image) 
-        print(np.mean(img))
         if np.mean(img) < th:
             if cellLine.startswith('HGC') or cellLine.startswith('SUM'):
                 img = gammaCorrection(img)

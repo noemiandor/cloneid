@@ -1,20 +1,20 @@
-seed <- function(id, from, cellCount, flask, tx = Sys.time(), media=NULL, excludeOption=F){ 
-  .seed_or_harvest(event = "seeding", id=id, from = from, cellCount = cellCount, tx = tx, flask = flask, media = media, excludeOption=excludeOption)
+seed <- function(id, from, cellCount, flask, tx = Sys.time(), media=NULL, excludeOption=F, preprocessing=T){ 
+  .seed_or_harvest(event = "seeding", id=id, from = from, cellCount = cellCount, tx = tx, flask = flask, media = media, excludeOption=excludeOption, preprocessing=preprocessing)
 }
 
 
-harvest <- function(id, from, cellCount, tx = Sys.time(), media=NULL, excludeOption=F){
-  .seed_or_harvest(event = "harvest", id=id, from=from, cellCount = cellCount, tx = tx, flask = NULL, media = media, excludeOption=excludeOption)
+harvest <- function(id, from, cellCount, tx = Sys.time(), media=NULL, excludeOption=F, preprocessing=T){
+  .seed_or_harvest(event = "harvest", id=id, from=from, cellCount = cellCount, tx = tx, flask = NULL, media = media, excludeOption=excludeOption, preprocessing=preprocessing)
 }
- 
 
-init <- function(id, cellLine, cellCount, tx = Sys.time(), media=NULL, flask=NULL){
+
+init <- function(id, cellLine, cellCount, tx = Sys.time(), media=NULL, flask=NULL, preprocessing=T){
   mydb = connect2DB()
   
   dishCount = cellCount;
   if(!is.null(flask)){
     dishSurfaceArea_cm2 = .readDishSurfaceArea_cm2(flask, mydb)
-    dishCount = .readCellSegmentationsOutput(id= id, cellLine = cellLine, dishSurfaceArea_cm2 = dishSurfaceArea_cm2, cellCount = cellCount)$dishCount;
+    dishCount = .readCellSegmentationsOutput(id= id, cellLine = cellLine, dishSurfaceArea_cm2 = dishSurfaceArea_cm2, cellCount = cellCount, preprocessing=preprocessing)$dishCount;
   }
   if(is.null(media)){
     media = "NULL"
@@ -307,7 +307,7 @@ plotLiquidNitrogenBox <- function(rack, row){
 }
 
 
-.seed_or_harvest <- function(event, id, from, cellCount, tx, flask, media, excludeOption){
+.seed_or_harvest <- function(event, id, from, cellCount, tx, flask, media, excludeOption, preprocessing=T){
   library(RMySQL)
   library(matlab)
   
@@ -352,22 +352,23 @@ plotLiquidNitrogenBox <- function(rack, row){
   
   dishSurfaceArea_cm2 = .readDishSurfaceArea_cm2(flask, mydb)
   
-  dish = .readCellSegmentationsOutput(id= id, cellLine = kids$cellLine, dishSurfaceArea_cm2 = dishSurfaceArea_cm2, cellCount = cellCount, excludeOption=excludeOption);
+  dish = .readCellSegmentationsOutput(id= id, cellLine = kids$cellLine, dishSurfaceArea_cm2 = dishSurfaceArea_cm2, cellCount = cellCount, excludeOption=excludeOption, preprocessing=preprocessing);
   
   ### Insert
   passage = kids$passage
   if(event=="seeding"){
     passage = passage+1
   }
+  stmt = paste0("INSERT INTO Passaging (id, passaged_from_id1, event, date, cellCount, passage, flask, media) ",
+                "VALUES ('",id ,"', '",from,"', '",event,"', '",tx,"', ",dish$dishCount,", ", passage,", ",flask,", ", kids$media, ");")
+  rs = dbSendQuery(mydb, stmt)
   ## @TODO: remove
   # stmt = paste0("update Passaging set correctedCount = ",dish$dishCount," where id='",id,"';")
   # rs = dbSendQuery(mydb, stmt)
-  stmt = paste0("INSERT INTO Passaging (id, passaged_from_id1, event, date, cellCount, passage, flask, media) ",
-                "VALUES ('",id ,"', '",from,"', '",event,"', '",tx,"', ",dish$dishCount,", ", passage,", ",flask,", ", kids$media, ");")
   # stmt = paste0("update Passaging set areaOccupied_um2 = ",dish$dishAreaOccupied," where id='",id,"';")
   # rs = dbSendQuery(mydb, stmt)
   # stmt = paste0("update Passaging set cellSize_um2 = ",dish$cellSize," where id='",id,"';")
-  rs = dbSendQuery(mydb, stmt)
+  # rs = dbSendQuery(mydb, stmt)
   
   
   dbClearResult(dbListResults(mydb)[[1]])
@@ -375,7 +376,7 @@ plotLiquidNitrogenBox <- function(rack, row){
 }
 
 
-.readCellSegmentationsOutput <- function(id, cellLine, dishSurfaceArea_cm2, cellCount, excludeOption){
+.readCellSegmentationsOutput <- function(id, cellLine, dishSurfaceArea_cm2, cellCount, excludeOption, preprocessing=T){
   ## Typical values for dishSurfaceArea_cm2 are: 
   ## a) 75 cm^2 = 10.1 cm x 7.30 cm  
   ## b) 25 cm^2 = 5.08 cm x 5.08 cm
@@ -426,9 +427,11 @@ plotLiquidNitrogenBox <- function(rack, row){
   }
   
   ## Preprocessing
-  for(x in list.files(TMP_DIR, pattern = ".tif", full.names = T)){
-    cmd = paste("python3",PREPROCESS_SCRIPT, x, cellLine)
-    system(cmd)
+  if(preprocessing){
+    for(x in list.files(TMP_DIR, pattern = ".tif", full.names = T)){
+      cmd = paste("python3",PREPROCESS_SCRIPT, x, cellLine)
+      system(cmd)
+    }
   }
   
   ## Cell segmentation
