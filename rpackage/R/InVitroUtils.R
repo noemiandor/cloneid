@@ -446,6 +446,7 @@ plotLiquidNitrogenBox <- function(rack, row){
   }else{
     ## Call CellPose for images inside temp dir 
     # virtualenv_list()
+    print(paste("Using", CELLPOSE_MODEL))
     source_python(CELLPOSE_SCRIPT)
     run(TMP_DIR,normalizePath(CELLPOSE_MODEL),TMP_DIR,".tif")
   }
