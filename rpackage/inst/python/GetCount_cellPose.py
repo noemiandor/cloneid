@@ -175,7 +175,7 @@ def iterate(path2Pred,path2Save,ext):
           df_total.to_csv(os.path.join(path2Save,'cellpose_count',maskName.split('_cp_masks')[0]+'.csv'),index=False,sep='\t')
           
 def run_cellPose(path2Images,path2Pretrained):
-  call(['python', '-m' , 'cellpose' ,'--dir', path2Images ,'--pretrained_model', path2Pretrained,'--use_gpu','--save_png'])
+  call(['python', '-m' , 'cellpose' ,'--dir', path2Images ,'--pretrained_model', path2Pretrained,'--use_gpu','--save_png', '--verbose', '--diameter', '21', '--flow_threshold', '2.4'])
 
 def run(path2Images,path2Pretrained,path2Save,ext):
   run_cellPose(path2Images,path2Pretrained)
