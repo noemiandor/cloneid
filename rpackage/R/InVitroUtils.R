@@ -429,8 +429,11 @@ plotLiquidNitrogenBox <- function(rack, row){
   ## Preprocessing
   if(preprocessing){
     for(x in list.files(TMP_DIR, pattern = ".tif", full.names = T)){
-      cmd = paste("python3",PREPROCESS_SCRIPT, x, cellLine)
-      system(cmd)
+      # cmd = paste("python3",PREPROCESS_SCRIPT, x, cellLine)
+      # system(cmd)
+      print(paste("Using", PREPROCESS_SCRIPT))
+      source_python(PREPROCESS_SCRIPT)
+      ApplyGammaCorrection(x, cellLine)
     }
   }
   
@@ -573,7 +576,7 @@ plotLiquidNitrogenBox <- function(rack, row){
   area2dish = dishSurfaceArea_cm2 / sum(cellCounts[,"area_cm2"])
   dishCount = round(sum(cellCounts[,"areaCount"]) * area2dish)
   dishConfluency = sum(cellCounts[,"dishAreaOccupied"]) * area2dish
-  cellSize = mean(cellCounts[,"cellSize_um2"],na.rm=T)
+  cellSize = median(cellCounts[,"cellSize_um2"],na.rm=T)
   print(paste("Estimated number of cells in entire flask at",dishCount), quote = F)
   
   if(!is.na(cellCount) && (dishCount/cellCount > 2 || dishCount/cellCount <0.5)){
