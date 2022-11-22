@@ -359,16 +359,16 @@ plotLiquidNitrogenBox <- function(rack, row){
   if(event=="seeding"){
     passage = passage+1
   }
-  stmt = paste0("INSERT INTO Passaging (id, passaged_from_id1, event, date, cellCount, passage, flask, media) ",
-                "VALUES ('",id ,"', '",from,"', '",event,"', '",tx,"', ",dish$dishCount,", ", passage,", ",flask,", ", kids$media, ");")
-  rs = dbSendQuery(mydb, stmt)
+  # stmt = paste0("INSERT INTO Passaging (id, passaged_from_id1, event, date, cellCount, passage, flask, media) ",
+  #               "VALUES ('",id ,"', '",from,"', '",event,"', '",tx,"', ",dish$dishCount,", ", passage,", ",flask,", ", kids$media, ");")
+  # rs = dbSendQuery(mydb, stmt)
   ## @TODO: remove
-  # stmt = paste0("update Passaging set correctedCount = ",dish$dishCount," where id='",id,"';")
-  # rs = dbSendQuery(mydb, stmt)
-  # stmt = paste0("update Passaging set areaOccupied_um2 = ",dish$dishAreaOccupied," where id='",id,"';")
-  # rs = dbSendQuery(mydb, stmt)
-  # stmt = paste0("update Passaging set cellSize_um2 = ",dish$cellSize," where id='",id,"';")
-  # rs = dbSendQuery(mydb, stmt)
+  stmt = paste0("update Passaging set correctedCount = ",dish$dishCount," where id='",id,"';")
+  rs = dbSendQuery(mydb, stmt)
+  stmt = paste0("update Passaging set areaOccupied_um2 = ",dish$dishAreaOccupied," where id='",id,"';")
+  rs = dbSendQuery(mydb, stmt)
+  stmt = paste0("update Passaging set cellSize_um2 = ",dish$cellSize," where id='",id,"';")
+  rs = dbSendQuery(mydb, stmt)
   
   
   dbClearResult(dbListResults(mydb)[[1]])
@@ -429,14 +429,17 @@ plotLiquidNitrogenBox <- function(rack, row){
   ## Preprocessing
   if(preprocessing){
     for(x in list.files(TMP_DIR, pattern = ".tif", full.names = T)){
-      cmd = paste("python3",PREPROCESS_SCRIPT, x, cellLine)
-      system(cmd)
+      # cmd = paste("python3",PREPROCESS_SCRIPT, x, cellLine)
+      # system(cmd)
+      print(paste("Using", PREPROCESS_SCRIPT))
+      source_python(PREPROCESS_SCRIPT)
+      ApplyGammaCorrection(x, cellLine)
     }
   }
   
   ## Cell segmentation
   ## @TODO: use cellpose for all cell lines 
-  if(!cellLine %in% c("HGC-27","SUM-159","SNU-668","NCI-N87","KATOIII", "DKMG", "KNS42")){
+  if(!cellLine %in% c("HGC-27","SUM-159","SNU-668","NCI-N87","KATOIII","NUGC-4","SNU-16","DKMG", "KNS42")){
     ## Call QuPath for images inside temp dir:
     write(.QuPathScript(qpdir = TMP_DIR, cellLine = cellLine), file=QSCRIPT)
     write(.SaveProject(QUPATH_PRJ, paste0(TMP_DIR,filesep,sapply(f_i, function(x) fileparts(x)$name),".tif")), file=QUPATH_PRJ)
@@ -573,7 +576,7 @@ plotLiquidNitrogenBox <- function(rack, row){
   area2dish = dishSurfaceArea_cm2 / sum(cellCounts[,"area_cm2"])
   dishCount = round(sum(cellCounts[,"areaCount"]) * area2dish)
   dishConfluency = sum(cellCounts[,"dishAreaOccupied"]) * area2dish
-  cellSize = mean(cellCounts[,"cellSize_um2"],na.rm=T)
+  cellSize = median(cellCounts[,"cellSize_um2"],na.rm=T)
   print(paste("Estimated number of cells in entire flask at",dishCount), quote = F)
   
   if(!is.na(cellCount) && (dishCount/cellCount > 2 || dishCount/cellCount <0.5)){
