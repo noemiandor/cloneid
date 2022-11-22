@@ -439,7 +439,7 @@ plotLiquidNitrogenBox <- function(rack, row){
   
   ## Cell segmentation
   ## @TODO: use cellpose for all cell lines 
-  if(!cellLine %in% c("HGC-27","SUM-159","SNU-668","NCI-N87","KATOIII","NUGC-4","SNU-16","DKMG")){
+  if(!cellLine %in% c("HGC-27","SUM-159","SNU-668","NCI-N87","KATOIII","NUGC-4","SNU-16","DKMG", "KNS42")){
     ## Call QuPath for images inside temp dir:
     write(.QuPathScript(qpdir = TMP_DIR, cellLine = cellLine), file=QSCRIPT)
     write(.SaveProject(QUPATH_PRJ, paste0(TMP_DIR,filesep,sapply(f_i, function(x) fileparts(x)$name),".tif")), file=QUPATH_PRJ)
