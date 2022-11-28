@@ -1,10 +1,10 @@
-seed <- function(id, from, cellCount, flask, tx = Sys.time(), media=NULL, excludeOption=F, preprocessing=T){ 
-  .seed_or_harvest(event = "seeding", id=id, from = from, cellCount = cellCount, tx = tx, flask = flask, media = media, excludeOption=excludeOption, preprocessing=preprocessing)
+seed <- function(id, from, cellCount, flask, tx = Sys.time(), media=NULL, excludeOption=F, preprocessing=T, param=NULL){ 
+  .seed_or_harvest(event = "seeding", id=id, from = from, cellCount = cellCount, tx = tx, flask = flask, media = media, excludeOption=excludeOption, preprocessing=preprocessing, param=param)
 }
 
 
-harvest <- function(id, from, cellCount, tx = Sys.time(), media=NULL, excludeOption=F, preprocessing=T){
-  .seed_or_harvest(event = "harvest", id=id, from=from, cellCount = cellCount, tx = tx, flask = NULL, media = media, excludeOption=excludeOption, preprocessing=preprocessing)
+harvest <- function(id, from, cellCount, tx = Sys.time(), media=NULL, excludeOption=F, preprocessing=T, param=NULL){
+  .seed_or_harvest(event = "harvest", id=id, from=from, cellCount = cellCount, tx = tx, flask = NULL, media = media, excludeOption=excludeOption, preprocessing=preprocessing, param=param)
 }
 
 
@@ -179,6 +179,8 @@ findAllDescendandsOf <-function(ids, mydb = NULL, recursive = T, verbose = T){
   rs = suppressWarnings(RMySQL::dbSendQuery(mydb, stmt))
   res = fetch(rs, n=-1)
   
+  dbDisconnect(mydb)
+  
   return(res)
 }
 
@@ -307,7 +309,7 @@ plotLiquidNitrogenBox <- function(rack, row){
 }
 
 
-.seed_or_harvest <- function(event, id, from, cellCount, tx, flask, media, excludeOption, preprocessing=T){
+.seed_or_harvest <- function(event, id, from, cellCount, tx, flask, media, excludeOption, preprocessing=T, param=NULL){
   library(RMySQL)
   library(matlab)
   
@@ -351,32 +353,35 @@ plotLiquidNitrogenBox <- function(rack, row){
   }
   
   dishSurfaceArea_cm2 = .readDishSurfaceArea_cm2(flask, mydb)
+  dbClearResult(dbListResults(mydb)[[1]])
+  dbDisconnect(mydb)
   
-  dish = .readCellSegmentationsOutput(id= id, cellLine = kids$cellLine, dishSurfaceArea_cm2 = dishSurfaceArea_cm2, cellCount = cellCount, excludeOption=excludeOption, preprocessing=preprocessing);
+  dish = .readCellSegmentationsOutput(id= id, cellLine = kids$cellLine, dishSurfaceArea_cm2 = dishSurfaceArea_cm2, cellCount = cellCount, excludeOption=excludeOption, preprocessing=preprocessing, param=param);
   
   ### Insert
   passage = kids$passage
   if(event=="seeding"){
     passage = passage+1
   }
-  stmt = paste0("INSERT INTO Passaging (id, passaged_from_id1, event, date, cellCount, passage, flask, media, cellSize_um2, areaOccupied_um2) ",
-                "VALUES ('",id ,"', '",from,"', '",event,"', '",tx,"', ",dish$dishCount,", ", passage,", ",flask,", ", kids$media,", ", dish$cellSize, ", ", dish$dishAreaOccupied, ");")
-  rs = dbSendQuery(mydb, stmt) 
+  
+  mydb = connect2DB()
+  stmt = paste0("INSERT INTO Passaging (id, passaged_from_id1, event, date, cellCount, passage, flask, media) ",
+                "VALUES ('",id ,"', '",from,"', '",event,"', '",tx,"', ",dish$dishCount,", ", passage,", ",flask,", ", kids$media, ");")
+  rs = dbSendQuery(mydb, stmt)
   # ## @TODO: remove
   # stmt = paste0("update Passaging set correctedCount = ",dish$dishCount," where id='",id,"';")
   # rs = dbSendQuery(mydb, stmt)
-  # stmt = paste0("update Passaging set areaOccupied_um2 = ",dish$dishAreaOccupied," where id='",id,"';")
-  # rs = dbSendQuery(mydb, stmt)
-  # stmt = paste0("update Passaging set cellSize_um2 = ",dish$cellSize," where id='",id,"';")
-  # rs = dbSendQuery(mydb, stmt)
+  stmt = paste0("update Passaging set areaOccupied_um2 = ",dish$dishAreaOccupied," where id='",id,"';")
+  rs = dbSendQuery(mydb, stmt)
+  stmt = paste0("update Passaging set cellSize_um2 = ",dish$cellSize," where id='",id,"';")
+  rs = dbSendQuery(mydb, stmt)
   
   
   dbClearResult(dbListResults(mydb)[[1]])
   dbDisconnect(mydb)
 }
 
-
-.readCellSegmentationsOutput <- function(id, cellLine, dishSurfaceArea_cm2, cellCount, excludeOption, preprocessing=T){
+.readCellSegmentationsOutput <- function(id, cellLine, dishSurfaceArea_cm2, cellCount, excludeOption, preprocessing=T, param=NULL){
   ## Typical values for dishSurfaceArea_cm2 are: 
   ## a) 75 cm^2 = 10.1 cm x 7.30 cm  
   ## b) 25 cm^2 = 5.08 cm x 5.08 cm
@@ -394,6 +399,7 @@ plotLiquidNitrogenBox <- function(rack, row){
     CELLPOSE_MODEL=grep(cellLine,CELLPOSE_MODEL,value = T)
   }
   CELLPOSE_SCRIPT=paste0(find.package("cloneid"),filesep,"python/GetCount_cellPose.py")
+  CELLPOSE_PARAM=paste0(find.package("cloneid"),filesep,"python/cellPose.param")
   PREPROCESS_SCRIPT=paste0(find.package("cloneid"),filesep,"python/preprocessing.py")
   TISSUESEG_SCRIPT=paste0(find.package("cloneid"),filesep,"python/tissue_seg.py")
   QCSTATS_SCRIPT=paste0(find.package("cloneid"),filesep,"python/QC_Statistics.py")
@@ -451,7 +457,22 @@ plotLiquidNitrogenBox <- function(rack, row){
     # virtualenv_list()
     print(paste("Using", CELLPOSE_MODEL))
     source_python(CELLPOSE_SCRIPT)
-    run(TMP_DIR,normalizePath(CELLPOSE_MODEL),TMP_DIR,".tif")
+    ## cellPose parameters:
+    if(is.null(param)){
+      cpp=read.table(CELLPOSE_PARAM,header=T,row.names = 1)
+      for(cl in setdiff(rownames(cpp),"default")){
+        tmp=cloneid::findAllDescendandsOf(id=cl,verbose = F)
+        if(id %in% tmp$id){
+          param=as.list(cpp[cl,])
+          break
+        }
+      }
+      if(is.null(param)){
+        param=as.list(cpp["default",])
+      }
+    }
+    print(param)
+    run(TMP_DIR,normalizePath(CELLPOSE_MODEL),TMP_DIR,".tif", as.character(param$diameter), as.character(param$flow_threshold), as.character(param$cellprob_threshold))
   }
   
   ## Tissue segmentation
@@ -507,7 +528,7 @@ plotLiquidNitrogenBox <- function(rack, row){
     areaCount = nrow(dm)
     # areaCount = sum(conf$`Area.in.um`)/median(dm$`Cell: Area`)
     area_cm2 = anno$`area.µm.2`[1]*UM2CM^2
-    cellCounts[fileparts(f[i])$name,] = c(areaCount, area_cm2, sum(conf$`Area.in.um`), median(dm$`Cell: Area`))
+    cellCounts[fileparts(f[i])$name,] = c(areaCount, area_cm2, sum(conf$`Area.in.um`), quantile(dm$`Cell: Area`, 0.9, na.rm=T))
     # ## Visualize
     # ## @TODO: Delete
     # if(!file.exists(f_o[i])){

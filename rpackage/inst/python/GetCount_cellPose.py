@@ -174,11 +174,12 @@ def iterate(path2Pred,path2Save,ext):
           df.to_csv(os.path.join(path2Save,'pred',maskName.split('_cp_masks')[0]+'.csv'),index=False,sep='\t')
           df_total.to_csv(os.path.join(path2Save,'cellpose_count',maskName.split('_cp_masks')[0]+'.csv'),index=False,sep='\t')
           
-def run_cellPose(path2Images,path2Pretrained):
-  call(['python', '-m' , 'cellpose' ,'--dir', path2Images ,'--pretrained_model', path2Pretrained,'--use_gpu','--save_png', '--verbose', '--diameter', '21', '--flow_threshold', '2.4'])
+def run_cellPose(path2Images,path2Pretrained, diameter, flow, cellprob):
+#  call(['python', '-m' , 'cellpose' ,'--dir', path2Images ,'--pretrained_model', path2Pretrained,'--use_gpu','--save_png', '--verbose', '--diameter', '21', '--flow_threshold', '2.4'])
+  call(['python', '-m' , 'cellpose' ,'--dir', path2Images ,'--pretrained_model', path2Pretrained,'--use_gpu','--save_png', '--verbose', '--diameter', diameter, '--flow_threshold', flow, '--cellprob_threshold', cellprob])
 
-def run(path2Images,path2Pretrained,path2Save,ext):
-  run_cellPose(path2Images,path2Pretrained)
+def run(path2Images,path2Pretrained,path2Save,ext, diameter, flow, cellprob):
+  run_cellPose(path2Images,path2Pretrained, diameter, flow, cellprob)
   iterate(path2Images,path2Save,ext)
   vis_overlay(path2Images,path2Save,ext)
 
@@ -187,8 +188,8 @@ if __name__ == "__main__":
     # execute only if run as a script
     args = len(sys.argv)
     print(args)
-    if args == 5:
-      run(sys.argv[1],sys.argv[2],sys.argv[3],sys.argv[4])
+    if args == 8:
+      run(sys.argv[1],sys.argv[2],sys.argv[3],sys.argv[4],sys.argv[5],sys.argv[6],sys.argv[7])
     else:
       print('Error in number of arguments')
 '''
