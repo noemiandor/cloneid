@@ -7,14 +7,12 @@ dependencies:
   - opencv
   - pip
   - imagecodecs
+  - cellpose
   - pip:
-    - cellpose
     - fastremap
     - llvmlite
     - natsort
     - numba>0.5
-    - opencv-python
-    - opencv-python-headless
     - pandas
     - pillow
     - python-dateutil
