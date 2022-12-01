@@ -21,6 +21,7 @@ CLONEID requires the followwing software and versions.
 1. [MySQL Server version 8](https://dev.mysql.com/downloads/mysql/8.0.html#macosx-dmg)
 1. [XQuartz](https://www.xquartz.org/) (may be needed. OSX only)
 1. [R version 3.6+](https://www.r-project.org/). Additionally, make sure that the following R packages are installed.
+1. [Miniconda] (https://docs.conda.io/projects/conda/en/latest/user-guide/install)
 
 #### R Packages
 1. rJava 

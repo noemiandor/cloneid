@@ -81,13 +81,15 @@ getPedigreeTree <- function(cellLine= cellLine, id = NULL, cex = 0.5){
   library(RMySQL)
   library(ape)
   
-  mydb = connect2DB()
   if(is.null(id)){
+    mydb = connect2DB()
     stmt = paste0("select * from Passaging where cellLine = '",cellLine,"'");
     rs = suppressWarnings(dbSendQuery(mydb, stmt))
     kids = fetch(rs, n=-1)
+    dbClearResult(dbListResults(mydb)[[1]])
+    dbDisconnect(mydb)
   }else{
-    kids = findAllDescendandsOf(id, mydb = mydb)
+    kids = findAllDescendandsOf(id)
   }
   kids= kids[sort(kids$passage, index.return=T)$ix,,drop=F]
   rownames(kids) = kids$id
@@ -124,8 +126,6 @@ getPedigreeTree <- function(cellLine= cellLine, id = NULL, cex = 0.5){
   plot(tr, underscore = T, cex=cex, tip.color = col[kids[tr$tip.label,]$event])
   legend("topright",names(col),fill=col, bty="n")
   
-  dbClearResult(dbListResults(mydb)[[1]])
-  dbDisconnect(mydb)
   return(tr)
 }
 
@@ -371,6 +371,7 @@ plotLiquidNitrogenBox <- function(rack, row){
   # ## @TODO: remove
   # stmt = paste0("update Passaging set correctedCount = ",dish$dishCount," where id='",id,"';")
   # rs = dbSendQuery(mydb, stmt)
+  
   stmt = paste0("update Passaging set areaOccupied_um2 = ",dish$dishAreaOccupied," where id='",id,"';")
   rs = dbSendQuery(mydb, stmt)
   stmt = paste0("update Passaging set cellSize_um2 = ",dish$cellSize," where id='",id,"';")
@@ -398,11 +399,12 @@ plotLiquidNitrogenBox <- function(rack, row){
   }else{
     CELLPOSE_MODEL=grep(cellLine,CELLPOSE_MODEL,value = T)
   }
-  CELLPOSE_SCRIPT=paste0(find.package("cloneid"),filesep,"python/GetCount_cellPose.py")
   CELLPOSE_PARAM=paste0(find.package("cloneid"),filesep,"python/cellPose.param")
-  PREPROCESS_SCRIPT=paste0(find.package("cloneid"),filesep,"python/preprocessing.py")
-  TISSUESEG_SCRIPT=paste0(find.package("cloneid"),filesep,"python/tissue_seg.py")
-  QCSTATS_SCRIPT=paste0(find.package("cloneid"),filesep,"python/QC_Statistics.py")
+  PYTHON_SCRIPTS=list.files(paste0(find.package("cloneid"),filesep,"python"), pattern=".py", full.names = T)
+  CELLPOSE_SCRIPT=grep("GetCount_cellPose.py",PYTHON_SCRIPTS, value = T)
+  PREPROCESS_SCRIPT=grep("preprocessing.py",PYTHON_SCRIPTS, value = T)
+  TISSUESEG_SCRIPT=grep("tissue_seg.py",PYTHON_SCRIPTS, value = T)
+  QCSTATS_SCRIPT=grep("QC_Statistics.py",PYTHON_SCRIPTS, value = T)
   # OUTSEGF=paste0(CELLSEGMENTATIONS_DIR,"Images",filesep,id,"_segmentations.pdf")
   suppressWarnings(dir.create(paste0(CELLSEGMENTATIONS_DIR,"DetectionResults")))
   suppressWarnings(dir.create(paste0(CELLSEGMENTATIONS_DIR,"Annotations"))) 
@@ -413,9 +415,12 @@ plotLiquidNitrogenBox <- function(rack, row){
   qpversion = list.files("/Applications", pattern = "QuPath")
   qpversion = gsub(".app","", gsub("QuPath","",qpversion))
   qpversion = qpversion[length(qpversion)]
+  
+  ## Load environment and source python scripts
   LOADEDENV='cellpose' %in% conda_list()$name
   if(LOADEDENV){
     use_condaenv("cellpose")
+    sapply(PYTHON_SCRIPTS, source_python)
   }
   
   ## Copy raw images to temporary directory:
@@ -455,8 +460,8 @@ plotLiquidNitrogenBox <- function(rack, row){
   }else{
     ## Call CellPose for images inside temp dir 
     # virtualenv_list()
-    print(paste("Using", CELLPOSE_MODEL))
     source_python(CELLPOSE_SCRIPT)
+    print(paste("Using", CELLPOSE_MODEL))
     ## cellPose parameters:
     if(is.null(param)){
       cpp=read.table(CELLPOSE_PARAM,header=T,row.names = 1)
@@ -477,10 +482,9 @@ plotLiquidNitrogenBox <- function(rack, row){
   
   ## Tissue segmentation
   for(x in f_i){
-    tmp=paste0(TMP_DIR,filesep,fileparts(x)$name,".tif")
-    cmd=paste("python3",TISSUESEG_SCRIPT, "-imgPath", tmp," -resultsPath",paste0(TMP_DIR,filesep,"Confluency"),"-cellType", cellLine)
-    print(cmd, quote = F)
-    system(cmd)
+    imgPath=paste0(TMP_DIR,filesep,fileparts(x)$name,".tif")
+    source_python(TISSUESEG_SCRIPT)
+    get_mask(imgPath,paste0(TMP_DIR,filesep,"Confluency"),toupper(cellLine),"False")
   }
   
   

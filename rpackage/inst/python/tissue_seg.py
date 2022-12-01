@@ -181,7 +181,7 @@ def main(parser):
         loopTroughImages(args.imgPath,args.resultsPath,args.cellType.upper(),args.saveVis)
     
 
-
+'''
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     # todo add argument for cell-line
@@ -190,3 +190,4 @@ if __name__ == "__main__":
     parser.add_argument('-cellType',required=True,help='name of cell type for the images example NUGC, NCI-N87, SNU, etc')
     parser.add_argument('--saveVis',action='store_true',help='Flag for saving all the visualization for detected tissues, default is False')
     main(parser)
+'''

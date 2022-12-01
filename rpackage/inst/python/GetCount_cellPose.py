@@ -78,7 +78,11 @@ def get_blob_prop(msk,pixel_size):
     except:
       continue  
     area = area * pixel_size * pixel_size
-    return {'Centroid X µm':x * pixel_size, 'Centroid Y µm':y * pixel_size,'Area µm^2':area,'perimeter µm':perimeter * pixel_size,'ROI':ROI}
+    perimeter = perimeter * pixel_size 
+    roundnes_value = (4 * area * 3.1415)/ float(perimeter * perimeter)   # roundness calculated using 4*area*pi/perimeter^2
+    return {'Centroid X µm':x * pixel_size, 'Centroid Y µm':y * pixel_size,'Area µm^2':area,'perimeter µm':perimeter * pixel_size,'roundness':roundnes_value,'ROI':ROI}
+
+
 
 def get_ROI_cellCount(df,msk,name,pixel_size):
   df_total_det = pd.DataFrame()
@@ -127,6 +131,7 @@ def get_count2csv(list_of_cells_props):
     df['ROI'] = [i['ROI'] for i in list_of_cells_props]
     df['Area µm^2'] = [i['Area µm^2'] for i in list_of_cells_props]
     df['perimeter µm'] = [i['perimeter µm'] for i in list_of_cells_props]
+    df['roundness'] = [i['roundness'] for i in list_of_cells_props]
     return df
 
 def get_pixel_size(objectiveLens):
