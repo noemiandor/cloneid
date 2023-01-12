@@ -60,6 +60,11 @@ def vis_overlay(path2Masks,path2Save,ext):
       msk = cv2.imread(os.path.join(path2Masks,item),-1)
       img = cv2.imread(os.path.join(path2Masks,base_name+ext),-1)
       overlay = mask_overlay(img,msk)
+      mask = overlay * 0 
+      overlay_copy = overlay.copy()
+      overlay = img 
+      overlay[100:1200,100:1900] = overlay_copy[100:1200,100:1900]
+      overlay = cv2.rectangle(overlay, (100,100), (1900,1200), (0,0,255), 4)
       cv2.imwrite(os.path.join(path2Save,'vis',base_name+'_overlay.png'),overlay)
 
 
