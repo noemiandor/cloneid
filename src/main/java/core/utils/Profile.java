@@ -12,7 +12,7 @@ import java.io.Serializable;
 public class Profile implements Serializable {
 
 	/**
-	 * 
+	 *
 	 */
 	private static final long serialVersionUID = 1L;
 	private Double[] values;
@@ -32,7 +32,7 @@ public class Profile implements Serializable {
 	public Double[] getValues() {
 		return values;
 	}
-	
+
 	public double[] simpleValues() {
 		return Helper.toDouble(values);
 	}
@@ -44,7 +44,7 @@ public class Profile implements Serializable {
 	public String[] getLoci() {
 		return loci;
 	}
-	
+
 	public String getLocus(int i) {
 		return loci[i];
 	}

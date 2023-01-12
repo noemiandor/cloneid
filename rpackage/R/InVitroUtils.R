@@ -368,9 +368,9 @@ plotLiquidNitrogenBox <- function(rack, row){
   stmt = paste0("INSERT INTO Passaging (id, passaged_from_id1, event, date, cellCount, passage, flask, media) ",
                 "VALUES ('",id ,"', '",from,"', '",event,"', '",tx,"', ",dish$dishCount,", ", passage,", ",flask,", ", kids$media, ");")
   rs = dbSendQuery(mydb, stmt)
-  # ## @TODO: remove
-  # stmt = paste0("update Passaging set correctedCount = ",dish$dishCount," where id='",id,"';")
-  # rs = dbSendQuery(mydb, stmt)
+  ## @TODO: remove
+  stmt = paste0("update Passaging set correctedCount = ",dish$dishCount," where id='",id,"';")
+  rs = dbSendQuery(mydb, stmt)
   
   stmt = paste0("update Passaging set areaOccupied_um2 = ",dish$dishAreaOccupied," where id='",id,"';")
   rs = dbSendQuery(mydb, stmt)
@@ -393,12 +393,6 @@ plotLiquidNitrogenBox <- function(rack, row){
   CELLSEGMENTATIONS_DIR="~/CellSegmentations/output/"; 
   QUPATH_PRJ = "~/Downloads/qproject/project.qpproj"
   QSCRIPT = "~/Downloads/qpscript/runDetectionROI.groovy"
-  CELLPOSE_MODEL=list.files(paste0(find.package("cloneid"),filesep,"python"),pattern = "cellpose_residual", full.names=T)
-  if(isempty(grep(cellLine,CELLPOSE_MODEL))){
-    CELLPOSE_MODEL=grep("default",CELLPOSE_MODEL,value = T)
-  }else{
-    CELLPOSE_MODEL=grep(cellLine,CELLPOSE_MODEL,value = T)
-  }
   CELLPOSE_PARAM=paste0(find.package("cloneid"),filesep,"python/cellPose.param")
   PYTHON_SCRIPTS=list.files(paste0(find.package("cloneid"),filesep,"python"), pattern=".py", full.names = T)
   CELLPOSE_SCRIPT=grep("GetCount_cellPose.py",PYTHON_SCRIPTS, value = T)
@@ -461,10 +455,9 @@ plotLiquidNitrogenBox <- function(rack, row){
     ## Call CellPose for images inside temp dir 
     # virtualenv_list()
     source_python(CELLPOSE_SCRIPT)
-    print(paste("Using", CELLPOSE_MODEL))
     ## cellPose parameters:
     if(is.null(param)){
-      cpp=read.table(CELLPOSE_PARAM,header=T,row.names = 1)
+      cpp=read.table(CELLPOSE_PARAM,header=T,row.names = 1) 
       for(cl in setdiff(rownames(cpp),"default")){
         tmp=cloneid::findAllDescendandsOf(id=cl,verbose = F)
         if(id %in% tmp$id){
@@ -476,8 +469,9 @@ plotLiquidNitrogenBox <- function(rack, row){
         param=as.list(cpp["default",])
       }
     }
+    param$cellposeModel=paste0(find.package("cloneid"),filesep,"python",filesep, param$cellposeModel)
     print(param)
-    run(TMP_DIR,normalizePath(CELLPOSE_MODEL),TMP_DIR,".tif", as.character(param$diameter), as.character(param$flow_threshold), as.character(param$cellprob_threshold))
+    run(TMP_DIR,normalizePath(param$cellposeModel),TMP_DIR,".tif", as.character(param$diameter), as.character(param$flow_threshold), as.character(param$cellprob_threshold))
   }
   
   ## Tissue segmentation
@@ -515,7 +509,7 @@ plotLiquidNitrogenBox <- function(rack, row){
   f_o = list.files(paste0(CELLSEGMENTATIONS_DIR,"Images"), pattern = paste0(id,"_"), full.names = T)
   f_c = list.files(paste0(CELLSEGMENTATIONS_DIR,"Confluency"), pattern = ".csv", full.names = T)
   f_c = grep(paste0(id,"_"), f_c, value=T)
-  print(paste0("QPath output found for ",fileparts(f[1])$name," and ",(length(f)-1)," other image files."), quote = F)
+  print(paste0("Output found for ",fileparts(f[1])$name," and ",(length(f)-1)," other image files."), quote = F)
   
   
   ## Read automated image analysis output

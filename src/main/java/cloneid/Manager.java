@@ -211,11 +211,11 @@ public final class Manager {
 //			Perspective p2 = new GenomePerspective(new File("/Users/noemi/Projects/PMO/MeasuringGIperClone/data/GastricCancerCLs/scDNAseq/E07_180831_clones/HGC-27.sps.cbs"), "CN_Estimate");
 //			System.out.println(p2.getChildrensSizes());
 			//			p2.save2DB();
-//			display("HGC-27", Perspectives.Identity);
+			display("SNU-668", Perspectives.TranscriptomePerspective);
 //			profiles(119963, Perspectives.TranscriptomePerspective, false);
-			TranscriptomePerspective tmp = new TranscriptomePerspective(new File("/Users/4470246/Projects/PMO/MeasuringGIperClone/data/GastricCancerCLs/scRNAseq/C07_190610_LIAYSON//SNU-16_3.sps.cbs"), "CN_Estimate");
+//			TranscriptomePerspective tmp = new TranscriptomePerspective(new File("/Users/4470246/Projects/PMO/MeasuringGIperClone/data/GastricCancerCLs/scRNAseq/C07_190610_LIAYSON//SNU-16_3.sps.cbs"), "CN_Estimate");
 //			TranscriptomePerspective tmp = new TranscriptomePerspective(new File("/Users/4470246/Projects/PMO/MeasuringGIperClone/data/GastricCancerCLs/scRNAseq/C07_190610_LIAYSON//SNU-16_3.0.1914997.sps.cbs"), "Clone_0.191499695181847");
-tmp.save2DB();
+//tmp.save2DB();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

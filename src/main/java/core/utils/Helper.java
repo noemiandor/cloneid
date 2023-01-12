@@ -9,8 +9,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -124,18 +122,18 @@ public final class Helper {
 	}
 
 	public static Double[] byte2double(byte[] asBytes) throws IOException {
-		List<Double> dubs = new ArrayList<Double>();
+		List<Double> dubs = new ArrayList<>();
 		ByteArrayInputStream bin = new ByteArrayInputStream(asBytes);
 		DataInputStream din = new DataInputStream(bin);
 		while(din.available()>0){
 			dubs.add(din.readDouble());
 		}
-		Double[] object = dubs.toArray(new Double[dubs.size()]);;
+		Double[] object = dubs.toArray(new Double[dubs.size()]);
 		return(object);
 	}
 
 	public static double parseDouble(String string) {
-		if(Helper.isDouble(string)){				
+		if(Helper.isDouble(string)){
 			return(Double.parseDouble(string));
 		}else{
 			return( Double.NaN);
@@ -155,11 +153,11 @@ public final class Helper {
 	/**
 	 * Histogram
 	 * @param childrensSizes
-	 * @param precision 
+	 * @param precision
 	 * @return
 	 */
 	public static Map<Double, Integer> count(float[] childrensSizes, double precision) {
-		Map<Double,Integer> spfreq =new HashMap<Double, Integer>();
+		Map<Double,Integer> spfreq =new HashMap<>();
 		for(double d_ : childrensSizes){
 			double d=Math.round(d_/precision)*precision;
 			if(spfreq.containsKey(d)){
@@ -194,7 +192,7 @@ public final class Helper {
 	}
 
 	public static String[] byte2String(byte[] bytes) throws IOException {
-		List<String> dubs = new ArrayList<String>();
+		List<String> dubs = new ArrayList<>();
 		ByteArrayInputStream bin = new ByteArrayInputStream(bytes);
 		DataInputStream din = new DataInputStream(bin);
 		while(din.available()>0){
@@ -206,7 +204,7 @@ public final class Helper {
 			}
 			dubs.add(l.trim());
 		}
-		String[] object = dubs.toArray(new String[dubs.size()]);;
+		String[] object = dubs.toArray(new String[dubs.size()]);
 		return(object);
 	}
 
