@@ -40,13 +40,12 @@ public final class CLONEID {
 		String db_connect_string = "jdbc:mysql://"
 				+ yamlReader.getConfig().getMysqlConnection().get("host") + ":"
 				+ yamlReader.getConfig().getMysqlConnection().get("port")
-				+ "?serverTimezone=UTC";
+				+ "/CLONEID";
 
 
 		
 		con = DriverManager.getConnection(db_connect_string, db_userid, db_password);
 		stmt = con.createStatement();
-		stmt.executeQuery("USE CLONEID");
 		return true;
 	}
 

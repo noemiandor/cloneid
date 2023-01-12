@@ -1,4 +1,4 @@
-setupCLONEID = function(host = 'localhost', port = '3306', user = NA, password = NA, database="CLONEID", schemaScript = "CLONEID_schema.sql", rebuildCondaEnvironments=T){
+setupCLONEID = function(host = 'localhost', port = '3306', user = NA, password = NA, database="CLONEID", schemaScript = "CLONEID_schema.sql", rebuildCondaEnvironments=F){
     
     yaml_dir = paste0(system.file(package='cloneid'), '/config/config.yaml')
     yml = read_yaml(yaml_dir)

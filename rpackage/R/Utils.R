@@ -1,10 +1,30 @@
+.addColumn<-function(M,newCol,initVal){
+  if (!any(colnames(M)==newCol)){
+    if(!is.null(dim(M))){
+      M=matrix(cbind(M,matrix(initVal,nrow(M),1)),nrow=nrow(M),ncol=ncol(M)+1,
+               dimnames = list(rownames(M), c(colnames(M),newCol)));
+    }else{
+      cols=names(M);
+      M=c(M,initVal);
+      names(M)=c(cols,newCol);
+    }
+  }
+  return(M);
+}
+
+.notifyUser<-function(message,verbose=T){
+  if(verbose){
+    print(message)
+  }
+}
+
 .javamap2Rmatrix<-function (map){
   keys=c(); vals=c()
-  for (e in as.list(map$entrySet())){
-    keys=c(keys,e$getKey())
-    vals=cbind(vals, e$getValue()$simpleValues() )
+  for (key in as.list(map$keySet())){
+    keys=c(keys,key$toString())
+    vals=cbind(vals, map$get(key)$simpleValues() )
   }
-  rownames(vals)=unlist(e$getValue()$getLoci())
+  rownames(vals)=unlist(map$get(key)$getLoci())
   colnames(vals)=keys;
   return(vals)
 }
