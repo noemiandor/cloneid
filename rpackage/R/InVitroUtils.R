@@ -443,36 +443,26 @@ plotLiquidNitrogenBox <- function(rack, row){
   }
   
   ## Cell segmentation
-  ## @TODO: use cellpose for all cell lines 
-  if(!cellLine %in% c("HGC-27","SUM-159","SNU-668","NCI-N87","KATOIII","NUGC-4","SNU-16","DKMG", "KNS42")){
-    ## Call QuPath for images inside temp dir:
-    write(.QuPathScript(qpdir = TMP_DIR, cellLine = cellLine), file=QSCRIPT)
-    write(.SaveProject(QUPATH_PRJ, paste0(TMP_DIR,filesep,sapply(f_i, function(x) fileparts(x)$name),".tif")), file=QUPATH_PRJ)
-    cmd = paste0("/Applications/QuPath",qpversion,".app/Contents/MacOS/QuPath",qpversion," script ", QSCRIPT, " -p ", QUPATH_PRJ)
-    print(cmd, quote = F)
-    system(cmd)
-  }else{
-    ## Call CellPose for images inside temp dir 
-    # virtualenv_list()
-    source_python(CELLPOSE_SCRIPT)
-    ## cellPose parameters:
-    if(is.null(param)){
-      cpp=read.table(CELLPOSE_PARAM,header=T,row.names = 1) 
-      for(cl in setdiff(rownames(cpp),"default")){
-        tmp=cloneid::findAllDescendandsOf(id=cl,verbose = F)
-        if(id %in% tmp$id){
-          param=as.list(cpp[cl,])
-          break
-        }
-      }
-      if(is.null(param)){
-        param=as.list(cpp["default",])
+  ## Call CellPose for images inside temp dir 
+  # virtualenv_list()
+  source_python(CELLPOSE_SCRIPT)
+  ## cellPose parameters:
+  if(is.null(param)){
+    cpp=read.table(CELLPOSE_PARAM,header=T,row.names = 1) 
+    for(cl in setdiff(rownames(cpp),"default")){
+      tmp=cloneid::findAllDescendandsOf(id=cl,verbose = F)
+      if(id %in% tmp$id){
+        param=as.list(cpp[cl,])
+        break
       }
     }
-    param$cellposeModel=paste0(find.package("cloneid"),filesep,"python",filesep, param$cellposeModel)
-    print(param)
-    run(TMP_DIR,normalizePath(param$cellposeModel),TMP_DIR,".tif", as.character(param$diameter), as.character(param$flow_threshold), as.character(param$cellprob_threshold))
+    if(is.null(param)){
+      param=as.list(cpp["default",])
+    }
   }
+  param$cellposeModel=paste0(find.package("cloneid"),filesep,"python",filesep, param$cellposeModel)
+  print(param)
+  run(TMP_DIR,normalizePath(param$cellposeModel),TMP_DIR,".tif", as.character(param$diameter), as.character(param$flow_threshold), as.character(param$cellprob_threshold))
   
   ## Tissue segmentation
   for(x in f_i){
