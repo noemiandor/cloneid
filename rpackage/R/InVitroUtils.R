@@ -14,7 +14,7 @@ init <- function(id, cellLine, cellCount, tx = Sys.time(), media=NULL, flask=NUL
   dishCount = cellCount;
   if(!is.null(flask)){
     dishSurfaceArea_cm2 = .readDishSurfaceArea_cm2(flask, mydb)
-    dishCount = .readCellSegmentationsOutput(id= id, cellLine = cellLine, dishSurfaceArea_cm2 = dishSurfaceArea_cm2, cellCount = cellCount, preprocessing=preprocessing)$dishCount;
+    dishCount = .readCellSegmentationsOutput(id= id, from=cellLine, cellLine = cellLine, dishSurfaceArea_cm2 = dishSurfaceArea_cm2, cellCount = cellCount, preprocessing=preprocessing)$dishCount;
   }
   if(is.null(media)){
     media = "NULL"
@@ -356,7 +356,7 @@ plotLiquidNitrogenBox <- function(rack, row){
   dbClearResult(dbListResults(mydb)[[1]])
   dbDisconnect(mydb)
   
-  dish = .readCellSegmentationsOutput(id= id, cellLine = kids$cellLine, dishSurfaceArea_cm2 = dishSurfaceArea_cm2, cellCount = cellCount, excludeOption=excludeOption, preprocessing=preprocessing, param=param);
+  dish = .readCellSegmentationsOutput(id= id, from=from, cellLine = kids$cellLine, dishSurfaceArea_cm2 = dishSurfaceArea_cm2, cellCount = cellCount, excludeOption=excludeOption, preprocessing=preprocessing, param=param);
   
   ### Insert
   passage = kids$passage
@@ -382,7 +382,7 @@ plotLiquidNitrogenBox <- function(rack, row){
   dbDisconnect(mydb)
 }
 
-.readCellSegmentationsOutput <- function(id, cellLine, dishSurfaceArea_cm2, cellCount, excludeOption, preprocessing=T, param=NULL){
+.readCellSegmentationsOutput <- function(id, from, cellLine, dishSurfaceArea_cm2, cellCount, excludeOption, preprocessing=T, param=NULL){
   ## Typical values for dishSurfaceArea_cm2 are: 
   ## a) 75 cm^2 = 10.1 cm x 7.30 cm  
   ## b) 25 cm^2 = 5.08 cm x 5.08 cm
@@ -449,11 +449,13 @@ plotLiquidNitrogenBox <- function(rack, row){
   ## cellPose parameters:
   if(is.null(param)){
     cpp=read.table(CELLPOSE_PARAM,header=T,row.names = 1) 
+    ##@TODO can we zoom in on just a subset of entries of cpp? Include an additional column called "cellLine" in cellPose.param
     for(cl in setdiff(rownames(cpp),"default")){
-      tmp=cloneid::findAllDescendandsOf(id=cl,verbose = F)
-      if(id %in% tmp$id){
+      tmp=cloneid::findAllDescendandsOf(id=cl,verbose = F); 
+      if(from %in% tmp$id){
         param=as.list(cpp[cl,])
-        break
+        ##@TODO: this will pick the first lineage that fits. If there are multiple lineages that fit, the subsequent ones will be ignored
+        break; 
       }
     }
     if(is.null(param)){
