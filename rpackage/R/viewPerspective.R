@@ -18,6 +18,7 @@ viewPerspective<-function(spstatsFile, whichP, suffix=".sps.cbs", xy=NULL){
   eP=J("core.utils.Perspectives")$ExomePerspective
   tP=J("core.utils.Perspectives")$TranscriptomePerspective
   kP=J("core.utils.Perspectives")$KaryotypePerspective
+  mP=J("core.utils.Perspectives")$MorphologyPerspective
   if(!file.exists(clonesIn)){
     print(paste("Clonal composition input does not exists at:",clonesIn,". Run clonal decomposition algorithm first."))
   }
@@ -41,6 +42,12 @@ viewPerspective<-function(spstatsFile, whichP, suffix=".sps.cbs", xy=NULL){
   if(whichP==gP$name()){
     for(sp in p$getChildrensSizes()){ ##Save subclone profiles
       p_<-.jnew("core.GenomePerspective",.jnew("java.io.File", gsub("sps",paste(round(sp,NUMRES),"sps",sep="."),clonesIn) ),paste("SP",sp,sep="_"))
+      .jcall(p_,returnSig ="V",method = "save2DB")
+    }
+  }
+  if(whichP==mP$name()){
+    for(sp in p$getChildrensSizes()){ ##Save subclone profiles
+      p_<-.jnew("core.MorphologyPerspective",.jnew("java.io.File", gsub("sps",paste(round(sp,NUMRES),"sps",sep="."),clonesIn) ),paste("SP",sp,sep="_"))
       .jcall(p_,returnSig ="V",method = "save2DB")
     }
   }

@@ -113,6 +113,8 @@ public class SerializeProfile_MySQL {
 			p=new Genome(loci);
 		}else if(perspective.equals(Perspectives.TranscriptomePerspective.name())){
 			p=new Transcriptome(loci);
+		}else if(perspective.equals(Perspectives.MorphologyPerspective.name())){
+			p=new Profile(loci);
 		}
 		for(int i=0; i<object.length; i++){
 			p.modify(i, object[i]);

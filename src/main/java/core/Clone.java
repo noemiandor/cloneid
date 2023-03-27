@@ -416,6 +416,9 @@ public abstract class Clone {
 		}else if(which.equals(Perspectives.ExomePerspective)){
 			ExomePerspective gP = new ExomePerspective(size, sampleName, nMut);
 			return(gP);
+		}else if(which.equals(Perspectives.MorphologyPerspective)){
+			MorphologyPerspective gP = new MorphologyPerspective(size, sampleName, nMut);
+			return(gP);
 		}
 		return null;
 	}

@@ -89,7 +89,7 @@ public final class CLONEID {
 	 * @throws Exception
 	 */
 	public Clone getClone(int cloneID, Perspectives which) throws Exception {
-		String attr="size,sampleSource,whichPerspective,parent,coordinates";
+		String attr="size,origin,whichPerspective,parent,coordinates";
 		if(which==Perspectives.Identity){
 			attr+=","+Arrays.toString(Perspectives.values()).replace(", Identity", "").replace("[", "").replace("]", "");
 
