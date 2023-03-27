@@ -30,7 +30,7 @@ import database.SerializeProfile_MySQL;
  */
 public abstract class Clone {
 
-	private static final double PRECISION = 0.00000005;
+	protected static final double PRECISION = 0.00000005;
 
 	/**
 	 * The fraction of cells from the biosample that have been assigned to this clone (1 if this clone represents the metapopulation). 
@@ -41,7 +41,7 @@ public abstract class Clone {
 	 * A clone which contains this clone. Clones without a parent shall not persist in the database.
 	 * @TODO: parent should be forced to be of same type!
 	 */
-	private Clone parent;
+	protected Clone parent;
 
 	/**
 	 * Clones contained within this clone
@@ -58,7 +58,7 @@ public abstract class Clone {
 	/**
 	 * The unique identifier of the clone in the database. Only set once clone is saved to database.
 	 */
-	private int cloneID;
+	protected int cloneID;
 
 	/**
 	 * The characteristics unique to this clone.
@@ -73,7 +73,7 @@ public abstract class Clone {
 	/**
 	 * The geographical location of the clone
 	 */
-	private double[] coordinates;
+	protected double[] coordinates;
 
 	/**
 	 * True if the clone was already found in the database when trying to save it, false otherwise.
@@ -133,7 +133,6 @@ public abstract class Clone {
 		String[] header=lines.get(0).split(Helper.TAB);
 		String[] loci=Helper.apply(Helper.sapply(lines.subList(1, lines.size()),"split",Helper.TAB),"get",Helper.firstIndexOf("LOCUS", header));
 
-
 		//Find clone columns
 		List<Integer> cloneI=new ArrayList<Integer>(); //Column indices of clones
 		int metaI=Helper.firstIndexOf(parentCloneID, header); //@TODO: ensure root column name has correct format *_number
@@ -186,7 +185,7 @@ public abstract class Clone {
 	 * @TODO: this will not work if two or more clones have same size --> get rid of dependencies on this method, instead use only CLONEID.getClone(..) for loading objects from DB 
 	 * @throws Exception
 	 */
-	private void loadFromDB() throws Exception {
+	protected void loadFromDB() throws Exception {
 		CLONEID db= new CLONEID();
 		db.connect();
 		//@TODO: there's a risk here of overlapping clone sizes and wrong assignment of clone members
@@ -282,7 +281,7 @@ public abstract class Clone {
 	 * Adds clone @child contained within this clone to this clone's children. This method also sets the parent of @child to reference this clone.  
 	 * @param c - the clone contained within this clone. 
 	 */
-	private void addChild(Clone c){
+	protected void addChild(Clone c){
 		//children and parent must be of the same type: e.g. an identity's parent can't be a perspective
 		if(!c.getClass().equals(this.getClass())){
 			throw new IncompatibleClassChangeError();
@@ -381,7 +380,7 @@ public abstract class Clone {
 	/**
 	 * Check if clone exists yet in DB. If so, return the clone's ID
 	 */
-	private Integer isInDB(String tableName, CLONEID db) throws Exception {
+	protected Integer isInDB(String tableName, CLONEID db) throws Exception {
 		int hash = Arrays.deepHashCode(profile.getValues());
 		//@TODO: risk that clone is falsely classified as already existent even though it is not <=> hash is non-unique for long arrays
 		String selstmt="SELECT cloneID from "+tableName+" where abs(size-"+this.size+")<"+PRECISION+" and profile_hash="+hash+" AND whichPerspective=\'"+this.getClass().getSimpleName()+"\' AND sampleSource=\'"+sampleSource+"\';"; 
