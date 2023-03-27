@@ -51,7 +51,7 @@ public final class Manager {
 
 	public static Map<String, Profile> profiles(String sampleName, Perspectives which, boolean includeRoot) throws Exception {
 		String tN = CLONEID.getTableNameForClass(which.name());
-		String selstmt="SELECT size,cloneID from "+tN+" where hasChildren=true AND sampleSource=\'"+sampleName+"\' AND whichPerspective=\'"+which+"\' ORDER BY size DESC;"; 
+		String selstmt="SELECT size,cloneID from "+tN+" where hasChildren=true AND origin=\'"+sampleName+"\' AND whichPerspective=\'"+which+"\' ORDER BY size DESC;"; 
 		return(gatherProfiles(selstmt,which,includeRoot));
 	}
 
@@ -208,14 +208,15 @@ public final class Manager {
 				Perspective p =new ExomePerspective(new File(args[0]),"CN_Estimate");
 				Perspective p = new TranscriptomePerspective(new File("/Users/noemi/Projects/PMO/MeasuringGIperClone/data/GastricCancerCLs/scRNAseq/B07_180109_LIAYSON/SNU-16.0.07274.sps.cbs"),"Clone_0.07274");
 			*/
-//			Perspective p =new MorphologyPerspective(new File("/Users/4470246/Desktop/tmp/SNU-601_A4_seedT7.1.sps.csv"),"SP1_1");
-//			System.out.println(p.toString());	
-//			p.save2DB();
+			Perspective p =new MorphologyPerspective(new File("/Users/4470246/Desktop/tmp/NUGC-4_A4_seedTPd13/NUGC-4_A4_seedTPd13.0.99.sps.csv"),"SP_0.990000009536743");
+			System.out.println(p.toString());	
+			p.save2DB();
 //			profile(3456, Perspectives.GenomePerspective);
 //			Perspective p2 = new GenomePerspective(new File("/Users/noemi/Projects/PMO/MeasuringGIperClone/data/GastricCancerCLs/scDNAseq/E07_180831_clones/HGC-27.sps.cbs"), "CN_Estimate");
 //			System.out.println(p2.getChildrensSizes());
 			//			p2.save2DB();
-			display("P06270_19495_mp", Perspectives.MorphologyPerspective);
+//			display(253823, Perspectives.MorphologyPerspective);
+//			profiles(257274, Perspectives.MorphologyPerspective,false);
 //			display("SNU-601_A4_seedT5", Perspectives.MorphologyPerspective);
 //			profiles(119963, Perspectives.TranscriptomePerspective, false);
 //			TranscriptomePerspective tmp = new TranscriptomePerspective(new File("/Users/4470246/Projects/PMO/MeasuringGIperClone/data/GastricCancerCLs/scRNAseq/C07_190610_LIAYSON//SNU-16_3.sps.cbs"), "CN_Estimate");
