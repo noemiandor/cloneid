@@ -208,9 +208,9 @@ public final class Manager {
 				Perspective p =new ExomePerspective(new File(args[0]),"CN_Estimate");
 				Perspective p = new TranscriptomePerspective(new File("/Users/noemi/Projects/PMO/MeasuringGIperClone/data/GastricCancerCLs/scRNAseq/B07_180109_LIAYSON/SNU-16.0.07274.sps.cbs"),"Clone_0.07274");
 			*/
-			Perspective p =new MorphologyPerspective(new File("/Users/4470246/Desktop/tmp/NUGC-4_A4_seedTPd13/NUGC-4_A4_seedTPd13.0.99.sps.csv"),"SP_0.990000009536743");
-			System.out.println(p.toString());	
-			p.save2DB();
+//			Perspective p =new MorphologyPerspective(new File("/Users/4470246/Desktop/tmp/NUGC-4_A4_seedTPd13/NUGC-4_A4_seedTPd13.0.99.sps.csv"),"SP_0.990000009536743");
+//			System.out.println(p.toString());	
+//			p.save2DB();
 //			profile(3456, Perspectives.GenomePerspective);
 //			Perspective p2 = new GenomePerspective(new File("/Users/noemi/Projects/PMO/MeasuringGIperClone/data/GastricCancerCLs/scDNAseq/E07_180831_clones/HGC-27.sps.cbs"), "CN_Estimate");
 //			System.out.println(p2.getChildrensSizes());
