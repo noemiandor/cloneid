@@ -492,15 +492,6 @@ public abstract class Clone {
 	public void setCoordinates(double x,double y) throws Exception {
 		this.coordinates = new double[]{x,y};
 		
-		CLONEID cloneid= new CLONEID();
-		cloneid.connect();
-		try{
-			cloneid.update(this, "coordinates", "\'"+x+","+y+"\'");
-		}catch(Exception e){
-			e.printStackTrace();
-		}
-		cloneid.close();
-		
 		for(Clone c : children){
 			c.setCoordinates(x, y);
 		}
