@@ -218,7 +218,7 @@ public final class Manager {
 //			display(253823, Perspectives.MorphologyPerspective);
 //			profiles(257274, Perspectives.MorphologyPerspective,false);
 //			display("SNU-601_A4_seedT5", Perspectives.MorphologyPerspective);
-//			profiles(119963, Perspectives.TranscriptomePerspective, false);
+			profiles(134018, Perspectives.GenomePerspective, false);
 //			TranscriptomePerspective tmp = new TranscriptomePerspective(new File("/Users/4470246/Projects/PMO/MeasuringGIperClone/data/GastricCancerCLs/scRNAseq/C07_190610_LIAYSON//SNU-16_3.sps.cbs"), "CN_Estimate");
 //			TranscriptomePerspective tmp = new TranscriptomePerspective(new File("/Users/4470246/Projects/PMO/MeasuringGIperClone/data/GastricCancerCLs/scRNAseq/C07_190610_LIAYSON//SNU-16_3.0.1914997.sps.cbs"), "Clone_0.191499695181847");
 //tmp.save2DB();
