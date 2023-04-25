@@ -81,14 +81,17 @@ getCloneColors<-function(sName, whichP = "TranscriptomePerspective",cmap=NULL){
 
 
 
-identity2perspectiveMap<- function(sName,persp, includeSampleOrigin=F){
-  identities=cloneid::getSubclones(sName,"Identity")
-  tmp=sapply(identities,function(x) x$getPerspective(J("core.utils.Perspectives")$valueOf(persp))$toString())
-  persp=sapply(strsplit(names(tmp),"ID"),"[[",2)
-  if(includeSampleOrigin){
-    persp=paste0(sName,".",persp)
+identity2perspectiveMap <- function (sName, persp, includeSampleOrigin = F) {
+  mydb = cloneid::connect2DB()
+  stmt = paste0("select cloneID,",persp," from Identity where parent is NOT NULL and sampleSource = '",sName,"'")
+  rs = suppressWarnings(dbSendQuery(mydb, stmt))
+  la=fetch(rs, n=-1)
+  
+  persp =la[,persp]
+  if (includeSampleOrigin) {
+    persp = paste0(sName, ".", persp)
   }
-  names(persp)=sapply(strsplit(tmp,"ID"),"[[",2)
+  names(persp) = as.character(la$cloneID)
   return(persp)
 }
 
