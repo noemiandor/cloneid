@@ -29,7 +29,7 @@ data(CloneProfiles)
 ## Look at GenomePerspective object:
 CloneProfiles = CloneProfiles$GenomePerspective
 names(CloneProfiles)
-sapply(CloneProfiles$, dim)
+sapply(CloneProfiles, dim)
 print(CloneProfiles$`SNU-16.spstats`)
 
 ## Layer 1:
