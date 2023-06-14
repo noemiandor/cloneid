@@ -390,7 +390,7 @@ plotLiquidNitrogenBox <- function(rack, row){
   ## CellSegmentations Settings; @TODO: should be set under settings, not here
   UM2CM = 1e-4
   TMP_DIR = normalizePath("~/Downloads/tmp");
-  CELLSEGMENTATIONS_DIR="~/CellSegmentations/output/"; 
+  CELLSEGMENTATIONS_DIR=paste0(normalizePath("~/CellSegmentations/output/"),"/");
   QUPATH_PRJ = "~/Downloads/qproject/project.qpproj"
   QSCRIPT = "~/Downloads/qpscript/runDetectionROI.groovy"
   CELLPOSE_PARAM=paste0(find.package("cloneid"),filesep,"python/cellPose.param")
@@ -420,7 +420,7 @@ plotLiquidNitrogenBox <- function(rack, row){
   ## Copy raw images to temporary directory:
   unlink(TMP_DIR,recursive=T)
   dir.create(TMP_DIR)
-  f_i = list.files("~/CellSegmentations", pattern = paste0("^",id,"_"), full.names = T)
+  f_i = list.files(paste0(CELLSEGMENTATIONS_DIR,".."), pattern = paste0("^",id,"_"), full.names = T)
   f_i = grep("x_ph_",f_i,value=T)
   f_i = grep(".tif$",f_i,value=T)
   file.copy(f_i, TMP_DIR)
