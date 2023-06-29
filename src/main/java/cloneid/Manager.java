@@ -213,6 +213,7 @@ public final class Manager {
 //			p.save2DB();
 //			profile(3456, Perspectives.GenomePerspective);
 //			Perspective p2 = new GenomePerspective(new File("/Users/noemi/Projects/PMO/MeasuringGIperClone/data/GastricCancerCLs/scDNAseq/E07_180831_clones/HGC-27.sps.cbs"), "CN_Estimate");
+			Perspective p2 = new TranscriptomePerspective(new File("~/Downloads/testViewPerspective/TranscriptomePerspective/SNU-16.sps.cbs"), "CN_Estimate");
 //			System.out.println(p2.getChildrensSizes());
 			//			p2.save2DB();
 //			display(253823, Perspectives.MorphologyPerspective);

@@ -5,3 +5,8 @@ mysqlConnection:
   password: 
   database: CLONEID
   schemaScript: CLONEID_schema.sql
+
+cellSegmentation:
+  input: ~/CellSegmentations/
+  output: ~/CellSegmentations/output/
+  tmp: ~/Downloads/tmp/
