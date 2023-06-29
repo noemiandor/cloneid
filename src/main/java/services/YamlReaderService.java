@@ -5,6 +5,8 @@ package services;
 import cloneid.Manager;
 import org.apache.commons.io.FilenameUtils;
 import services.dto.YamlConfigDTO;
+
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
@@ -22,6 +24,8 @@ public class YamlReaderService {
     public YamlReaderService() {
         this.yamlDir = getYamlDir();
         this.mapper = new ObjectMapper(new YAMLFactory().disable(YAMLGenerator.Feature.WRITE_DOC_START_MARKER));
+//        configuring the objectMapper to ignore the error in case we have some unrecognized fields
+    	mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         readYAML();
     }
 

@@ -389,26 +389,27 @@ plotLiquidNitrogenBox <- function(rack, row){
   ## c) well from 96-plate = 0.32 cm^2
   ## CellSegmentations Settings; @TODO: should be set under settings, not here
   UM2CM = 1e-4
-  TMP_DIR = normalizePath("~/Downloads/tmp");
-  CELLSEGMENTATIONS_DIR=paste0(normalizePath("~/CellSegmentations/output/"),"/");
-  QUPATH_PRJ = "~/Downloads/qproject/project.qpproj"
-  QSCRIPT = "~/Downloads/qpscript/runDetectionROI.groovy"
+  yml = yaml::read_yaml(paste0(system.file(package='cloneid'), '/config/config.yaml'))
+  TMP_DIR = normalizePath(yml$cellSegmentation$tmp);
+  CELLSEGMENTATIONS_OUTDIR=paste0(normalizePath(yml$cellSegmentation$output),"/");
+  CELLSEGMENTATIONS_INDIR=paste0(normalizePath(yml$cellSegmentation$input),"/");
+  # QUPATH_PRJ = "~/Downloads/qproject/project.qpproj"
+  # QSCRIPT = "~/Downloads/qpscript/runDetectionROI.groovy"
   CELLPOSE_PARAM=paste0(find.package("cloneid"),filesep,"python/cellPose.param")
   PYTHON_SCRIPTS=list.files(paste0(find.package("cloneid"),filesep,"python"), pattern=".py", full.names = T)
   CELLPOSE_SCRIPT=grep("GetCount_cellPose.py",PYTHON_SCRIPTS, value = T)
   PREPROCESS_SCRIPT=grep("preprocessing.py",PYTHON_SCRIPTS, value = T)
   TISSUESEG_SCRIPT=grep("tissue_seg.py",PYTHON_SCRIPTS, value = T)
   QCSTATS_SCRIPT=grep("QC_Statistics.py",PYTHON_SCRIPTS, value = T)
-  # OUTSEGF=paste0(CELLSEGMENTATIONS_DIR,"Images",filesep,id,"_segmentations.pdf")
-  suppressWarnings(dir.create(paste0(CELLSEGMENTATIONS_DIR,"DetectionResults")))
-  suppressWarnings(dir.create(paste0(CELLSEGMENTATIONS_DIR,"Annotations"))) 
-  suppressWarnings(dir.create(paste0(CELLSEGMENTATIONS_DIR,"Images"))); 
-  suppressWarnings(dir.create(paste0(CELLSEGMENTATIONS_DIR,"Confluency"))); 
-  suppressWarnings(dir.create("~/Downloads/qpscript"))
-  suppressWarnings(dir.create(fileparts(QUPATH_PRJ)$pathstr))
-  qpversion = list.files("/Applications", pattern = "QuPath")
-  qpversion = gsub(".app","", gsub("QuPath","",qpversion))
-  qpversion = qpversion[length(qpversion)]
+  suppressWarnings(dir.create(paste0(CELLSEGMENTATIONS_OUTDIR,"DetectionResults")))
+  suppressWarnings(dir.create(paste0(CELLSEGMENTATIONS_OUTDIR,"Annotations"))) 
+  suppressWarnings(dir.create(paste0(CELLSEGMENTATIONS_OUTDIR,"Images"))); 
+  suppressWarnings(dir.create(paste0(CELLSEGMENTATIONS_OUTDIR,"Confluency"))); 
+  # suppressWarnings(dir.create("~/Downloads/qpscript"))
+  # suppressWarnings(dir.create(fileparts(QUPATH_PRJ)$pathstr))
+  # qpversion = list.files("/Applications", pattern = "QuPath")
+  # qpversion = gsub(".app","", gsub("QuPath","",qpversion))
+  # qpversion = qpversion[length(qpversion)]
   
   ## Load environment and source python scripts
   LOADEDENV='cellpose' %in% conda_list()$name
@@ -420,13 +421,13 @@ plotLiquidNitrogenBox <- function(rack, row){
   ## Copy raw images to temporary directory:
   unlink(TMP_DIR,recursive=T)
   dir.create(TMP_DIR)
-  f_i = list.files(paste0(CELLSEGMENTATIONS_DIR,".."), pattern = paste0("^",id,"_"), full.names = T)
+  f_i = list.files(CELLSEGMENTATIONS_INDIR, pattern = paste0("^",id,"_"), full.names = T)
   f_i = grep("x_ph_",f_i,value=T)
   f_i = grep(".tif$",f_i,value=T)
   file.copy(f_i, TMP_DIR)
   ## Delete output files from prior runs:
   for(subfolder in c("Annotations","Images","DetectionResults","Confluency")){
-    f = list.files(paste0(CELLSEGMENTATIONS_DIR,subfolder), pattern = paste0(id,"_"), full.names = T)
+    f = list.files(paste0(CELLSEGMENTATIONS_OUTDIR,subfolder), pattern = paste0(id,"_"), full.names = T)
     f = grep("x_ph_",f,value=T)
     file.remove(f)
   }
@@ -481,25 +482,25 @@ plotLiquidNitrogenBox <- function(rack, row){
   }
   ## Move files from tempDir to destination:
   cellPoseOut_csv = list.files(TMP_DIR, recursive = T, pattern = ".csv",full.names = T)
-  sapply(grep("pred",cellPoseOut_csv,value = T), function(x) file.copy(x, paste0(CELLSEGMENTATIONS_DIR,"DetectionResults") ))
-  sapply(grep("cellpose_count",cellPoseOut_csv,value = T), function(x) file.copy(x, paste0(CELLSEGMENTATIONS_DIR,"Annotations") ))
-  sapply(grep("Confluency",cellPoseOut_csv,value = T), function(x) file.copy(x, paste0(CELLSEGMENTATIONS_DIR,"Confluency") ))
+  sapply(grep("pred",cellPoseOut_csv,value = T), function(x) file.copy(x, paste0(CELLSEGMENTATIONS_OUTDIR,"DetectionResults") ))
+  sapply(grep("cellpose_count",cellPoseOut_csv,value = T), function(x) file.copy(x, paste0(CELLSEGMENTATIONS_OUTDIR,"Annotations") ))
+  sapply(grep("Confluency",cellPoseOut_csv,value = T), function(x) file.copy(x, paste0(CELLSEGMENTATIONS_OUTDIR,"Confluency") ))
   cellPoseOut_img = list.files(TMP_DIR, recursive = T, pattern = "overlay.",full.names = T)
   tissuesegOut_img = list.files(TMP_DIR, recursive = T, pattern = "mask.",full.names = T)
-  sapply(cellPoseOut_img, function(x) file.copy(x, paste0(CELLSEGMENTATIONS_DIR,"Images") ))
-  sapply(tissuesegOut_img, function(x) file.copy(x, paste0(CELLSEGMENTATIONS_DIR,"Confluency") ))
+  sapply(cellPoseOut_img, function(x) file.copy(x, paste0(CELLSEGMENTATIONS_OUTDIR,"Images") ))
+  sapply(tissuesegOut_img, function(x) file.copy(x, paste0(CELLSEGMENTATIONS_OUTDIR,"Confluency") ))
   
   ## Wait and look for imaging analysis output
-  print(paste0("Waiting for ",id," to appear under ",CELLSEGMENTATIONS_DIR," ..."), quote = F)
+  print(paste0("Waiting for ",id," to appear under ",CELLSEGMENTATIONS_OUTDIR," ..."), quote = F)
   f = c()
   while(length(f)<length(f_i)){
     Sys.sleep(3)
-    f = list.files(paste0(CELLSEGMENTATIONS_DIR,"DetectionResults"), pattern = paste0(id,"_"), full.names = T)
+    f = list.files(paste0(CELLSEGMENTATIONS_OUTDIR,"DetectionResults"), pattern = paste0(id,"_"), full.names = T)
     f = grep("x_ph_",f,value=T)
   }
-  f_a = list.files(paste0(CELLSEGMENTATIONS_DIR,"Annotations"), pattern = paste0(id,"_"), full.names = T)
-  f_o = list.files(paste0(CELLSEGMENTATIONS_DIR,"Images"), pattern = paste0(id,"_"), full.names = T)
-  f_c = list.files(paste0(CELLSEGMENTATIONS_DIR,"Confluency"), pattern = ".csv", full.names = T)
+  f_a = list.files(paste0(CELLSEGMENTATIONS_OUTDIR,"Annotations"), pattern = paste0(id,"_"), full.names = T)
+  f_o = list.files(paste0(CELLSEGMENTATIONS_OUTDIR,"Images"), pattern = paste0(id,"_"), full.names = T)
+  f_c = list.files(paste0(CELLSEGMENTATIONS_OUTDIR,"Confluency"), pattern = ".csv", full.names = T)
   f_c = grep(paste0(id,"_"), f_c, value=T)
   print(paste0("Output found for ",fileparts(f[1])$name," and ",(length(f)-1)," other image files."), quote = F)
   
