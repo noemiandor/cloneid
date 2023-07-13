@@ -1,0 +1,12 @@
+Changes made to the code on NOV 30th, 2022  
+Saeed Alahmari 
+Added roundness for every cell detected using cellpose 
+The closer the value of roundness to 1, the more circular is the cell 
+
+
+Changes made to the code on July 12th, 2023
+Saeed Alahmari
+
+Added 10 more features extracted from countours of each cell
+The features are aspect_ratio, extent, solidity, equivalent diameter, Orientation, max intensity value, min intensity value, mean intensity value, length of major axis, length of minor axis.
+
