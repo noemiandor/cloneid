@@ -450,7 +450,18 @@ plotLiquidNitrogenBox <- function(rack, row){
   ## cellPose parameters:
   if(is.null(param)){
     cpp=read.table(CELLPOSE_PARAM,header=T,row.names = 1) 
-    ##@TODO can we zoom in on just a subset of entries of cpp? Include an additional column called "cellLine" in cellPose.param
+    ##Let's zoom in on just a subset of entries of cpp, based on the "cellLine" param
+    mydb = connect2DB()
+    stmt = paste0("select id, cellLine from Passaging where id in (\'",paste(setdiff(rownames(cpp),"default"),collapse = "', '"),"\') ")
+    rs = dbSendQuery(mydb, stmt)
+    cli = fetch(rs, n=-1)
+    dbClearResult(dbListResults(mydb)[[1]])
+    dbDisconnect(mydb)
+    cli=rbind(cli,c("default","default"))
+    rownames(cli)=cli$id
+    cpp$cellLine=cli[rownames(cpp),"cellLine"]
+    cpp=cpp[cpp$cellLine %in% c(cellLine,"default"),,drop=F]
+    ## Now iterate through entries of cpp that we have left:
     for(cl in setdiff(rownames(cpp),"default")){
       tmp=cloneid::findAllDescendandsOf(id=cl,verbose = F); 
       if(from %in% tmp$id){

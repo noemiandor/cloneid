@@ -1,7 +1,7 @@
 #post-processing prediction
 
 #to run this file do 
-#python GetCount_cellPose.py  <path to images>  <path to pretrained model> <path to save results>  <extention of the original images such as '.tif'>
+#python GetCount_cellPose.py  <path to images>  <path to pretrained model> <path to save results>  <Cell-line name> <extention of the original images such as '.tif'>
 import argparse
 import os 
 import cv2
@@ -9,10 +9,36 @@ import numpy as np
 import pandas as pd 
 from tqdm import tqdm 
 from cellpose.plot import mask_overlay
-import sys
-from subprocess import call 
 from PIL import Image
 from PIL.TiffTags import TAGS
+
+import sys
+from subprocess import call 
+
+def vis_overlay(path2Masks,path2Save,ext):
+  #parentPath = os.path.dirname(path2Masks)
+  if not os.path.exists(os.path.join(path2Save,'vis')):
+    os.makedirs(os.path.join(path2Save,'vis'))
+  if not ext.startswith('.'):
+    ext = '.'+ext
+  print('Getting cell visualization ...')
+  for item in tqdm(os.listdir(path2Masks)):
+    
+    if item.startswith('.'):
+      continue 
+    elif not item.endswith('_masks.png'):
+      continue
+    else:
+      base_name = item.rsplit('_cp_masks',1)[0]
+      msk = cv2.imread(os.path.join(path2Masks,item),-1)
+      img = cv2.imread(os.path.join(path2Masks,base_name+ext),-1)
+      overlay = mask_overlay(img,msk)
+      mask = overlay * 0 
+      overlay_copy = overlay.copy()
+      overlay = img 
+      overlay[100:1200,100:1900] = overlay_copy[100:1200,100:1900]
+      overlay = cv2.rectangle(overlay, (100,100), (1900,1200), (0,0,255), 4)
+      cv2.imwrite(os.path.join(path2Save,'vis',base_name+'_overlay.png'),overlay)
 
 def get_metadata(path2Image):
     img = Image.open(path2Image)
@@ -42,33 +68,18 @@ def get_metadata(path2Image):
         #print('objectivelens from filename {}'.format(objective_lens))
     return objective_lens
 
-def vis_overlay(path2Masks,path2Save,ext):
-  #parentPath = os.path.dirname(path2Masks)
-  if not os.path.exists(os.path.join(path2Save,'vis')):
-    os.makedirs(os.path.join(path2Save,'vis'))
-  if not ext.startswith('.'):
-    ext = '.'+ext
-  print('Getting cell visualization ...')
-  for item in tqdm(os.listdir(path2Masks)):
-    
-    if item.startswith('.'):
-      continue 
-    elif not item.endswith('_masks.png'):
-      continue
-    else:
-      base_name = item.rsplit('_cp_masks',1)[0]
-      msk = cv2.imread(os.path.join(path2Masks,item),-1)
-      img = cv2.imread(os.path.join(path2Masks,base_name+ext),-1)
-      overlay = mask_overlay(img,msk)
-      mask = overlay * 0 
-      overlay_copy = overlay.copy()
-      overlay = img 
-      overlay[100:1200,100:1900] = overlay_copy[100:1200,100:1900]
-      overlay = cv2.rectangle(overlay, (100,100), (1900,1200), (0,0,255), 4)
-      cv2.imwrite(os.path.join(path2Save,'vis',base_name+'_overlay.png'),overlay)
+def get_pixel_size(objectiveLens):
+    if objectiveLens == '10x':
+        pixel_size = 0.922 
+    elif objectiveLens == '20x':
+        pixel_size = 0.922 / float(2)
+    elif objectiveLens == '40x':
+        pixel_size = 0.922 / float(4) 
+    return pixel_size
 
-
-def get_blob_prop(msk,pixel_size):
+def get_blob_prop(msk,pixel_size,path2Image):
+  imgray = cv2.imread(path2Image,cv2.IMREAD_GRAYSCALE)
+  #cv2.imwrite('image.png',imgray)
   contours,hierarchy = cv2.findContours(msk, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
   for cnt in contours:
     try:
@@ -80,14 +91,39 @@ def get_blob_prop(msk,pixel_size):
       ROI = 'rectangle'
       area = cv2.contourArea(cnt)
       perimeter = cv2.arcLength(cnt,True)
+
+      area = area * pixel_size * pixel_size
+      perimeter = perimeter * pixel_size 
+      roundnes_value = (4 * area * 3.1415)/ float(perimeter * perimeter)   # roundness calculated using 4*area*pi/perimeter^2
+      # Aspect ratio
+      x1,y1,w1,h1 = cv2.boundingRect(cnt)
+      x1,y1,w1,h1 =  x1* pixel_size, y1* pixel_size, w1* pixel_size, h1* pixel_size
+      aspect_ratio = float(w1)/h1
+      # Extent 
+      rect_area = w1*h1
+      extent = float(area)/rect_area
+      # Solidity 
+      hull = cv2.convexHull(cnt)
+      hull_area = cv2.contourArea(hull)
+      hull_area = hull_area* pixel_size * pixel_size
+      solidity = float(area)/hull_area
+      # Equivalant Diameter 
+      equi_diameter = np.sqrt(4*area/np.pi)
+      # Orientation Angle and Major Axis and Minor Axis 
+      (x,y),(MA,ma),angle = cv2.fitEllipse(cnt)
+      MA = MA * pixel_size 
+      ma = ma * pixel_size 
+      # Mask and Pixel points 
+      mask = np.zeros(imgray.shape,np.uint8)
+      cv2.drawContours(mask,[cnt],0,255,-1)
+      pixelpoints = np.transpose(np.nonzero(mask))
+      min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(imgray,mask = mask)
+      mean_val = cv2.mean(imgray,mask = mask)
+      mean_val = mean_val[0]
     except:
       continue  
-    area = area * pixel_size * pixel_size
-    perimeter = perimeter * pixel_size 
-    roundnes_value = (4 * area * 3.1415)/ float(perimeter * perimeter)   # roundness calculated using 4*area*pi/perimeter^2
-    return {'Centroid X µm':x * pixel_size, 'Centroid Y µm':y * pixel_size,'Area µm^2':area,'perimeter µm':perimeter * pixel_size,'roundness':roundnes_value,'ROI':ROI}
-
-
+    return {'Centroid X µm':x * pixel_size, 'Centroid Y µm':y * pixel_size,'Area µm^2':area,'perimeter µm':perimeter * pixel_size,'roundness':roundnes_value,'ROI':ROI,
+            'aspect_ratio':aspect_ratio,'extent':extent,'solidity':solidity,'equi_diameter':equi_diameter,'Major_Axis':ma,'Minor_Axis':MA,'Orientation':angle,'min_val':min_val,'max_val':max_val,'mean_val':mean_val}
 
 def get_ROI_cellCount(df,msk,name,pixel_size):
   df_total_det = pd.DataFrame()
@@ -137,16 +173,17 @@ def get_count2csv(list_of_cells_props):
     df['Area µm^2'] = [i['Area µm^2'] for i in list_of_cells_props]
     df['perimeter µm'] = [i['perimeter µm'] for i in list_of_cells_props]
     df['roundness'] = [i['roundness'] for i in list_of_cells_props]
+    df['aspect_ratio'] = [i['aspect_ratio'] for i in list_of_cells_props]
+    df['extent'] = [i['extent'] for i in list_of_cells_props]
+    df['solidity'] = [i['solidity'] for i in list_of_cells_props]
+    df['equi_diameter'] = [i['equi_diameter'] for i in list_of_cells_props]
+    df['Major_Axis'] = [i['Major_Axis'] for i in list_of_cells_props]
+    df['Minor_Axis'] = [i['Minor_Axis'] for i in list_of_cells_props]
+    df['Orientation'] = [i['Orientation'] for i in list_of_cells_props]
+    df['min_val'] = [i['min_val'] for i in list_of_cells_props]
+    df['max_val'] = [i['max_val'] for i in list_of_cells_props]
+    df['mean_val'] = [i['mean_val'] for i in list_of_cells_props]
     return df
-
-def get_pixel_size(objectiveLens):
-    if objectiveLens == '10x':
-        pixel_size = 0.922 
-    elif objectiveLens == '20x':
-        pixel_size = 0.922 / float(2)
-    elif objectiveLens == '40x':
-        pixel_size = 0.922 / float(4) 
-    return pixel_size
 
 
 def iterate(path2Pred,path2Save,ext):
@@ -175,7 +212,7 @@ def iterate(path2Pred,path2Save,ext):
               msk = msk[100:1200,100:1900]
               nzCount = cv2.countNonZero(msk)
               if(nzCount > 0):
-                  prop_dict = get_blob_prop(msk.astype(np.uint8),pixel_size)
+                  prop_dict = get_blob_prop(msk.astype(np.uint8),pixel_size,path2Image)
                   if prop_dict:
                       list_of_cells_props.append(prop_dict)
 
@@ -184,8 +221,8 @@ def iterate(path2Pred,path2Save,ext):
           df.to_csv(os.path.join(path2Save,'pred',maskName.split('_cp_masks')[0]+'.csv'),index=False,sep='\t')
           df_total.to_csv(os.path.join(path2Save,'cellpose_count',maskName.split('_cp_masks')[0]+'.csv'),index=False,sep='\t')
           
+
 def run_cellPose(path2Images,path2Pretrained, diameter, flow, cellprob):
-#  call(['python', '-m' , 'cellpose' ,'--dir', path2Images ,'--pretrained_model', path2Pretrained,'--use_gpu','--save_png', '--verbose', '--diameter', '21', '--flow_threshold', '2.4'])
   call(['python', '-m' , 'cellpose' ,'--dir', path2Images ,'--pretrained_model', path2Pretrained,'--use_gpu','--save_png', '--verbose', '--diameter', diameter, '--flow_threshold', flow, '--cellprob_threshold', cellprob])
 
 def run(path2Images,path2Pretrained,path2Save,ext, diameter, flow, cellprob):
@@ -193,13 +230,14 @@ def run(path2Images,path2Pretrained,path2Save,ext, diameter, flow, cellprob):
   iterate(path2Images,path2Save,ext)
   vis_overlay(path2Images,path2Save,ext)
 
-'''
+
 if __name__ == "__main__":
     # execute only if run as a script
     args = len(sys.argv)
     print(args)
-    if args == 8:
-      run(sys.argv[1],sys.argv[2],sys.argv[3],sys.argv[4],sys.argv[5],sys.argv[6],sys.argv[7])
+    if args == 6:
+      run(sys.argv[1],sys.argv[2],sys.argv[3],sys.argv[4],sys.argv[5])
     else:
       print('Error in number of arguments')
-'''
+    #run('/Volumes/WD Element/Collaboration/Moffitt_Noemi/CellPose/Clonid Integrated Code/testing/images','../','/Volumes/WD Element/Collaboration/Moffitt_Noemi/CellPose/Clonid Integrated Code/testing/results2','NCI-N87','.tif')
+
