@@ -77,58 +77,53 @@ feed <- function(id, tx=Sys.time()){
   return(dishSurfaceArea_cm2[[1]])
 }
 
-getPedigreeTree <- function(cellLine= cellLine, id = NULL, cex = 0.5){
+
+getPedigreeTree <- function (cellLine = cellLine, id = NULL, cex = 0.5){
   library(RMySQL)
   library(ape)
-  
-  if(is.null(id)){
+  if (is.null(id)) {
     mydb = connect2DB()
-    stmt = paste0("select * from Passaging where cellLine = '",cellLine,"'");
+    stmt = paste0("select * from Passaging where cellLine = '", 
+                  cellLine, "'")
     rs = suppressWarnings(dbSendQuery(mydb, stmt))
-    kids = fetch(rs, n=-1)
+    kids = fetch(rs, n = -1)
     dbClearResult(dbListResults(mydb)[[1]])
     dbDisconnect(mydb)
-  }else{
+  } else {
     kids = findAllDescendandsOf(id)
   }
-  kids= kids[sort(kids$passage, index.return=T)$ix,,drop=F]
+  kids = kids[sort(kids$date, index.return = T)$ix, , drop = F]
+  kids = kids[sort(kids$passage, index.return = T)$ix, , drop = F]
   rownames(kids) = kids$id
-  
-  ## Recursive function to assemble tree
-  .gatherDescendands<-function(kids, x){
-    ii = which(kids$passaged_from_id1==x)
-    if(isempty(ii)){
+  .gatherDescendands <- function(kids, x) {
+    ii = grep(paste0("^",x,"$"), kids$passaged_from_id1, ignore.case = T )
+    if (isempty(ii)) {
       return("")
     }
     TREE_ = "("
-    for(i in ii){
+    for (i in ii) {
       y = .gatherDescendands(kids, kids$id[i])
-      if(nchar(y)>0){
-        y = paste0(y,":1,")
+      if (nchar(y) > 0) {
+        y = paste0(y, ":1,")
       }
       dx = kids$passage[i]
-      TREE_ =paste0(TREE_ , y, kids$id[i],":", dx, ",")
-    } 
-    TREE_ = gsub(",$",")", TREE_)
+      TREE_ = paste0(TREE_, y, kids$id[i], ":", dx, ",")
+    }
+    TREE_ = gsub(",$", ")", TREE_)
     return(TREE_)
   }
-  
-  ## Assemble tree
   x = kids$id[1]
   TREE_ = .gatherDescendands(kids, x)
-  TREE = paste0("(",TREE_, ":1,",x,":1);");
-  
-  ## Build tree
+  TREE = paste0("(", TREE_, ":1,", x, ":1);")
   tr <- read.tree(text = TREE)
   str(tr)
-  col = c("blue","red")
-  names(col) = c("seeding","harvest")
-  plot(tr, underscore = T, cex=cex, tip.color = col[kids[tr$tip.label,]$event])
-  legend("topright",names(col),fill=col, bty="n")
-  
+  col = c("blue", "red")
+  names(col) = c("seeding", "harvest")
+  plot(tr, underscore = T, cex = cex, tip.color = col[kids[tr$tip.label, 
+  ]$event])
+  legend("topright", names(col), fill = col, bty = "n")
   return(tr)
 }
-
 
 
 findAllDescendandsOf <-function(ids, mydb = NULL, recursive = T, verbose = T){
