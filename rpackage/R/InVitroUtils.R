@@ -367,7 +367,7 @@ plotLiquidNitrogenBox <- function(rack, row){
   mydb = connect2DB()
   stmt = paste0("INSERT INTO Passaging (id, passaged_from_id1, event, date, cellCount, passage, flask, media) ",
                 "VALUES ('",id ,"', '",from,"', '",event,"', '",tx,"', ",dish$dishCount,", ", passage,", ",flask,", ", kids$media, ");")
-  rs = dbSendQuery(mydb, stmt)
+  rs = try(dbSendQuery(mydb, stmt))
   ## @TODO: remove
   stmt = paste0("update Passaging set correctedCount = ",dish$dishCount," where id='",id,"';")
   rs = dbSendQuery(mydb, stmt)
@@ -415,6 +415,7 @@ plotLiquidNitrogenBox <- function(rack, row){
   LOADEDENV='cellpose' %in% conda_list()$name
   if(LOADEDENV){
     use_condaenv("cellpose")
+    # use_condaenv("cellpose", required = TRUE)
     sapply(PYTHON_SCRIPTS, source_python)
   }
   
