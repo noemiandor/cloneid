@@ -362,7 +362,7 @@ plotLiquidNitrogenBox <- function(rack, row){
   mydb = connect2DB()
   stmt = paste0("INSERT INTO Passaging (id, passaged_from_id1, event, date, cellCount, passage, flask, media) ",
                 "VALUES ('",id ,"', '",from,"', '",event,"', '",tx,"', ",dish$dishCount,", ", passage,", ",flask,", ", kids$media, ");")
-  rs = try(dbSendQuery(mydb, stmt))
+  rs = dbSendQuery(mydb, stmt)
   ## @TODO: remove
   stmt = paste0("update Passaging set correctedCount = ",dish$dishCount," where id='",id,"';")
   rs = dbSendQuery(mydb, stmt)
