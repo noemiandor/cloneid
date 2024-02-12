@@ -22,8 +22,12 @@ init <- function(id, cellLine, cellCount, tx = Sys.time(), media=NULL, flask=NUL
   if(is.null(flask)){
     flask = "NULL"
   }
-  stmt = paste0("INSERT INTO Passaging (id, cellLine, event, date, cellCount, passage, flask, media) ",
-                "VALUES ('",id ,"', '",cellLine,"', 'harvest', '",tx,"', ",dishCount,", ", 1,", ",flask,", ", media, ");")
+  
+  rs = suppressWarnings(dbSendQuery(mydb, "SELECT user()"));
+  user=fetch(rs, n=-1)[,1];
+  
+  stmt = paste0("INSERT INTO Passaging (id, cellLine, event, date, cellCount, passage, flask, media, owner, lastModified) ",
+                "VALUES ('",id ,"', '",cellLine,"', 'harvest', '",tx,"', ",dishCount,", ", 1,", ",flask,", ", media, ", ", user, ", ", user, ");")
   rs = dbSendQuery(mydb, stmt)
   
   dbClearResult(dbListResults(mydb)[[1]])
@@ -353,29 +357,85 @@ plotLiquidNitrogenBox <- function(rack, row){
   
   dish = .readCellSegmentationsOutput(id= id, from=from, cellLine = kids$cellLine, dishSurfaceArea_cm2 = dishSurfaceArea_cm2, cellCount = cellCount, excludeOption=excludeOption, preprocessing=preprocessing, param=param);
   
-  ### Insert
+  ### Passaging info
   passage = kids$passage
   if(event=="seeding"){
     passage = passage+1
   }
   
-  mydb = connect2DB()
-  stmt = paste0("INSERT INTO Passaging (id, passaged_from_id1, event, date, cellCount, passage, flask, media) ",
-                "VALUES ('",id ,"', '",from,"', '",event,"', '",tx,"', ",dish$dishCount,", ", passage,", ",flask,", ", kids$media, ");")
-  rs = dbSendQuery(mydb, stmt)
-  ## @TODO: remove
-  stmt = paste0("update Passaging set correctedCount = ",dish$dishCount," where id='",id,"';")
-  rs = dbSendQuery(mydb, stmt)
+  ### Check id, passaged_from_id1: is there potential for incorrect assignment between them?
+  stmt = "SELECT id, event, passaged_from_id1, correctedCount,passage, date from Passaging";
+  rs = suppressWarnings(dbSendQuery(mydb, stmt))
+  passaging = fetch(rs, n=-1)
+  rownames(passaging) <- passaging$id
+  passaging$passage_id <- sapply(passaging$id, .unique_passage_id)
+  x=data.table::transpose(as.data.frame(c(id , event, from, dish$dishCount, passage)))
+  colnames(x) = c("id", "event", "passaged_from_id1", "correctedCount", "passage")
+  rownames(x) <- x$id
+  x$passage_id <- .unique_passage_id(x$id)
+  x$probable_ancestor <- .assign_probable_ancestor(x$id,xi=passaging)
+  ancestorCheck = T;
+  if(x$passaged_from_id1!=x$probable_ancestor){
+    confirmError = ""
+    while(!confirmError %in% c("yes", "no")){
+      confirmError <- readline(prompt=paste0("Warning encountered while updating database: Was ",x$id," really derived from ",x$passaged_from_id1,"? type yes/no: "))
+    }
+    if(confirmError=="no"){
+      ancestorCheck=F;
+      readline(prompt="No changes are made to the database. Please modify passaged_from_id1, then rerun. Type yes to confirm: ")
+    }
+  }
   
-  stmt = paste0("update Passaging set areaOccupied_um2 = ",dish$dishAreaOccupied," where id='",id,"';")
-  rs = dbSendQuery(mydb, stmt)
-  stmt = paste0("update Passaging set cellSize_um2 = ",dish$cellSize," where id='",id,"';")
-  rs = dbSendQuery(mydb, stmt)
-  
+  ## Attempt to update the DB:
+  if(ancestorCheck){
+    ## User info
+    mydb = connect2DB()
+    rs = suppressWarnings(dbSendQuery(mydb, "SELECT user()"));
+    user=fetch(rs, n=-1)[,1];
+    
+    ### Insert
+    stmt = paste0("INSERT INTO Passaging (id, passaged_from_id1, event, date, cellCount, passage, flask, media, owner, lastModified) ",
+                  "VALUES ('",id ,"', '",from,"', '",event,"', '",tx,"', ",dish$dishCount,", ", passage,", ",flask,", ", kids$media, ", ", user, ", ", user, ");")
+    rs = try(dbSendQuery(mydb, stmt))
+    if(class(rs)!="try-error"){
+      stmt = paste0("update Passaging set correctedCount = ",dish$dishCount," where id='",id,"';")
+      rs = dbSendQuery(mydb, stmt)
+      
+      stmt = paste0("update Passaging set areaOccupied_um2 = ",dish$dishAreaOccupied," where id='",id,"';")
+      rs = dbSendQuery(mydb, stmt)
+      stmt = paste0("update Passaging set cellSize_um2 = ",dish$cellSize," where id='",id,"';")
+      rs = dbSendQuery(mydb, stmt)
+    }else{
+      confirmError = "no"
+      while(confirmError!="yes"){
+        confirmError <- readline(prompt="Error encountered while updating database: no changes were made to the database. Please check id is not redundant with existing IDs, then rerun. Type yes to confirm: ")
+      }
+    }
+  }
   
   dbClearResult(dbListResults(mydb)[[1]])
   dbDisconnect(mydb)
 }
+
+##find the unique string that identifies a passage
+.unique_passage_id <- function(i){
+  paste(head(unlist(strsplit(i,split="_")),3),collapse="_")
+}
+
+## Make suggestions to correct ancestor
+.assign_probable_ancestor <- function(i,xi){
+  if(xi$event[xi$id==i]=="harvest"){
+    return(xi$id[xi$passage_id==xi$passage_id[xi$id==i] & xi$event=="seeding"])
+  }
+  if(xi$event[xi$id==i]=="seeding"){
+    passage_split <- unlist(strsplit(i,split="_"))
+    passage_no <- paste0("A",as.numeric(gsub("A","",passage_split[3]))-1)
+    passage_id <- paste0(c(passage_split[1:2],passage_no),collapse="_")
+    target_passage <- xi[xi$passage_id==passage_id,]
+    return(target_passage$id[which.max(as.Date(target_passage$date))])
+  }
+}
+
 
 .readCellSegmentationsOutput <- function(id, from, cellLine, dishSurfaceArea_cm2, cellCount, excludeOption, preprocessing=T, param=NULL){
   ## Typical values for dishSurfaceArea_cm2 are: 
