@@ -70,10 +70,10 @@ public final class CLONEID {
 		if(!cloneClass.contains(tableName)){
 			tableName="Perspective"; //@TODO: improve table choice
 		}
-		//@TODO: remove after solving speed issues for table Perspective
-		if(cloneClass.contains("MorphologyPerspective")){
-			tableName="MorphologyPerspective"; 
-		}
+		////@TODO: remove after solving speed issues for table Perspective
+		//if(cloneClass.contains("MorphologyPerspective")){
+		//	tableName="MorphologyPerspective"; 
+		//}
 		return(tableName);
 	}
 
