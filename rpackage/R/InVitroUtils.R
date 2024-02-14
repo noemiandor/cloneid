@@ -27,7 +27,7 @@ init <- function(id, cellLine, cellCount, tx = Sys.time(), media=NULL, flask=NUL
   user=fetch(rs, n=-1)[,1];
   
   stmt = paste0("INSERT INTO Passaging (id, cellLine, event, date, cellCount, passage, flask, media, owner, lastModified) ",
-                "VALUES ('",id ,"', '",cellLine,"', 'harvest', '",tx,"', ",dishCount,", ", 1,", ",flask,", ", media, ", ", user, ", ", user, ");")
+                "VALUES ('",id ,"', '",cellLine,"', 'harvest', '",tx,"', ",dishCount,", ", 1,", ",flask,", ", media, ", '", user, "', '", user, "');")
   rs = dbSendQuery(mydb, stmt)
   
   dbClearResult(dbListResults(mydb)[[1]])
@@ -322,27 +322,28 @@ plotLiquidNitrogenBox <- function(rack, row){
   kids = fetch(rs, n=-1)
   
   ### Checks
+  CHECKRESULT="pass"
   if(nrow(kids)==0){
-    print(paste(from,"does not exist in table Passaging"), quote = F)
-    return()
-  }
-  if(kids$event !=otherevent){
-    print(paste(from,"is not a",otherevent,". You must do",event,"from a",otherevent), quote = F)
-    return()
-  }
-  if(event=="seeding" && !is.na(kids$cellCount) && !is.na(cellCount) && cellCount>kids$cellCount){
-    print("You cannot seed more than is available from harvest!", quote = F)
-    return()
-  }
-  if(is.na(kids$media) || !is.null(media)){
+    CHECKRESULT=paste(from,"does not exist in table Passaging")
+  }else if(kids$event !=otherevent){
+    CHECKRESULT=paste(from,"is not a",otherevent,". You must do",event,"from a",otherevent)
+  }else if(event=="seeding" && !is.na(kids$cellCount) && !is.na(cellCount) && cellCount>kids$cellCount){
+    CHECKRESULT="You cannot seed more than is available from harvest!"
+  }else if(is.na(kids$media) || !is.null(media)){
     if(is.null(media)){
-      print("Please enter media information", quote = F)
-      return()
+      CHECKRESULT="Please enter media information"
     }else{
       kids$media = media
     }
   }else{
     warning(paste("Copying media information from parent: media set to",kids$media))
+  }
+  if(CHECKRESULT!="pass"){
+    confirmError = "no"
+    while(confirmError!="yes"){
+      confirmError <- readline(prompt=paste0("Error encountered while updating database: ",CHECKRESULT,". No changes were made to the database. Type yes to confirm: "))
+    }
+    return()
   }
   ## TODO: What if from is too far in the past
   
@@ -352,8 +353,6 @@ plotLiquidNitrogenBox <- function(rack, row){
   }
   
   dishSurfaceArea_cm2 = .readDishSurfaceArea_cm2(flask, mydb)
-  dbClearResult(dbListResults(mydb)[[1]])
-  dbDisconnect(mydb)
   
   dish = .readCellSegmentationsOutput(id= id, from=from, cellLine = kids$cellLine, dishSurfaceArea_cm2 = dishSurfaceArea_cm2, cellCount = cellCount, excludeOption=excludeOption, preprocessing=preprocessing, param=param);
   
@@ -364,6 +363,7 @@ plotLiquidNitrogenBox <- function(rack, row){
   }
   
   ### Check id, passaged_from_id1: is there potential for incorrect assignment between them?
+  mydb = connect2DB()
   stmt = "SELECT id, event, passaged_from_id1, correctedCount,passage, date from Passaging";
   rs = suppressWarnings(dbSendQuery(mydb, stmt))
   passaging = fetch(rs, n=-1)
@@ -373,29 +373,36 @@ plotLiquidNitrogenBox <- function(rack, row){
   colnames(x) = c("id", "event", "passaged_from_id1", "correctedCount", "passage")
   rownames(x) <- x$id
   x$passage_id <- .unique_passage_id(x$id)
-  x$probable_ancestor <- .assign_probable_ancestor(x$id,xi=passaging)
+  probable_ancestor <- try(.assign_probable_ancestor(x$id,xi=passaging), silent = T)
   ancestorCheck = T;
-  if(x$passaged_from_id1!=x$probable_ancestor){
-    confirmError = ""
-    while(!confirmError %in% c("yes", "no")){
-      confirmError <- readline(prompt=paste0("Warning encountered while updating database: Was ",x$id," really derived from ",x$passaged_from_id1,"? type yes/no: "))
-    }
-    if(confirmError=="no"){
-      ancestorCheck=F;
-      readline(prompt="No changes are made to the database. Please modify passaged_from_id1, then rerun. Type yes to confirm: ")
+  if(class(probable_ancestor)!="try-error" && !isempty(probable_ancestor) ){
+    x$probable_ancestor = probable_ancestor
+    if(x$passaged_from_id1!=x$probable_ancestor){
+      confirmAncestorCorrect = ""
+      while(!confirmAncestorCorrect %in% c("yes", "no")){
+        confirmAncestorCorrect <- readline(prompt=paste0("Warning encountered while updating database: Was ",x$id," really derived from ",x$passaged_from_id1,"? type yes/no: "))
+      }
+      if(confirmAncestorCorrect=="no"){
+        ancestorCheck=F;
+        ## @TODO: this is redundant code. Write short function for this and use it everywhere.
+        confirmError = "no"
+        while(confirmError!="yes"){
+          confirmError <- readline(prompt="No changes are made to the database. Please modify passaged_from_id1, then rerun. Type yes to confirm: ")
+        }
+      }
     }
   }
   
   ## Attempt to update the DB:
   if(ancestorCheck){
     ## User info
-    mydb = connect2DB()
     rs = suppressWarnings(dbSendQuery(mydb, "SELECT user()"));
     user=fetch(rs, n=-1)[,1];
     
     ### Insert
     stmt = paste0("INSERT INTO Passaging (id, passaged_from_id1, event, date, cellCount, passage, flask, media, owner, lastModified) ",
-                  "VALUES ('",id ,"', '",from,"', '",event,"', '",tx,"', ",dish$dishCount,", ", passage,", ",flask,", ", kids$media, ", ", user, ", ", user, ");")
+                  "VALUES ('",id ,"', '",from,"', '",event,"', '",tx,"', ",dish$dishCount,", ", passage,", ",flask,", ", kids$media, ", '", user, "', '", user, "');")
+    print(stmt)
     rs = try(dbSendQuery(mydb, stmt))
     if(class(rs)!="try-error"){
       stmt = paste0("update Passaging set correctedCount = ",dish$dishCount," where id='",id,"';")
@@ -413,8 +420,8 @@ plotLiquidNitrogenBox <- function(rack, row){
     }
   }
   
-  dbClearResult(dbListResults(mydb)[[1]])
-  dbDisconnect(mydb)
+  try(dbClearResult(dbListResults(mydb)[[1]]), silent = T)
+  try(dbDisconnect(mydb), silent = T)
 }
 
 ##find the unique string that identifies a passage
