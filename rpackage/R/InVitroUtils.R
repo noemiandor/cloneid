@@ -1,10 +1,12 @@
 seed <- function(id, from, cellCount, flask, tx = Sys.time(), media=NULL, excludeOption=F, preprocessing=T, param=NULL){ 
-  .seed_or_harvest(event = "seeding", id=id, from = from, cellCount = cellCount, tx = tx, flask = flask, media = media, excludeOption=excludeOption, preprocessing=preprocessing, param=param)
+  x=.seed_or_harvest(event = "seeding", id=id, from = from, cellCount = cellCount, tx = tx, flask = flask, media = media, excludeOption=excludeOption, preprocessing=preprocessing, param=param)
+  return(x)
 }
 
 
 harvest <- function(id, from, cellCount, tx = Sys.time(), media=NULL, excludeOption=F, preprocessing=T, param=NULL){
-  .seed_or_harvest(event = "harvest", id=id, from=from, cellCount = cellCount, tx = tx, flask = NULL, media = media, excludeOption=excludeOption, preprocessing=preprocessing, param=param)
+  x=.seed_or_harvest(event = "harvest", id=id, from=from, cellCount = cellCount, tx = tx, flask = NULL, media = media, excludeOption=excludeOption, preprocessing=preprocessing, param=param)
+  return(x)
 }
 
 
@@ -369,8 +371,10 @@ plotLiquidNitrogenBox <- function(rack, row){
   passaging = fetch(rs, n=-1)
   rownames(passaging) <- passaging$id
   passaging$passage_id <- sapply(passaging$id, .unique_passage_id)
-  x=data.table::transpose(as.data.frame(c(id , event, from, dish$dishCount, passage)))
-  colnames(x) = c("id", "event", "passaged_from_id1", "correctedCount", "passage")
+  # x=data.table::transpose(as.data.frame(c(id , event, from, dish$dishCount, passage)))
+  # colnames(x) = c("id", "event", "passaged_from_id1", "correctedCount", "passage")
+  x=data.table::transpose(as.data.frame(c(id ,from,event,tx,dish$dishCount,dish$dishCount,dish$cellSize, dish$dishAreaOccupied, passage,flask,kids$media,  user,  user)))
+  colnames(x) = ("id", "passaged_from_id1", "event", "date", "cellCount","correctedCount","cellSize_um2","areaOccupied_um2", "passage", "flask", "media", "owner", "lastModified")
   rownames(x) <- x$id
   x$passage_id <- .unique_passage_id(x$id)
   probable_ancestor <- try(.assign_probable_ancestor(x$id,xi=passaging), silent = T)
@@ -393,6 +397,10 @@ plotLiquidNitrogenBox <- function(rack, row){
     }
   }
   
+  ## non-numeric entries formatting:
+  ii=which(!names(x) %in% c("cellSize_um2","areaOccupied_um2","correctedCount","cellCount", "passage", "flask", "media"))
+  x[ii]=paste0("'",x[ii],"'")
+  
   ## Attempt to update the DB:
   if(ancestorCheck){
     ## User info
@@ -400,17 +408,18 @@ plotLiquidNitrogenBox <- function(rack, row){
     user=fetch(rs, n=-1)[,1];
     
     ### Insert
-    stmt = paste0("INSERT INTO Passaging (id, passaged_from_id1, event, date, cellCount, passage, flask, media, owner, lastModified) ",
-                  "VALUES ('",id ,"', '",from,"', '",event,"', '",tx,"', ",dish$dishCount,", ", passage,", ",flask,", ", kids$media, ", '", user, "', '", user, "');")
-    print(stmt)
+    # stmt = paste0("INSERT INTO Passaging (id, passaged_from_id1, event, date, cellCount, passage, flask, media, owner, lastModified) ",
+                  # "VALUES ('",id ,"', '",from,"', '",event,"', '",tx,"', ",dish$dishCount,", ", passage,", ",flask,", ", kids$media, ", '", user, "', '", user, "');")
+    stmt = paste0("INSERT INTO Passaging (",paste(names(x), collapse = ", "),") ",
+                  "VALUES (",paste(x, collapse = ", "),");")
     rs = try(dbSendQuery(mydb, stmt))
     if(class(rs)!="try-error"){
-      stmt = paste0("update Passaging set correctedCount = ",dish$dishCount," where id='",id,"';")
+      stmt = paste0("update Passaging set correctedCount = ",x$correctedCount," where id='",id,"';")
       rs = dbSendQuery(mydb, stmt)
       
-      stmt = paste0("update Passaging set areaOccupied_um2 = ",dish$dishAreaOccupied," where id='",id,"';")
+      stmt = paste0("update Passaging set areaOccupied_um2 = ",x$areaOccupied_um2," where id='",id,"';")
       rs = dbSendQuery(mydb, stmt)
-      stmt = paste0("update Passaging set cellSize_um2 = ",dish$cellSize," where id='",id,"';")
+      stmt = paste0("update Passaging set cellSize_um2 = ",x$cellSize_um2," where id='",id,"';")
       rs = dbSendQuery(mydb, stmt)
     }else{
       confirmError = "no"
@@ -422,6 +431,8 @@ plotLiquidNitrogenBox <- function(rack, row){
   
   try(dbClearResult(dbListResults(mydb)[[1]]), silent = T)
   try(dbDisconnect(mydb), silent = T)
+  
+  return(x)
 }
 
 ##find the unique string that identifies a passage
