@@ -364,8 +364,12 @@ plotLiquidNitrogenBox <- function(rack, row){
     passage = passage+1
   }
   
-  ### Check id, passaged_from_id1: is there potential for incorrect assignment between them?
+  ## User info
   mydb = connect2DB()
+  rs = suppressWarnings(dbSendQuery(mydb, "SELECT user()"));
+  user=fetch(rs, n=-1)[,1];
+  
+  ### Check id, passaged_from_id1: is there potential for incorrect assignment between them?
   stmt = "SELECT id, event, passaged_from_id1, correctedCount,passage, date from Passaging";
   rs = suppressWarnings(dbSendQuery(mydb, stmt))
   passaging = fetch(rs, n=-1)
@@ -403,10 +407,6 @@ plotLiquidNitrogenBox <- function(rack, row){
   
   ## Attempt to update the DB:
   if(ancestorCheck){
-    ## User info
-    rs = suppressWarnings(dbSendQuery(mydb, "SELECT user()"));
-    user=fetch(rs, n=-1)[,1];
-    
     ### Insert
     # stmt = paste0("INSERT INTO Passaging (id, passaged_from_id1, event, date, cellCount, passage, flask, media, owner, lastModified) ",
                   # "VALUES ('",id ,"', '",from,"', '",event,"', '",tx,"', ",dish$dishCount,", ", passage,", ",flask,", ", kids$media, ", '", user, "', '", user, "');")
