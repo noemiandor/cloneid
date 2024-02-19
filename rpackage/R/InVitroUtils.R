@@ -374,7 +374,7 @@ plotLiquidNitrogenBox <- function(rack, row){
   # x=data.table::transpose(as.data.frame(c(id , event, from, dish$dishCount, passage)))
   # colnames(x) = c("id", "event", "passaged_from_id1", "correctedCount", "passage")
   x=data.table::transpose(as.data.frame(c(id ,from,event,tx,dish$dishCount,dish$dishCount,dish$cellSize, dish$dishAreaOccupied, passage,flask,kids$media,  user,  user)))
-  colnames(x) = ("id", "passaged_from_id1", "event", "date", "cellCount","correctedCount","cellSize_um2","areaOccupied_um2", "passage", "flask", "media", "owner", "lastModified")
+  colnames(x) = c("id", "passaged_from_id1", "event", "date", "cellCount","correctedCount","cellSize_um2","areaOccupied_um2", "passage", "flask", "media", "owner", "lastModified")
   rownames(x) <- x$id
   x$passage_id <- .unique_passage_id(x$id)
   probable_ancestor <- try(.assign_probable_ancestor(x$id,xi=passaging), silent = T)
