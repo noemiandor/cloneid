@@ -1,0 +1,162 @@
+diff --git a/src/main/java/core/Clone.java b/src/main/java/core/Clone.java
+index bd763b8..599cbc3 100644
+--- a/src/main/java/core/Clone.java
++++ b/src/main/java/core/Clone.java
+@@ -4,10 +4,13 @@ import java.io.File;
+ import java.nio.charset.Charset;
+ import java.nio.file.Files;
+ import java.nio.file.Paths;
++import java.sql.Date;
+ import java.sql.PreparedStatement;
+ import java.sql.ResultSet;
+ import java.sql.SQLException;
+ import java.sql.Statement;
++import java.text.DateFormat;
++import java.text.SimpleDateFormat;
+ import java.util.ArrayList;
+ import java.util.Arrays;
+ import java.util.HashMap;
+@@ -367,6 +370,143 @@ public abstract class Clone {
+ 
+ 	}
+ 
++	public void backend_message(long txid, String Level, String k, String v) {
++		// DateFormat dbTimeFormat = new SimpleDateFormat("%Y-%m-%d %H:%M:%S");
++		// DateFormat dbTimeFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
++		DateFormat dbTimeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
++		String tx2 = dbTimeFormat.format(new Date(0L));
++
++		String[] levels = { "ABRT", "AFIQ", "AFIR", "DONE", "INFO", "JSON", "MESG", "MSQL", "NTIF", "PRNT", "QUIT", "RSLT", "VARS", "WRNG" };
++		boolean levelMatched = Arrays.asList(levels).contains(Level);
++
++		if (levelMatched) {
++			System.out.println("[" + Level + "]::" + txid + "::" + tx2 + "::" + k + "|" + v + "::" + txid);
++			try {
++				Thread.sleep(1000);
++			} catch (InterruptedException e) {
++				e.printStackTrace();
++			}
++			if ("ABRT".equals(Level)) {
++				try {
++					Thread.sleep(10000);
++				} catch (InterruptedException e) {
++					e.printStackTrace();
++				}
++				System.exit(0); // Terminate program similar to 'q()' in R.
++			}
++		}
++	}
++
++
++	/**
++	 * Saves this clone along with all its children into the database. 
++	 * Importantly, this is the only method within which a clone's ID (@cloneID) can be assigned as the value of the primary key used to enter the clone into the database.
++	 * @throws Exception 
++	 * @TODO: this method must guarantee that a clone without a parent will not persist in the database
++	 * @TODO: this method must first remove from the database clones associated with the same perspective on this biosample, before entering the new clones.  
++	 */
++	public void save2DBX(long transactionId) throws Exception{
++
++		String tableName=CLONEID.getTableNameForClass(this.getClass().getSimpleName());
++		informUserX(transactionId);
++		// backend_message(transactionId, "INFO", "tableName", tableName);
++		// System.out.println("save2DBX::380::tableName::"+tableName);
++		for(Clone c: children){
++			c.save2DBX(transactionId);
++		}
++		CLONEID cloneid= new CLONEID();
++		cloneid.connect();
++
++		//Check if clone doesn't exist yet in DB
++		Integer existingid=isInDB(tableName, cloneid);
++		Map<String,String> map = this.getDBformattedAttributesAsMap();
++		if(existingid==null){
++			//Formulate INSERT statement
++			String addstmt = "INSERT INTO " + tableName+ "(";
++			String valstmt=" VALUES(";
++			for(Entry<String, String> kv : map.entrySet()){
++				addstmt+=""+kv.getKey()+", ";
++				valstmt+=""+kv.getValue()+", "; 
++			}
++		// map.put( "transactionId", transactionId);
++			addstmt+="transactionId )";
++			valstmt+=""+transactionId+" )"; 
++			// addstmt=Helper.replaceLast(addstmt,",",")");
++			// valstmt=Helper.replaceLast(valstmt,",",")");
++			addstmt+=valstmt;
++			// System.out.println("save2DBX::401::addstmt::"+addstmt);
++			// backend_message(transactionId, "INFO", "save2DBX_addstmt", addstmt);
++			//Save all attributes except profile
++			PreparedStatement prest= cloneid.getConnection().prepareStatement(addstmt, Statement.RETURN_GENERATED_KEYS);
++			prest.executeUpdate();
++			ResultSet rs = prest.getGeneratedKeys();
++			rs.next();
++			this.cloneID = rs.getInt(1);
++
++			//Save profile
++			SerializeProfile_MySQL serp=new SerializeProfile_MySQL(this.cloneID,this.getClass().getSimpleName());
++			serp.writeProfile2DB(cloneid.getConnection(), profile);
++		}else{
++			// backend_message(transactionId, "INFO", "save2DBX_existingid", Integer.toString(existingid));
++			// System.out.println("save2DBX::413::existing::"+existingid);
++			this.cloneID=existingid;
++			this.redundant=true;
++		}
++
++		//IF this is a parent - update the children to reference the parent and vice versa
++		if(children.size()>0){
++			for(Clone c: children){
++				String updateSTmt =
++				"UPDATE " +
++				tableName +
++				" SET parent=" + this.cloneID +
++				", rootID="+this.getRoot().cloneID +
++				" WHERE cloneID=" + c.cloneID +
++				";";
++				// backend_message(transactionId, "INFO", "save2DBX_updateSTmt1", updateSTmt);
++				// System.out.println("save2DBX::428::"+updateSTmt);
++				cloneid.getStatement().executeUpdate(updateSTmt);
++			}
++//			String updateSTmt = "UPDATE " + tableName + " SET children="+ map.get("children")+" WHERE cloneID=" + cloneID;
++			String updateSTmt = "UPDATE " + tableName + " SET hasChildren=true WHERE cloneID=" + cloneID;
++			// backend_message(transactionId, "INFO", "save2DBX_updateSTmt2", updateSTmt);
++			// System.out.println("save2DBX::433::"+updateSTmt);
++			cloneid.getStatement().executeUpdate(updateSTmt);
++		}
++
++		cloneid.close();
++		
++		//How many clones were not saved:
++		if(this.parent==null && countRedundant()>0){
++			// backend_message(transactionId, "NTIF", "save2DBX_redundant", countRedundant()+" clones already existed in database, not saved.");
++			backend_message(transactionId, "NTIF", "RDD", countRedundant()+"");
++			backend_message(transactionId, "JSON", "RDD",
++			"[ \"" + countRedundant() + "\" ]"
++			);
++	   // System.out.println(countRedundant()+" clones already existed in database and were not saved again.");
++		}
++
++	}
++
++	private void informUserX(long transactionId) {
++		Map<Double,Integer> spfreq=Helper.count(getChildrensSizes(),0.001);
++		if(spfreq.size()>0){
++			// System.out.println("Clones scheduled for saving to database:");
++			// backend_message(transactionId, "INFO", "informUserX", "Clones scheduled for saving to database:");
++			backend_message(transactionId, "NTIF", "CSS", "");
++			backend_message(transactionId, "JSON", "CSS", "[\"NULL\"]");
++			for(Entry<Double, Integer> e : spfreq.entrySet()){
++				// backend_message(transactionId, "NTIF", "informUserX", ""+e.getValue()+" clone(s) of size "+e.getKey()+" saved to database");
++				// backend_message(transactionId, "NTIF", "SFS", e.getValue()+"|"+e.getKey());
++				backend_message(transactionId, "NTIF", "SFS", e.getValue() + "|" + String.format("%.7f", e.getKey()));
++				backend_message(transactionId, "JSON", "SFS",
++				 "[ \"" + e.getValue() + "\", \"" + String.format("%.7f", e.getKey()) + "\" ]"
++				 );
++				// System.out.println(""+e.getValue()+" clone(s) of size "+e.getKey()+"");
++			}
++		}
++	}
++
+ 	private void informUser() {
+ 		Map<Double,Integer> spfreq=Helper.count(getChildrensSizes(),0.001);
+ 		if(spfreq.size()>0){
