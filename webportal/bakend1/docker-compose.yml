@@ -1,0 +1,114 @@
+# docker-compose.yml
+version: "3.8"
+
+services:
+
+  dbv2:
+    image: "mysql:latest"
+    container_name: "sql2"
+    restart: "always"
+    environment:
+      MYSQL_ROOT_PASSWORD: "xxxxx"
+      MYSQL_DATABASE: "CLONEID"
+      MYSQL_ALLOW_EMPTY_PASSWORD: 1
+      MYSQL_LOG_CONSOLE: true
+      INDOCKER: true
+      DOCKERNAME: sql
+      MYSQL_USER: 'u2'
+      MYSQL_PASSWORD: 'p2'
+    ports:
+      - "13307:3306"
+    volumes:
+      - "/lake/CLONEID_TMP/DATABASE/20240523/SQL/00.sql:/docker-entrypoint-initdb.d/00.sql"
+      - "/lake/CLONEID_TMP/DATABASE/20240523/SQL/01.sql:/docker-entrypoint-initdb.d/01.sql"
+      - "/lake/CLONEID_TMP/DATABASE/20240523/SQL/02.sql:/docker-entrypoint-initdb.d/02.sql"
+      - "/lake/CLONEID_TMP/DATABASE/20240523/SQL/03.sql:/docker-entrypoint-initdb.d/03.sql"
+      - "/lake/CLONEID_TMP/DATABASE/20240523/SQL/04.sql:/docker-entrypoint-initdb.d/04.sql"
+      - "/lake/CLONEID_TMP/DATABASE/20240523/SQL/05.sql:/docker-entrypoint-initdb.d/05.sql"
+      - "/lake/CLONEID_TMP/DATABASE/20240523/SQL/06.sql:/docker-entrypoint-initdb.d/06.sql"
+      - "/lake/CLONEID_TMP/DATABASE/20240523/SQL/07.sql:/docker-entrypoint-initdb.d/07.sql"
+      - "/lake/CLONEID_TMP/DATABASE/20240523/SQL/08.sql:/docker-entrypoint-initdb.d/08.sql"
+      - sql-config:/etc/mysql
+      - sql-data:/var/lib/mysql
+    networks:
+      - io-backend
+
+
+  backend:
+    build: .
+    container_name: "backend"
+    restart: "always"
+    environment:
+      - INSIDE_DOCKER=true
+      - INDOCKER=true
+      - DOCKERNAME=backend
+    ports:
+      - "18080:8080"
+    depends_on:
+      - dbv2
+    networks:
+      - io-backend
+    volumes:
+      - type: bind
+        source: /opt/lake/data/cloneid
+        target: /opt/lake/data/cloneid
+
+
+
+
+  backend-conda:
+    build: cloneid-rstudio-conda-watch
+    container_name: "backend-conda-m2"
+    restart: "always"
+    environment:
+      - INSIDE_DOCKER=true
+      - INDOCKER=true
+      - DOCKERNAME=backend-conda
+    expose:
+      - 22
+    ports:
+      - "2222:22"
+      - "8787:8787"
+    depends_on:
+      - dbv2
+    networks:
+      - io-backend
+    volumes:
+      - type: bind
+        source: /lake/hostdir_cloneid
+        target: /root/containerdir
+      - type: bind
+        source: /opt/lake/data/cloneid
+        target: /opt/lake/data/cloneid
+
+
+
+  frontendm2:
+    build: cloneid/frontend
+    container_name: "frontendm2"
+    restart: "always"
+    environment:
+      - INSIDE_DOCKER=true
+      - INDOCKER=true
+      - DOCKERNAME=frontendm2
+    depends_on:
+      - dbv2
+      - backend
+    networks:
+      - io-backend
+    ports:
+      - "4172:4173"
+    volumes:
+      - type: bind
+        source: /opt/lake/data/cloneid
+        target: /opt/lake/data/cloneid
+
+
+networks:
+  io-backend: {}
+
+volumes:
+  sql-config:
+  sql-data:
+  xql-config:
+  xql-data:

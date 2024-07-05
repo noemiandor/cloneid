@@ -1,0 +1,16 @@
+#
+  * * * * * /cron/heartbeat.sh
+# * * * * * command to be executed
+# | | | | |
+# | | | | |
+# | | | | |
+# | | | | |_______________ Day of the Week (0 - 6)(Sunday to Saturday)
+# | | | |
+# | | | |_______________ Month of the Year (1 - 12)
+# | | |   
+# | | |_______________ Day of the Month (1 - 31)
+# | |
+# | |_______________ Hour (0 - 23)
+# | 
+# |_______________ Minute (0 - 59)
+
