@@ -1,7 +1,7 @@
 <script>
 	import { fetch_afianswer } from '@/lib/jobs/fetch';
 	import { loadingIndicatorToggle } from '@/lib/storage/local/stores';
-	import CellposeResults from '@/routes/(cloneId)/module2/3_d/components/CellposeResults.svelte';
+	import CellposeResults from '@/routes/(cloneId)/module2/home/components/CellposeResults.svelte';
 	import { Checkbox, Column, Grid, Modal, RadioButton, RadioButtonGroup, Row, Tile } from 'carbon-components-svelte';
 
 	/**

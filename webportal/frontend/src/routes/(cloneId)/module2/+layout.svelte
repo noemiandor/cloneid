@@ -80,7 +80,7 @@
 	bind:isSideNavOpen
 	persistentHamburgerMenu={true}
 	_href={linksAndTitles['overview'].href}
-	href={'/module2/3_d'}
+	href={'/module2/home'}
 	style="background-color:blue;"
 >
 	<svelte:fragment slot="skip-to-content">

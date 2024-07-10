@@ -12,7 +12,7 @@ import { uploadallphenotypeimages } from "./server/uploadallphenotypeimages.js";
 import { uploadgenotype } from "./server/uploadgenotype.js";
 
 
-/** @type {import('./$types').Actions} */
+/** @type {import('./$types.js').Actions} */
 export const actions = {
 
   import2cloneid:

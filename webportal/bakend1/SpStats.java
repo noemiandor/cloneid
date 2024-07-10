@@ -1,16 +1,11 @@
 package capi;
 
-//import cloneid.SHA512;
-//import core.*;
 import core.*;
 
 import java.io.File;
 import java.util.*;
 
 import static capi.YamlReaderService.getYmlConf;
-
-//import clextra.YamlReaderService.getYmlConf;
-//import static cloneid.Manager.getYmlConf;
 
 
 public class SpStats {
@@ -57,8 +52,6 @@ public class SpStats {
             }
             String n1 = String.format("%s.%s.sps.cbs", file, s1);
             File f1 = new File(spstatsPath + n1);
-//            GenomePerspective p1 = new GenomePerspective(f1, "SP_" + sp);
-//            Perspective p1 = new GenomePerspective(f1, "SP_" + sp);
 
             Perspective p1 = getPerspective(f1, "SP_" + sp, perspective);
             results = p1.save2DBX(transactionId);
@@ -88,7 +81,6 @@ public class SpStats {
 
 
     private static boolean IsCertifiedUser(String userhash) {
-//        String uncertified = "uncertifiedUsers";
         String uncertified = "anonymous";
         boolean u1 = userhash.equals(uncertified);
         String usha512 = SHA512.sha512(uncertified);
@@ -99,17 +91,12 @@ public class SpStats {
     private static void removeLaterIfUncertifiedUser(long timelapse, String userhash, long transactionId) {
         if (!IsCertifiedUser(userhash)) dbRowsRemoval(timelapse, transactionId);
     }
-//
-//    private static void dbRowsRemoval() {
-//        dbRowsRemoval(1 * 60 * 1000, (new Date()).getTime());
-//    }
 
     private static void dbRowsRemoval(long delay, long transactionId) {
         TimerTask task = new TimerTask() {
             public void run() {
                 try {
                     removeTransaction(transactionId);
-//                    Manager.removeBefore(tstmp);
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
@@ -127,11 +114,6 @@ public class SpStats {
         String updateSTmt = "DELETE FROM Perspective where transactionId = " + transactionId + " ;";
         dbIO.update(updateSTmt);
     }
-//
-//    public static void removeBefore(long timestamp) throws Exception {
-//        String updateSTmt = "DELETE FROM Perspective where transactionId < " + timestamp + " ;";
-//        dbIO.update(updateSTmt);
-//    }
 
     public static Map<String, Number> cleanspstats(
             long timestamp,
@@ -141,8 +123,6 @@ public class SpStats {
         getYmlConf();
         final Map<String, Number> resultMap = new LinkedHashMap<>();
         System.out.println("==== timestamp ==== " + timestamp);
-//        Manager.removeBefore(timestamp);
-
 
         resultMap.put("timestamp", timestamp);
         return resultMap;

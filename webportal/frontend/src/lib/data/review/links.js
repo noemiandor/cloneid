@@ -13,7 +13,7 @@ export const linksAndTitles = {
     '3.a':          { 'title': "Exhibit A, Module 2 - 3.a",                             'text': "Module 2 - 3.a",                           'href': "/module2/3_c/",                                                        'md': 'Module2_3a' },
 };
 export const linksAndTitles2 = {
-    'module2':        { 'title': "Exhibit A, Module 2",                                    'text': "Module 2",                                 'href': "/module2/3_d",                                                            'md': 'Module1_1'  },
+    'module2':        { 'title': "Exhibit A, Module 2",                                    'text': "Module 2",                                 'href': "/module2/home",                                                            'md': 'Module1_1'  },
     'acceptance':     { 'title': "Exhibit A, Module 2 - Acceptance",                       'text': "Module 2 - Acceptance",                    'href': "/module2/",                                                            'md': 'Module1_1'  },
 };
 

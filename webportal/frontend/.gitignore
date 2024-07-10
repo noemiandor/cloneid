@@ -57,4 +57,4 @@ sshkeys/*
 gctest/*.json
 pnpm-lock.yaml
 src/routes/(cloneId)/module2/3_e/*
-src/routes/(cloneId)/module2/3_d/testing/*
+src/routes/(cloneId)/module2/home/testing/*

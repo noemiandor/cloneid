@@ -4,7 +4,7 @@
 	import '@ibm/plex/scss/ibm-plex.scss';
 	import 'carbon-components-svelte/css/g10.css';
 	let id = data.id;
-	import CellposeResults from '@/routes/(cloneId)/module2/3_d/components/CellposeResults.svelte';
+	import CellposeResults from '@/routes/(cloneId)/module2/home/components/CellposeResults.svelte';
 </script>
 
 {#if id}
