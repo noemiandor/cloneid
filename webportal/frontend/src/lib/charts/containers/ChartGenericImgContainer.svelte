@@ -67,7 +67,10 @@
 	import { Carbon, CloseOutline } from 'carbon-icons-svelte';
 	import throttle from 'just-throttle';
 	import { onMount } from 'svelte';
+<<<<<<< HEAD
 
+=======
+>>>>>>> master
 	/**
 	 * @param {string} item
 	 */
@@ -75,6 +78,10 @@
 		if (!item) {
 			return [];
 		}
+<<<<<<< HEAD
+=======
+		// $cellInput = '';
+>>>>>>> master
 		let formData = new FormData();
 		formData.append('item', JSON.stringify(item));
 		const result = await fetch('?/callbackendscriptgen', {
@@ -91,6 +98,7 @@
 			.catch((e) => {
 				console.log('callbackendscriptgen', e);
 			})
+<<<<<<< HEAD
 			;
 		return result.result;
 	}
@@ -101,6 +109,14 @@
 	// 	[7, 8, 9]
 	// ];
 
+=======
+			.finally(() => {
+				// stopLoading();
+			});
+		return result.result;
+	}
+
+>>>>>>> master
 	async function drawGenericImg() {
 		ContainerDomId?.firstChild?.remove();
 		const child = document.createElement('img');
@@ -119,6 +135,17 @@
 				loaded = true;
 			});
 	}
+<<<<<<< HEAD
+=======
+	async function _redraw() {
+		if (browser) {
+			if (windowHeight && windowWidth) {
+				ContainerDomId?.firstChild?.remove();
+				await drawChart();
+			}
+		}
+	}
+>>>>>>> master
 	let waitingforredraw = false;
 	async function redraw() {
 		if (waitingforredraw) {
@@ -183,6 +210,10 @@ outline-offset: 0.05rem;_text-align:right;margin-bottom:0px;"
 			type="submit"
 			href="/fullScreen/generic/{cellId}/${perspective}"
 			on:click={(e) => {
+<<<<<<< HEAD
+=======
+				// e.preventDefault();
+>>>>>>> master
 			}}
 		>
 			<TooltipIcon tooltipText="Open in new Window">
@@ -234,6 +265,7 @@ outline-offset: 0.05rem;_text-align:right;margin-bottom:0px;"
 			{/if}
 		</div>
 	{/key}
+<<<<<<< HEAD
 </Tile>
 
 <style>
@@ -246,3 +278,6 @@ outline-offset: 0.05rem;_text-align:right;margin-bottom:0px;"
 		padding: 0px;
 	}
 </style>
+=======
+</Tile>
+>>>>>>> master

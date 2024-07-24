@@ -4,17 +4,29 @@ import {
 
 import { browser } from '$app/environment';
 import {
+<<<<<<< HEAD
+=======
+    certifieduser,
+>>>>>>> master
     loginIconBGColor,
     showModalLogin,
     showModalLoginInvalid,
     showModalLogout,
     userIsLoggedIn,
     userName,
+<<<<<<< HEAD
     userPassword
+=======
+    userPassword,
+>>>>>>> master
 } from '$lib/storage/local/stores.js';
 import { green } from '@carbon/colors';
 import "svelte/internal/disclose-version";
 
+<<<<<<< HEAD
+=======
+// import { counter } from "./stores";
+>>>>>>> master
 /**
  * @param {string} field
  * @param {string} value
@@ -52,9 +64,17 @@ export function setIconBG(l) {
 }
 export function setIconBGifExistingSession() {
     let $userIsLoggedIn;
+<<<<<<< HEAD
     if (browser) {
         if (sessionGet('cloneid') == 'on') {
             set_store_value(userIsLoggedIn, $userIsLoggedIn = true, $userIsLoggedIn);
+=======
+    let $certifieduser;
+    if (browser) {
+        if (sessionGet('cloneid') == 'on') {
+            set_store_value(userIsLoggedIn, $userIsLoggedIn = true, $userIsLoggedIn);
+            set_store_value(certifieduser, $certifieduser = sessionGet('user'), $certifieduser);
+>>>>>>> master
             setIconBG(true);
         } else {
             setIconBG(false);
@@ -78,3 +98,37 @@ export function cleanSlate() {
     set_store_value(userPassword, $userPassword = '', $userPassword);
     set_store_value(loginIconBGColor, $loginIconBGColor = '', $loginIconBGColor);
 }
+<<<<<<< HEAD
+=======
+
+
+export function authorized() {
+    if (browser) {
+        if (sessionGet('module2') == 'on') {
+            return true;
+        } else {
+            return false;
+        }
+    } else {
+        return false;
+    }
+}
+
+export function setAuthorized() {
+    if (browser) {
+        sessionStore('module2', 'on')
+    }
+}
+
+export function clearAuthorized() {
+    if (browser) {
+        sessionClear('module2');
+    }
+}
+
+
+// export function add() {
+//     var counterRef = get(counter);
+//     counter.set(counterRef + 1);
+// }
+>>>>>>> master

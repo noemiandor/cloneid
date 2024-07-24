@@ -1,7 +1,11 @@
 Project: cloneid-module1
 Title: Model-Based Systems for tracing and steering clonal dynamics / Home page to view database content
 Version: 0.1
+<<<<<<< HEAD
 Copyright: (c) 2024 MOFFITT
+=======
+Copyright: (c) 2023 MOFFITT
+>>>>>>> master
 Date: 2023-10-01
 Author: Daniel Hannaby
 License: MIT

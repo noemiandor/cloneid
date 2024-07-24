@@ -21,4 +21,10 @@ bin/main/.metadata/
 *.iml
 *.ipr
 
+<<<<<<< HEAD
 .DS_Store
+=======
+
+*/.DS_Store
+
+>>>>>>> master

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 // export let base = Object();
 import { cellLineOrLineageId, validateCellId, validateCellLine, descendants } from './funcs.js';
 //   * @param {{url: {searchParams: any;};}} req
@@ -75,3 +76,6 @@ export async function base(args) {
     if (data) return data;
     throw type + val;
 }
+=======
+export let base = Object();
+>>>>>>> master

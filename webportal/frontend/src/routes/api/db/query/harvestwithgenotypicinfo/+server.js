@@ -25,7 +25,10 @@ export async function GET(req) {
         rows = cached;
     } else {
         if (typeof hasGenotypicInfo == 'function') {
+<<<<<<< HEAD
             // NON CACHED
+=======
+>>>>>>> master
             // PLACEHOLDER MODULE 3
             console.log("PLACEHOLDER MODULE 3");
         }

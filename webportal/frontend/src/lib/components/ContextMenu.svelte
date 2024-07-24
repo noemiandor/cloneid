@@ -1,14 +1,42 @@
 <!-- 
+<<<<<<< HEAD
 Inspired from: Context Menu https://svelte.dev/repl/3a33725c3adb4f57b46b597f9dade0c1?version=3.25.0
 -->
 <script>
 	let pos = { x: 0, y: 0 };
 	let menu = { h: 0, y: 0 };
 	let browser = { h: 0, y: 0 };
+=======
+Github @dukenmarga, July 2022
+Context Menu is small menu that displayed when user right-click the mouse on browser.
+Think of it as a way to show Refresh option on Microsoft Windows when right-click on desktop.
+Known bug:
+    - If the browser loads the content for the first time, showMenu set to false.
+    Hence, we cannot get menu.h and menu.y dimension, since context menu has not been available at DOM.
+    The first right click will not shown properly when right-click occurs around the edge (bottom part
+    and right part) of the browser.
+
+Inspired from: Context Menu https://svelte.dev/repl/3a33725c3adb4f57b46b597f9dade0c1?version=3.25.0
+-->
+
+<script>
+	// pos is cursor position when right click occur
+	let pos = { x: 0, y: 0 };
+	// menu is dimension (height and width) of context menu
+	let menu = { h: 0, y: 0 };
+	// browser/window dimension (height and width)
+	let browser = { h: 0, y: 0 };
+	// showMenu is state of context-menu visibility
+>>>>>>> master
 	let showContextMenu = false;
 	let showClickMenu = false;
 	let showDblClickMenu = false;
 	let showSettingsMenu = false;
+<<<<<<< HEAD
+=======
+	// let showMenu = false;
+	// to display some text
+>>>>>>> master
 	/**
 	 * @type {{ textContent: string; }}
 	 */
@@ -18,6 +46,7 @@ Inspired from: Context Menu https://svelte.dev/repl/3a33725c3adb4f57b46b597f9dad
 	 */
 	let payload;
 	let node;
+<<<<<<< HEAD
 	import { setClipBoard } from '$lib/js/clipboard';
 	import {
 		AddAlt,
@@ -33,6 +62,27 @@ Inspired from: Context Menu https://svelte.dev/repl/3a33725c3adb4f57b46b597f9dad
 		ZoomArea
 	} from 'carbon-icons-svelte';
 
+=======
+	import { setClipBoard } from '../js/clipboard';
+	import { Slider } from 'carbon-components-svelte';
+	import {
+		AddAlt,
+		Camera,
+		ChartBarFloating,
+		ChartLine,
+		Copy,
+		Information,
+		InformationSquare,
+		Network_4Reference,
+		Printer,
+		TrashCan,
+		ZoomArea,
+		Settings,
+		ChartTSne
+	} from 'carbon-icons-svelte';
+
+
+>>>>>>> master
 	export let callbackC = () => {};
 	export let callbackM = (x) => {};
 	export let callbackF = (x, y) => {};
@@ -97,9 +147,17 @@ Inspired from: Context Menu https://svelte.dev/repl/3a33725c3adb4f57b46b597f9dad
 		callbackF(payload, 'test_menu');
 	}
 	async function growthcurve() {
+<<<<<<< HEAD
 		callbackF(payload, 'pin_growth');
 	}
 	async function timetable() {
+=======
+		console.log('growthcurve', payload, callbackF);
+		callbackF(payload, 'pin_growth');
+	}
+	async function timetable() {
+		console.log('timetable', payload, callbackF);
+>>>>>>> master
 		callbackF(payload, 'pin_timetable');
 	}
 	async function genotype() {
@@ -135,6 +193,53 @@ Inspired from: Context Menu https://svelte.dev/repl/3a33725c3adb4f57b46b597f9dad
 	function setting() {
 		content.textContent = 'Settings...';
 	}
+<<<<<<< HEAD
+=======
+	let dblClickItems = [
+		{
+			name: 'addItem',
+			onClick: addItem,
+			displayText: 'Add Item',
+			class: 'fa-solid fa-plus'
+		},
+		{
+			name: 'emptyicons',
+			onClick: addItem,
+			displayText: 'Empty Icon',
+			class: 'fa-solid fa-square'
+		},
+		{
+			name: 'zoom',
+			onClick: zoom,
+			displayText: 'Zoom',
+			class: 'fa-solid fa-magnifying-glass'
+		},
+		{
+			name: 'printMenu',
+			onClick: print,
+			displayText: 'Print',
+			class: 'fa-solid fa-print'
+		},
+		{
+			name: 'hr'
+		},
+		{
+			name: 'settings',
+			onClick: setting,
+			displayText: 'Settings',
+			class: 'fa-solid fa-gear'
+		},
+		{
+			name: 'hr'
+		},
+		{
+			name: 'trash',
+			onClick: remove,
+			displayText: 'Trash',
+			class: 'fa-solid fa-trash-can'
+		}
+	];
+>>>>>>> master
 	let availableClickItems = [
 		'copy',
 		'curve',
@@ -235,6 +340,34 @@ Inspired from: Context Menu https://svelte.dev/repl/3a33725c3adb4f57b46b597f9dad
 			element: 'hr'
 		},
 		{
+<<<<<<< HEAD
+=======
+			name: 'settings',
+			onClick: async () => {
+				await new Promise((res) => setTimeout(res, 300)).then(async () => {
+					showDblClickMenu = false;
+					showClickMenu = false;
+					await new Promise((res) => setTimeout(res, 300)).then(() => {
+						showContextMenu = true;
+					});
+				});
+			},
+			displayText: 'Settings',
+			class: 'fa-solid fa-gear',
+			icon: Settings
+		},
+		{
+			element: 'hr'
+		},
+		{
+			name: 'trash',
+			onClick: remove,
+			displayText: 'Trash',
+			class: 'fa-solid fa-trash-can',
+			icon: TrashCan
+		},
+		{
+>>>>>>> master
 			name: 'copy',
 			element: 'hr'
 		},
@@ -246,6 +379,20 @@ Inspired from: Context Menu https://svelte.dev/repl/3a33725c3adb4f57b46b597f9dad
 			icon: Copy
 		},
 		{
+<<<<<<< HEAD
+=======
+			name: 'reroute',
+			element: 'hr'
+		},
+		{
+			name: 'reroute',
+			onClick: setRoot,
+			displayText: 'set as root',
+			class: 'fa-solid fa-diagram-project',
+			icon: Network_4Reference
+		},
+		{
+>>>>>>> master
 			name: 'test',
 			onClick: test_menu,
 			displayText: '︎Test Menu',
@@ -253,7 +400,79 @@ Inspired from: Context Menu https://svelte.dev/repl/3a33725c3adb4f57b46b597f9dad
 			icon: ChartLine
 		}
 	];
+<<<<<<< HEAD
 
+=======
+	let contextmenuItems = [
+		{
+			name: 'addItem',
+			onClick: copyToClipboard,
+			displayText: 'Copy',
+			class: 'fa-solid fa-plus',
+			icon: Copy
+		},
+		{
+			name: 'emptyicons',
+			onClick: setRoot,
+			displayText: 'Set root',
+			class: 'fa-solid fa-diagram-project',
+			icon: Network_4Reference
+		},
+		{
+			name: 'nodeinfo',
+			onClick: addItem,
+			displayText: 'Node info',
+			class: 'fa-solid fa-camera',
+			icon: Information
+		},
+		{
+			name: 'nodeinfo',
+			name: 'hr'
+		},
+		{
+			name: 'settings',
+			onClick: async () => {
+				await new Promise((res) => setTimeout(res, 300)).then(() => {
+					showDblClickMenu = false;
+					showContextMenu = false;
+					showSettingsMenu = true;
+				});
+			},
+			displayText: 'Settings',
+			class: 'fa-solid fa-gear',
+			icon: Settings
+		}
+	];
+	let settingsmenuItems = [
+		{
+			name: 'zoom',
+			onClick: zoom,
+			displayText: 'Zoom',
+			class: 'fa-solid fa-magnifying-glass',
+			icon: ZoomArea
+		},
+		{
+			name: 'hr'
+		},
+		{
+			name: 'settings',
+			onClick: async () => {
+				await new Promise((res) => setTimeout(res, 300)).then(() => {
+					showDblClickMenu = false;
+					showContextMenu = false;
+					showClickMenu = true;
+				});
+			},
+			displayText: 'Settings',
+			class: 'fa-solid fa-gear',
+			icon: Settings
+		}
+	];
+	/**
+	 * @type {Button}
+	 */
+	let buttonrow;
+>>>>>>> master
 </script>
 
 {#if showClickMenu}
@@ -305,7 +524,87 @@ Inspired from: Context Menu https://svelte.dev/repl/3a33725c3adb4f57b46b597f9dad
 	</nav>
 {/if}
 
+<<<<<<< HEAD
 
+=======
+{#if false && showContextMenu}
+	<nav use:getContextMenuDimension style="position: absolute; top:{pos.y}px; left:{pos.x}px">
+		<div class="navbar" id="navbar">
+			<ul>
+				{#each contextmenuItems as item}
+					{#if item.name == 'hr'}
+						<hr />
+					{:else}
+						<li>
+							<button on:click={item.onClick} style="margin:0px;padding:0px;height:24px">
+								<div class="clickmenu">
+									<svelte:component
+										this={item.icon}
+										style="text-align:right;height:16px;margin-right:8px;padding:0px;"
+									/>
+									<span style="font-size:0.8rem;padding-bottom:14px;">
+										{item.displayText}
+									</span>
+								</div>
+							</button>
+						</li>
+					{/if}
+				{/each}
+			</ul>
+		</div>
+	</nav>
+{/if}
+
+{#if false && showSettingsMenu}
+	<nav use:getContextMenuDimension style="position: absolute; top:{pos.y}px; left:{pos.x}px">
+		<div class="navbar" id="navbar">
+			<ul>
+				{#each settingsmenuItems as item}
+					{#if item.name == 'hr'}
+						<hr />
+					{:else if item.name == 'zoom'}
+						<Slider hideLabel light style="margin:0px;padding:0px;width:150px" />
+					{:else}
+						<li>
+							<button on:click={item.onClick} style="margin:0px;padding:0px;height:24px">
+								<div class="clickmenu">
+									<svelte:component
+										this={item.icon}
+										style="text-align:right;height:16px;margin-right:8px;padding:0px;"
+									/>
+									<span style="font-size:0.8rem;padding-bottom:14px;">
+										{item.displayText}
+									</span>
+								</div>
+							</button>
+						</li>
+					{/if}
+				{/each}
+			</ul>
+		</div>
+	</nav>
+{/if}
+
+{#if false && showDblClickMenu}
+	<nav use:getContextMenuDimension style="position: absolute; top:{pos.y}px; left:{pos.x}px">
+		<div class="navbar" id="navbar">
+			<ul>
+				{#each dblClickItems as item}
+					{#if item.name == 'hr'}
+						<hr />
+					{:else}
+						<li>
+							<button on:click={item.onClick}
+								>||<i class={item.class}></i>||{item.displayText}</button
+							>
+						</li>
+					{/if}
+				{/each}
+			</ul>
+		</div>
+	</nav>
+{/if}
+>>>>>>> master
 <style>
 	* {
 		padding: 0;

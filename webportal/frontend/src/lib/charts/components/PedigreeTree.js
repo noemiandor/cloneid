@@ -92,7 +92,11 @@ export function drawPedigreeTree() {
                 worker.onerror = function (event) {
                     dfd.reject(event);
                 };
+<<<<<<< HEAD
                 worker.postMessage(args.args);
+=======
+                worker.postMessage(args.args); //Start the worker with supplied args
+>>>>>>> master
             }
         });
         return def.promise();
@@ -112,6 +116,12 @@ export function drawPedigreeTree() {
         }
     }
 
+<<<<<<< HEAD
+=======
+    /*
+     external function for changing settings, any rendered trees are updated
+     */
+>>>>>>> master
     function changeTreeSettings(settingsIn) {
         settings.useLengths = getSetting(settingsIn.useLengths, settings.useLengths);
         settings.alignTipLabels = getSetting(settingsIn.alignTipLabels, settings.alignTipLabels);
@@ -228,9 +238,15 @@ export function drawPedigreeTree() {
         var tree = {};
         var settingsLbls = [];
 
+<<<<<<< HEAD
         s = s.replace(/(\r\n|\n|\r)/gm, "");
 
         var tokens = s.split(/\s*(;|\(|\[|\]|\)|,|:)\s*/);
+=======
+        s = s.replace(/(\r\n|\n|\r)/gm, ""); // remove all new line characters
+
+        var tokens = s.split(/\s*(;|\(|\[|\]|\)|,|:)\s*/); //already splits the NHX format as well
+>>>>>>> master
 
         var nhx_tags = [':B', ':S', ':D', ':T', ':E', ':O', ':SO', ':L', ':Sw', ':CO', ':C'];
 
@@ -252,10 +268,17 @@ export function drawPedigreeTree() {
             }
         }
 
+<<<<<<< HEAD
         try { 
             if (tokens === "") {
                 throw "empty";
             }
+=======
+        try { //catch error when newick is not in place
+            if (tokens === "") {
+                throw "empty";
+            }// calls convert function from above
+>>>>>>> master
         } catch (err) {
             throw "NoTree";
         }
@@ -268,6 +291,10 @@ export function drawPedigreeTree() {
             throw "TooLittle)"
         }
         function is_nhx_tag_found(nhx_tags, tag_to_check) {
+<<<<<<< HEAD
+=======
+            // prepend with : to differentiate :S=, :Sw= and :SO=
+>>>>>>> master
             return jQuery.inArray(":" + tag_to_check, nhx_tags);
         }
         for (i = 0; i < new_tokens.length; i++) {
@@ -275,20 +302,34 @@ export function drawPedigreeTree() {
             var x;
             var subtree;
             switch (token) {
+<<<<<<< HEAD
                 case '(': 
+=======
+                case '(': // new children
+>>>>>>> master
                     subtree = {};
                     tree.children = [subtree];
                     ancestors.push(tree);
                     tree = subtree;
                     break;
+<<<<<<< HEAD
                 case ',': 
+=======
+                case ',': // another branch
+>>>>>>> master
                     subtree = {};
                     ancestors[ancestors.length - 1].children.push(subtree);
                     tree = subtree;
                     break;
+<<<<<<< HEAD
                 case '[':
                     x = new_tokens[i + 1];
                     if (x.indexOf("&&NHX") !== -1) { 
+=======
+                case '['://input NHX format
+                    x = new_tokens[i + 1];
+                    if (x.indexOf("&&NHX") !== -1) { //if NHX format
+>>>>>>> master
                         var nhx_tokens = x.split(/:/);
                         jQuery.each(nhx_tokens, function (i, nhx_token) {
                             var token = nhx_token.split("=");
@@ -320,9 +361,15 @@ export function drawPedigreeTree() {
                     }
                     break;
                 case ']':
+<<<<<<< HEAD
                 case ':':
                     break;
                 case ')':
+=======
+                case ':': // optional length next
+                    break;
+                case ')': // optional
+>>>>>>> master
                     tree = ancestors.pop();
                     x = new_tokens[i + 1];
                     if (!(x === ";" || x === "")) {
@@ -333,9 +380,15 @@ export function drawPedigreeTree() {
                 default:
                     x = new_tokens[i - 1];
                     if (x === ')' || x === '(' || x === ',') {
+<<<<<<< HEAD
                         var tree_meta = token.split("@@");
                         tree.name = tree_meta[0];
                         tree.length = 0.1;
+=======
+                        var tree_meta = token.split("@@"); // separation of metadata for export
+                        tree.name = tree_meta[0];
+                        tree.length = 0.1; // this is used in the case the tree does not have any branch values
+>>>>>>> master
                         tree.collapsed = false;
 
                     } else if (x === ':') {
@@ -387,11 +440,19 @@ export function drawPedigreeTree() {
 
         var tmpNewicks;
         var newicks = [];
+<<<<<<< HEAD
+=======
+        // this is important to allow trees to be separated by ";", or "\n" and also to have black lines
+>>>>>>> master
         const EON = newick.indexOf(";");
         tmpNewicks = newick.replace(/(^[ \t]*\n)/gm, "").replace(/(\r\n|\n|\r)/gm, (EON !== -1) ? "" : ";").split(";");
         if (tmpNewicks.length > 1) {
             newicks = tmpNewicks.slice(0, -1);
         }
+<<<<<<< HEAD
+=======
+        // reset settings radiobuttons
+>>>>>>> master
         updateSettingsLabels();
         resetTreeVisStatus(trees);
 
@@ -410,12 +471,20 @@ export function drawPedigreeTree() {
                 d.leaves = getChildLeaves(d);
                 d.clickedParentHighlight = false;
                 d.mouseoverHighlight = false; 
+<<<<<<< HEAD
                 d.mouseoverLinkHighlight = false;
+=======
+                d.mouseoverLinkHighlight = false; 
+>>>>>>> master
                 d.correspondingHighlight = false;
 
                 d.mouseoverLinkHighlight = true;
 
+<<<<<<< HEAD
                 d.collapsed = false;
+=======
+                d.collapsed = false; 
+>>>>>>> master
                 idCounter++;
             });
 
@@ -540,8 +609,14 @@ export function drawPedigreeTree() {
             return 0;
         }
     }
+<<<<<<< HEAD
     function postorderTraverse(d, f, do_children) {
         if (do_children === undefined) { 
+=======
+
+    function postorderTraverse(d, f, do_children) {
+        if (do_children === undefined) { //check whether variable is defined, e.g. string, integer ...
+>>>>>>> master
             do_children = true;
         }
         var children = [];
@@ -642,12 +717,20 @@ export function drawPedigreeTree() {
                 newHeight = renderHeight / (leavesVisible + leavesHidden);
                 treeData.treeHeight = newHeight;
             }
+<<<<<<< HEAD
+=======
+            console.log("settings.fitTree === scale", leavesVisible, treeData.treeHeight);
+>>>>>>> master
         }
         if (settings.fitTree === "scale" && leavesVisible === 0 && !treeData.prevNoLeavesVisible) {
             newHeight = renderHeight / (leavesVisible + leavesHidden);
             newHeight = (newHeight * triangleHeightDivisor);
             newHeight = newHeight - (newHeight / triangleHeightDivisor / 2);
             treeData.treeHeight = newHeight;
+<<<<<<< HEAD
+=======
+            console.log("settings.fitTree === scale", leavesVisible, treeData.treeHeight);
+>>>>>>> master
         }
         if (leavesVisible > 0) {
             treeData.prevNoLeavesVisible = false;
@@ -676,7 +759,10 @@ export function drawPedigreeTree() {
             getLeavesShownInner(e);
             return visNodes;
         }
+<<<<<<< HEAD
         
+=======
+>>>>>>> master
         function getCollapsedParams(e) {
             var collapsedHeightInner = 0;
             var leavesHiddenInner = 0;
@@ -684,7 +770,11 @@ export function drawPedigreeTree() {
             function getCollapsedHeight(d) {
                 if (d._children && !d.children) {
                     var offset = leafHeight / triangleHeightDivisor * d.leaves.length;
+<<<<<<< HEAD
                     if (offset < amendedLeafHeight) {
+=======
+                    if (offset < amendedLeafHeight) { //condition ensures the right spacing if the triangle is smaller than the distance between two leaves
+>>>>>>> master
                         collapsedHeightInner += amendedLeafHeight;
                     } else {
                         collapsedHeightInner += ((leafHeight / triangleHeightDivisor * d.leaves.length) + (trianglePadding * 2));
@@ -706,7 +796,10 @@ export function drawPedigreeTree() {
 
         const root_leaves_length = treeData.root.leaves.length;
         var allVisLeaves = getLeavesShown(treeData.root);
+<<<<<<< HEAD
         
+=======
+>>>>>>> master
         var divisor = (root_leaves_length - allVisLeaves) > 0
             ?
             allVisLeaves
@@ -714,6 +807,7 @@ export function drawPedigreeTree() {
             root_leaves_length;
 
 
+<<<<<<< HEAD
         var params = getCollapsedParams(treeData.root);
         var collapsedHeight = params.collapsedHeight;
         collapsedHeight = 0;
@@ -724,16 +818,31 @@ export function drawPedigreeTree() {
         settings.loadingCallback();
         
         
+=======
+        var params = getCollapsedParams(treeData.root); //helper function getCollapsedParams(e) above is called and saved in params
+        var collapsedHeight = params.collapsedHeight; // height of collapsed leaves with collapsed branches
+        collapsedHeight = 0;
+        var amendedLeafHeight = ((root_leaves_length * leafHeight) - collapsedHeight) / (divisor);
+
+        settings.loadingCallback();
+>>>>>>> master
         var test = 0;
         function setXPos(d, upperBound) {
 
             _UPPERBOUND_ = Math.min(_UPPERBOUND_, upperBound);
+<<<<<<< HEAD
             
+=======
+>>>>>>> master
 
             var params;
             var collapsedHeight;
 
+<<<<<<< HEAD
             if (d.children) {
+=======
+            if (d.children) { // defines the vertical position of the inner nodes
+>>>>>>> master
                 for (var i = 0; i < d.children.length; i++) {
                     setXPos(d.children[i], upperBound);
                     test += 1;
@@ -744,17 +853,24 @@ export function drawPedigreeTree() {
                 }
                 d.x = d.children[0].x + ((d.children[d.children.length - 1].x - d.children[0].x) / 2);
             } else if (d._children) {
+<<<<<<< HEAD
                 
+=======
+>>>>>>> master
                 params = getCollapsedParams(d);
                 collapsedHeight = params.collapsedHeight;
                 d.x = upperBound + (collapsedHeight / 2);
             } else {
+<<<<<<< HEAD
                 
+=======
+>>>>>>> master
                 d.x = upperBound + (amendedLeafHeight / 2);
             }
             d.x = d.x;
         }
 
+<<<<<<< HEAD
 
         var maxLength = treeData.maxLength;
         
@@ -764,11 +880,19 @@ export function drawPedigreeTree() {
         var lengthMult = treeData.treeWidth;
         
 
+=======
+        var maxLength = treeData.maxLength;
+        var lengthMult = treeData.treeWidth;
+>>>>>>> master
 
         var newLenghtMult = 0;
         nodes.forEach(function (d) {
             if (settings.useLengths) {
+<<<<<<< HEAD
                 d.y = getLength(d) * (lengthMult / maxLength) / 2; 
+=======
+                d.y = getLength(d) * (lengthMult / maxLength) / 2; //adjust position to screen size
+>>>>>>> master
                 d.baseY = d.y;
             } else {
                 d.y = d.depth * lengthMult / 10;
@@ -813,6 +937,14 @@ export function drawPedigreeTree() {
                 })
                 .attr("dy", function (d) {
                     return "6px";
+<<<<<<< HEAD
+=======
+                    if (d.children || d._children) {
+                        return "-10.3em";
+                    } else {
+                        return "0.3em";
+                    }
+>>>>>>> master
                 })
                 .attr("text-anchor", function (d) {
                     return "start";
@@ -827,15 +959,39 @@ export function drawPedigreeTree() {
                 })
                 .style("cursor", function (/** @type {{ name: any; }} */ d) {
                     return "pointer";
+<<<<<<< HEAD
                 })
                 ;
         }
+=======
+                    return "zoom-in";
+                })
+                ;
+        }
+
+
+>>>>>>> master
         // GROWTH CURVE ICON
         if (true || capableOf('C')) {
             nodeEnter.append("circle")
                 .attr("class", "node")
                 .attr("x", function (d) {
                     return "30px";
+<<<<<<< HEAD
+=======
+                    const p2 = settings.callbackH(d.name) ? 1 : 0;
+                    const p3 = settings.callbackI(d.name) ? 1 : 0;
+                    return (p2 + p3) * 10 + "px";
+
+                    console.log("GROWTH X NAMES:ICONS", d.name, d.icons);
+                    if (d.icons) {
+                        d.icons++;
+                        return 10 + (d.icons + 1) * 10 * settings.nodeSize + "px";
+                    } else {
+                        d.icons = 1;
+                        return '0px';
+                    }
+>>>>>>> master
                 })
                 .attr("r", function (d) {
                     if (settings.callbackH(d.name)) {
@@ -852,6 +1008,11 @@ export function drawPedigreeTree() {
             nodeEnter.append("path")
                 .attr("class", "triangle")
                 .attr("x", function (d) {
+<<<<<<< HEAD
+=======
+                    const p2 = settings.callbackH(d.name) ? 1 : 0;
+                    const p3 = settings.callbackI(d.name) ? 1 : 0;
+>>>>>>> master
                     if (d.icons) {
                         d.icons++;
                         return 10 + (d.icons + 1) * 10 * settings.nodeSize + "px";
@@ -876,6 +1037,48 @@ export function drawPedigreeTree() {
         }
 
         // GENOTYPE ICON
+<<<<<<< HEAD
+=======
+        if (false && capableOf('G')) {
+            nodeEnter.append("rect")
+                .attr("class", "node")
+                .attr("y", "-5px")
+                .attr("x", function (d) {
+                    const p1 = settings.callbackG(d.name) ? settings.callbackG(d.name).length : 0;
+                    const p2 = settings.callbackH(d.name) ? 1 : 0;
+                    const p3 = settings.callbackI(d.name) ? 1 : 0;
+                    return (p1 + p2 + p3) * 10 + "px";
+                    return '25px';
+                    console.log("GENOTYPE X NAMES:ICONS", d.name, d.icons);
+                    if (d.icons) {
+                        d.icons++;
+                        return 10 + (d.icons + 1) * 10 * settings.nodeSize + "px";
+                    } else {
+                        d.icons = 1;
+                        return '0px';
+                    }
+                })
+                .attr("width", function (d) {
+                    if (settings.callbackG(d.name)) {
+                        return '10px';
+                    }
+                    return '30px';
+                })
+                .attr("height", function (d) {
+                    return settings.callbackG(d.name) ? '10px' : '0px';
+                })
+                .style("fill", function (d) {
+                    const gi = settings.callbackG(d.name);
+                    if (!gi) return colorInfo.genotype;
+                    const c0 = gi[0];
+                    const ci = colorInfo[c0];
+                    return ci;
+
+                    return colorInfo.genotype;
+                });
+        }
+        // GENOTYPE ICON
+>>>>>>> master
         if (true || capableOf('G') && settings.callbackG()) {
             const perspkeys = Object.keys(perspectiveLabelColor1);
             for (let index = 0; index < perspkeys.length; index++) {
@@ -886,6 +1089,11 @@ export function drawPedigreeTree() {
                         const p1 = settings.callbackG(d.name);
                         if (p1) {
                             if (p1.includes(perspkeys[index])) {
+<<<<<<< HEAD
+=======
+
+
+>>>>>>> master
                                 if (d.icons) {
                                     d.icons++;
                                     return (d.icons) * 15 + "px";
@@ -893,6 +1101,13 @@ export function drawPedigreeTree() {
                                     d.icons = 1;
                                     return '0px';
                                 }
+<<<<<<< HEAD
+=======
+
+                                
+
+                                return (index) * 15 + "px";
+>>>>>>> master
                             } else {
                                 return "0px";
                             }
@@ -905,24 +1120,40 @@ export function drawPedigreeTree() {
                         if (p1) {
                             if (p1.includes(perspkeys[index])) {
                                 return "15px";
+<<<<<<< HEAD
+=======
+                                return (index + 1) * 15 + "px";
+>>>>>>> master
                             } else {
                                 return "0px";
                             }
                         } else {
                             return "0px";
                         }
+<<<<<<< HEAD
+=======
+                        return (p1 ? 15 : 0) + "px";
+>>>>>>> master
                     })
                     .attr("height", function (d) {
                         const p1 = settings.callbackG(d.name);
                         if (p1) {
                             if (p1.includes(perspkeys[index])) {
                                 return "15px";
+<<<<<<< HEAD
+=======
+                                return (index + 1) * 15 + "px";
+>>>>>>> master
                             } else {
                                 return "0px";
                             }
                         } else {
                             return "0px";
                         }
+<<<<<<< HEAD
+=======
+                        return (p1 ? 15 : 0) + "px";
+>>>>>>> master
                     })
                     .style("fill", function (d) {
                         const p1 = settings.callbackG(d.name);
@@ -959,13 +1190,51 @@ export function drawPedigreeTree() {
                     }
                 })
                 .text(function (d) {
+<<<<<<< HEAD
                     if (!d.children && !d._children) {
                         return d.name;
+=======
+                    if (!d.children && !d._children) { //print leaf names
+                        return d.name;
+                        return d.icons + "_" + d.name;
+>>>>>>> master
                     } else {
                         return "";
                     }
                 });
         }
+<<<<<<< HEAD
+=======
+        if (!true) {
+            var nodeExit = node.exit().transition()
+                .attr("transform", function (d) {
+                    if (source === treeData.root) {
+                    } else {
+                        console.log("F 1075", d.name, "translate(" + source.y + "," + source.x + ")");
+                        return "translate(" + source.y + "," + source.x + ")";
+                    }
+                })
+                .remove();
+
+            nodeExit.select("circle")
+                .attr("r", 1e-6)
+                .attr("stroke", "none");
+
+            nodeExit.select("text")
+                .style("fill-opacity", 1e-6);
+
+            nodeExit.select("path")
+                .attr("d", function (d) {
+                    return "M" + 0 + "," + 0 + "L" + 0 + "," + 0 + "L" + 0 + "," + 0 + "L" + 0 + "," + 0;
+                });
+
+            nodeExit.select(".triangleText")
+                .attr("x", 0)
+                .each("end", function () {
+                    d3.select(this).text("")
+                });
+        }
+>>>>>>> master
         node.select("text")
             .attr("font-family", "Arvo")
             .attr("font-weight", "900")
@@ -977,7 +1246,11 @@ export function drawPedigreeTree() {
                 .data(links, function (d) {
                     return d.target.id;
                 })
+<<<<<<< HEAD
                 .attr("id", function (d) {
+=======
+                .attr("id", function (d) { //adds source.id of node
+>>>>>>> master
                     return d.source.ID + '_' + d.target.ID;
                 })
                 .style("stroke", function (d) {
@@ -985,6 +1258,7 @@ export function drawPedigreeTree() {
                     var f = d.source;
                     if (f[currentS] && (settings.internalLabels === "none")) {
                         return colorScale(e[currentS])
+<<<<<<< HEAD
                     } else if (e["branchSupport"] && (settings.internalLabels === "name")) {
                         return colorScaleRest(parseFloat(e["branchSupport"]) / maxBranchSupport)
                     } else if (e["specifiedBranchColor"] && (settings.internalLabels === "color")) {
@@ -993,6 +1267,17 @@ export function drawPedigreeTree() {
                         return "black"
                     }
                 });
+=======
+                    } else if (e["branchSupport"] && (settings.internalLabels === "name")) { // color branch according to branch support
+                        return colorScaleRest(parseFloat(e["branchSupport"]) / maxBranchSupport)
+                    } else if (e["specifiedBranchColor"] && (settings.internalLabels === "color")) { // color branch according to prespecified rgb values in the nhx file
+                        return rgb2hex(e["specifiedBranchColor"])
+                    } else { // return the standard color
+                        return "black"
+                    }
+                });
+
+>>>>>>> master
             link.enter().insert("path", "g")
                 .attr("class", function (d) {
                     if (type === "bg") {
@@ -1001,16 +1286,26 @@ export function drawPedigreeTree() {
                         return "link";
                     }
                 })
+<<<<<<< HEAD
                 .attr("id", function (d) {
+=======
+                .attr("id", function (d) { //adds source.id of node
+>>>>>>> master
                     return d.source.ID + '_' + d.target.ID;
                 })
                 .attr("d", function (d) {
                     d = d.source;
                     var output;
                     if (source === treeData.root) {
+<<<<<<< HEAD
                         if (d.parent) {
                             output = "M" + d.parent.y + "," + d.parent.x + "L" + d.parent.y + "," + d.parent.x + "L" + d.parent.y + "," + d.parent.x;
                         } else {
+=======
+                        if (d.parent) { //draws the paths between nodes starting at root node
+                            output = "M" + d.parent.y + "," + d.parent.x + "L" + d.parent.y + "," + d.parent.x + "L" + d.parent.y + "," + d.parent.x;
+                        } else { //here when reroot is selected....
+>>>>>>> master
                             output = "M" + source.y + "," + source.x + "L" + source.y + "," + source.x + "L" + source.y + "," + source.x;
                         }
                     } else {
@@ -1032,7 +1327,11 @@ export function drawPedigreeTree() {
                         return colorScale(f[currentS])
                     } else if (e["branchSupport"] && (settings.internalLabels === "name")) {
                         return colorScaleRest(parseFloat(e["branchSupport"]) / maxBranchSupport)
+<<<<<<< HEAD
                     } else if (e["specifiedBranchColor"] && (settings.internalLabels === "color")) {
+=======
+                    } else if (e["specifiedBranchColor"] && (settings.internalLabels === "color")) { // color branch according to prespecified rgb values in the nhx file
+>>>>>>> master
                         return rgb2hex(e["specifiedBranchColor"])
                     } else {
                         return "black"
@@ -1063,6 +1362,10 @@ export function drawPedigreeTree() {
                 .attr("y", -settings.nodeSize + "px")
                 .attr("x", -settings.nodeSize + "px");
 
+<<<<<<< HEAD
+=======
+            // Transition links to their new position.
+>>>>>>> master
             link.transition()
                 .duration(duration)
                 .style("stroke-width", function () {
@@ -1076,6 +1379,10 @@ export function drawPedigreeTree() {
                     return "M" + d.source.y + "," + d.source.x + "L" + d.source.y + "," + d.target.x + "L" + d.target.y + "," + d.target.x;
                 });
 
+<<<<<<< HEAD
+=======
+            // Transition exiting nodes to the parent"s new position.
+>>>>>>> master
             link.exit().transition()
                 .duration(duration)
                 .attr("d", function (d) {
@@ -1098,6 +1405,17 @@ export function drawPedigreeTree() {
         });
 
         function nodeMouseover(d) {
+<<<<<<< HEAD
+=======
+            function _colorLinkNodeOver(n) {
+                if (
+                    settings.callbackJ(d.name)
+                ) {
+                    d3.select("g").select("#" + n.ID).classed("select", true);
+                    d3.select("#" + n.ID).select("text").classed("select", true);
+                }
+            }
+>>>>>>> master
             function colorLinkNodeOver(n) {
                 if (n.children) {
                     for (var i = 0; i < n.children.length; i++) {
@@ -1105,7 +1423,11 @@ export function drawPedigreeTree() {
                         colorLinkNodeOver(n.children[i]);
                     }
                 }
+<<<<<<< HEAD
                 if (!settings.enableFisheyeZoom) {
+=======
+                if (true || !settings.enableFisheyeZoom) { //as long as fishEyeZoom is turned off
+>>>>>>> master
                     d3.select("g").select("#" + n.ID).classed("select", true);
                     d3.select("#" + n.ID).select("text").classed("select", true);
                 }
@@ -1137,6 +1459,10 @@ export function drawPedigreeTree() {
 
         $('html').click(function (d) {
             if ((d.target.getAttribute("class") !== "link" && d.target.getAttribute("class") !== "node" && d.target.getAttribute("class") !== "link search" && d.target.getAttribute("class") !== "node select")) {
+<<<<<<< HEAD
+=======
+                // $(".tooltipElem").remove()
+>>>>>>> master
                 settings.callbackL(null, null);
             }
         });
@@ -1162,11 +1488,21 @@ export function drawPedigreeTree() {
             let sc = canvasHeight / _treeHeight;
 
             let dx = 100;
+<<<<<<< HEAD
+=======
+            //         // let dy = (canvasHeight / 2) -i deltay;
+>>>>>>> master
             let dy = deltay * x;
 
             t.zoomBehaviour.translate([dx, dy]);
             const z = d3.select("#" + t.canvasId + " svg g")
                 .attr("transform", "translate(" + [dx, dy] + ") scale(" + x + ")");
+<<<<<<< HEAD
+=======
+
+
+
+>>>>>>> master
         };
 
         settings.callbackB(setScaleCallBack, treeData);
@@ -1180,6 +1516,13 @@ export function drawPedigreeTree() {
                 }
             });
     }
+<<<<<<< HEAD
+=======
+
+    /*
+     Find the heighest collapsed node in the parents of a node
+     */
+>>>>>>> master
     function findHighestCollapsed(d) {
         if (d.parent) {
             if (d._children && d.parent.children) {
@@ -1192,12 +1535,18 @@ export function drawPedigreeTree() {
         }
     }
     function initializeRenderTreeCanvas(name, canvasId, scaleId, otherTreeName) {
+<<<<<<< HEAD
 
+=======
+>>>>>>> master
         var baseTree = trees[findTreeIndex(name)];
         if (otherTreeName !== undefined) {
             compareMode = true;
         }
+<<<<<<< HEAD
 
+=======
+>>>>>>> master
         $("#" + canvasId).empty();
         jQuery.extend(baseTree.data, {
             canvasId: canvasId
@@ -1211,6 +1560,14 @@ export function drawPedigreeTree() {
         }
     }
 
+<<<<<<< HEAD
+=======
+    /*---------------
+    /
+    /    Main function for setting up a d3 visualisation of a tree
+    /
+    ---------------*/
+>>>>>>> master
     function renderTree(baseTree, name, canvasId, scaleId, otherTreeName, treeToggle) {
         compareMode = false;
 
@@ -1243,6 +1600,10 @@ export function drawPedigreeTree() {
                 .on("dblclick.zoom", (e) => {
                     if (e && e.preventDefault) e.preventDefault();
                     if (e && e.stopPropagation) e.stopPropagation();
+<<<<<<< HEAD
+=======
+                    //  console.log("dblclick ignored 1673", e);
+>>>>>>> master
                 })
                 .on("dblclick", (e) => { if (e && e.preventDefault) e.preventDefault(); if (e && e.stopPropagation) e.stopPropagation(); })
         }
@@ -1294,6 +1655,10 @@ export function drawPedigreeTree() {
 
             var longest = 0;
             addParents(baseTree.data.root);
+<<<<<<< HEAD
+=======
+            // find longest path between leaf to root
+>>>>>>> master
             postorderTraverse(baseTree.data.root, function (d) {
                 var l = getLength(d);
                 if (l > longest) {
@@ -1319,6 +1684,12 @@ export function drawPedigreeTree() {
             var deltay = _treeHeight - canvasHeight;
             let sc = canvasHeight / _treeHeight;
 
+<<<<<<< HEAD
+=======
+            console.log("canvasWidth, canvasHeight, visibleLeaves, leafHeight, _treeHeight");
+            console.log(canvasWidth, canvasHeight, visibleLeaves, leafHeight, _treeHeight);
+
+>>>>>>> master
             let dy = deltay * sc;
 
             baseTree.data.zoomBehaviour.translate([dx, dy + 0]);
@@ -1326,6 +1697,10 @@ export function drawPedigreeTree() {
             d3.select("#" + baseTree.data.canvasId + " svg g")
                 .attr("transform", "translate(" + [dx, dy] + ") scale(" + sc + ")");
             settings.callbackA(sc);
+<<<<<<< HEAD
+=======
+            console.log("AFTER UPDATE 1", "transform", "translate(" + [dx, dy] + ") scale(" + sc + ")");
+>>>>>>> master
         } else {
             var canvasWidth = $("#" + canvasId).width();
             var canvasHeight = $("#" + canvasId).height();
@@ -1347,7 +1722,10 @@ export function drawPedigreeTree() {
         }
 
         function zoom() {
+<<<<<<< HEAD
 
+=======
+>>>>>>> master
             var scale = d3.event.scale;
             var translation = d3.event.translate;
             zoomBehaviour.translate(translation);
@@ -1355,7 +1733,10 @@ export function drawPedigreeTree() {
             if (settings.enableScale) {
                 settings.callbackA(scale);
             }
+<<<<<<< HEAD
 
+=======
+>>>>>>> master
             const x = d3.select("#" + baseTree.data.canvasId + " svg g")
                 .attr("transform", "translate(" + [translation[0], translation[1]] + ") scale(" + scale + ")");
 
@@ -1406,18 +1787,37 @@ export function drawPedigreeTree() {
         initializeRenderTreeCanvas(name, canvasId, scaleId);
         initialiseTree(trees[index].root, settings.autoCollapse);
         trees[index].data.clickEvent = getClickEventListenerNode(trees[index], false, {});
+<<<<<<< HEAD
         renderTree(trees[index], name, canvasId, scaleId);
 
+=======
+        // trees[index].data.clickEventLink = getClickEventListenerLink(trees[index], false, {});
+        renderTree(trees[index], name, canvasId, scaleId);
+
+
+
+
+
+>>>>>>> master
     }
 
     function zoomCallback(x) {
         const treeData = trees[0];
+<<<<<<< HEAD
+=======
+        console.log(treeData, x);
+>>>>>>> master
         if (treeData && treeData.zoomBehaviour && treeData.zoomBehaviour.scale) {
             treeData.zoomBehaviour.scale(x);
             treeData.zoomBehaviour.event(treeData.svg);
         }
     }
 
+<<<<<<< HEAD
+=======
+
+
+>>>>>>> master
     function limitDepth(d, depth) {
         if (d.depth > depth) {
             if (d.children) {
@@ -1493,6 +1893,15 @@ export function drawPedigreeTree() {
                 });
             };
 
+<<<<<<< HEAD
+=======
+            const c_G = settings.callbackG(d.name);
+            const c_H = settings.callbackH(d.name);
+            const c_I = settings.callbackI(d.name);
+            const c_J = settings.callbackJ(d.name);
+
+
+>>>>>>> master
             if (!d.children && !d._children) {
                 settings.callbackL(event, d);
             }

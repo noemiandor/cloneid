@@ -64,7 +64,11 @@
 	import { CloseOutline } from 'carbon-icons-svelte';
 	import * as d3 from 'd3';
 	import throttle from 'just-throttle';
+<<<<<<< HEAD
 	import { fetchGenotypePieData } from '../../js/fetchdata/fetch';
+=======
+	import { fetchGenotypePieData } from '../../fetchdata/fetch';
+>>>>>>> master
 
 	/**
 	 * @param {any[]} data
@@ -200,7 +204,11 @@
 				return x.data;
 			})
 			.catch((e) => {
+<<<<<<< HEAD
 				console.log('CHARTCONTAINERPIE::CHARTGENOTYPEPIE::ERROR', cellId, perspective, e);
+=======
+				console.log('259 CHARTCONTAINERPIE::CHARTGENOTYPEPIE::ERROR', cellId, perspective, e);
+>>>>>>> master
 				throw e;
 			});
 
