@@ -1,6 +1,9 @@
 <script>
 	import {
+<<<<<<< HEAD
+=======
 		certifieduser,
+>>>>>>> master
 		loginIconBGColor,
 		showModalLogin,
 		showModalLoginInvalid,
@@ -25,6 +28,11 @@
 	/**
 	 * @param {string} userName
 	 * @param {string} passWord
+<<<<<<< HEAD
+	 */
+	async function validateSQLCredentials(userName, passWord) {
+		const now = new Date();
+=======
 	 * @param {number} force
 	 */
 
@@ -38,6 +46,7 @@
 				return { auth: false, username: '' };
 			}
 		}
+>>>>>>> master
 
 		const response = await fetch(env.PUBLIC_API_ENDPOINT_SQLAUTH, {
 			method: 'POST',
@@ -50,15 +59,38 @@
 				'content-type': 'application/json'
 			}
 		})
+<<<<<<< HEAD
+			.then((r) => {
+				return r;
+=======
 			.then(async (r) => {
 				let j = await r.json();
 				j.username = userName;
 				return j;
+>>>>>>> master
 			})
 			.catch((e) => {
 				throw e;
 			});
 
+<<<<<<< HEAD
+		return await response.json();
+	}
+
+	function checkLogin() {
+		var auth = false;
+
+		const z = validateSQLCredentials($userName, $userPassword)
+			.then(
+				function (value) {
+					if ('sql' in value && value.sql == true) {
+						auth = true;
+						sessionStore('cloneid', 'on');
+					} else {
+						sessionClear('cloneid');
+						auth = false;
+					}
+=======
 		return response;
 		return await response.json();
 	}
@@ -74,6 +106,7 @@
 				function (value) {
 					auth = value.auth;
 					$certifieduser = value.username;
+>>>>>>> master
 				},
 				function (error) {
 					auth = false;
@@ -81,6 +114,21 @@
 				}
 			)
 			.finally(() => {
+<<<<<<< HEAD
+				$userName = '';
+				$userPassword = '';
+
+				if (auth) {
+					$userIsLoggedIn = true;
+					setIconBG(true);
+					$showModalLoginInvalid = false;
+					$showModalLogin = false;
+				} else {
+					$userIsLoggedIn = false;
+					$loginIconBGColor = '';
+					$showModalLoginInvalid = true;
+				}
+=======
 				$userIsLoggedIn = auth;
 				if (auth) {
 					$showModalLogin = false;
@@ -94,10 +142,53 @@
 				$showModalLoginInvalid = !auth;
 				$userName = '';
 				$userPassword = '';
+>>>>>>> master
 			});
 	}
 </script>
 
+<<<<<<< HEAD
+<Modal
+	passiveModal
+	bind:open={$showModalLogin}
+	modalHeading="Certified Users Login"
+	selectorPrimaryFocus="#user-name"
+	size="sm"
+>
+	<Grid>
+		<Row>
+			<Column>
+				<Tile>
+					<FluidForm on:submit={checkLogin}>
+						<TextInput
+							light
+							required
+							bind:value={$userName}
+							id="user-name"
+							labelText="User Name"
+							placeholder="Enter your CLONEiD user name..."
+							autocomplete="username"
+						/>
+						<PasswordInput
+							light
+							tooltipAlignment="start"
+							tooltipPosition="left"
+							required
+							bind:value={$userPassword}
+							id="user-password"
+							labelText="User Password"
+							placeholder="Enter your CLONEiD password..."
+							type="password"
+							autocomplete="current-password"
+						/>
+						<Button type="submit">Submit</Button>
+					</FluidForm>
+				</Tile>
+			</Column>
+		</Row>
+	</Grid>
+</Modal>
+=======
 {#key $showModalLogin}
 	{#if $showModalLogin}
 		<Modal
@@ -152,3 +243,4 @@
 		</Modal>
 	{/if}
 {/key}
+>>>>>>> master

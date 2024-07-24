@@ -3,7 +3,10 @@
 	import {
 		showModalLogout,
 		userIsLoggedIn,
+<<<<<<< HEAD
+=======
 		certifieduser,
+>>>>>>> master
 		userName,
 		userPassword
 	} from '$lib/storage/local/stores.js';
@@ -23,7 +26,10 @@
 	on:click:button--primary={() => {
 		$showModalLogout = false;
 		$userIsLoggedIn = false;
+<<<<<<< HEAD
+=======
 		$certifieduser = '';
+>>>>>>> master
 		$userName = '';
 		$userPassword = '';
 		setIconBG(false);

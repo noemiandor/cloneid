@@ -1,4 +1,12 @@
 <!-- 
+<<<<<<< HEAD
+Inspired from: Context Menu https://svelte.dev/repl/3a33725c3adb4f57b46b597f9dade0c1?version=3.25.0
+-->
+<script>
+	let pos = { x: 0, y: 0 };
+	let menu = { h: 0, y: 0 };
+	let browser = { h: 0, y: 0 };
+=======
 Github @dukenmarga, July 2022
 Context Menu is small menu that displayed when user right-click the mouse on browser.
 Think of it as a way to show Refresh option on Microsoft Windows when right-click on desktop.
@@ -19,12 +27,16 @@ Inspired from: Context Menu https://svelte.dev/repl/3a33725c3adb4f57b46b597f9dad
 	// browser/window dimension (height and width)
 	let browser = { h: 0, y: 0 };
 	// showMenu is state of context-menu visibility
+>>>>>>> master
 	let showContextMenu = false;
 	let showClickMenu = false;
 	let showDblClickMenu = false;
 	let showSettingsMenu = false;
+<<<<<<< HEAD
+=======
 	// let showMenu = false;
 	// to display some text
+>>>>>>> master
 	/**
 	 * @type {{ textContent: string; }}
 	 */
@@ -34,6 +46,23 @@ Inspired from: Context Menu https://svelte.dev/repl/3a33725c3adb4f57b46b597f9dad
 	 */
 	let payload;
 	let node;
+<<<<<<< HEAD
+	import { setClipBoard } from '$lib/js/clipboard';
+	import {
+		AddAlt,
+		ChartBarFloating,
+		ChartLine,
+		ChartTSne,
+		Copy,
+		Information,
+		Network_4Reference,
+		Printer,
+		Settings,
+		TrashCan,
+		ZoomArea
+	} from 'carbon-icons-svelte';
+
+=======
 	import { setClipBoard } from '../js/clipboard';
 	import { Slider } from 'carbon-components-svelte';
 	import {
@@ -53,6 +82,7 @@ Inspired from: Context Menu https://svelte.dev/repl/3a33725c3adb4f57b46b597f9dad
 	} from 'carbon-icons-svelte';
 
 
+>>>>>>> master
 	export let callbackC = () => {};
 	export let callbackM = (x) => {};
 	export let callbackF = (x, y) => {};
@@ -117,11 +147,17 @@ Inspired from: Context Menu https://svelte.dev/repl/3a33725c3adb4f57b46b597f9dad
 		callbackF(payload, 'test_menu');
 	}
 	async function growthcurve() {
+<<<<<<< HEAD
+		callbackF(payload, 'pin_growth');
+	}
+	async function timetable() {
+=======
 		console.log('growthcurve', payload, callbackF);
 		callbackF(payload, 'pin_growth');
 	}
 	async function timetable() {
 		console.log('timetable', payload, callbackF);
+>>>>>>> master
 		callbackF(payload, 'pin_timetable');
 	}
 	async function genotype() {
@@ -157,6 +193,8 @@ Inspired from: Context Menu https://svelte.dev/repl/3a33725c3adb4f57b46b597f9dad
 	function setting() {
 		content.textContent = 'Settings...';
 	}
+<<<<<<< HEAD
+=======
 	let dblClickItems = [
 		{
 			name: 'addItem',
@@ -201,6 +239,7 @@ Inspired from: Context Menu https://svelte.dev/repl/3a33725c3adb4f57b46b597f9dad
 			class: 'fa-solid fa-trash-can'
 		}
 	];
+>>>>>>> master
 	let availableClickItems = [
 		'copy',
 		'curve',
@@ -301,6 +340,8 @@ Inspired from: Context Menu https://svelte.dev/repl/3a33725c3adb4f57b46b597f9dad
 			element: 'hr'
 		},
 		{
+<<<<<<< HEAD
+=======
 			name: 'settings',
 			onClick: async () => {
 				await new Promise((res) => setTimeout(res, 300)).then(async () => {
@@ -326,6 +367,7 @@ Inspired from: Context Menu https://svelte.dev/repl/3a33725c3adb4f57b46b597f9dad
 			icon: TrashCan
 		},
 		{
+>>>>>>> master
 			name: 'copy',
 			element: 'hr'
 		},
@@ -337,6 +379,8 @@ Inspired from: Context Menu https://svelte.dev/repl/3a33725c3adb4f57b46b597f9dad
 			icon: Copy
 		},
 		{
+<<<<<<< HEAD
+=======
 			name: 'reroute',
 			element: 'hr'
 		},
@@ -348,6 +392,7 @@ Inspired from: Context Menu https://svelte.dev/repl/3a33725c3adb4f57b46b597f9dad
 			icon: Network_4Reference
 		},
 		{
+>>>>>>> master
 			name: 'test',
 			onClick: test_menu,
 			displayText: '︎Test Menu',
@@ -355,6 +400,9 @@ Inspired from: Context Menu https://svelte.dev/repl/3a33725c3adb4f57b46b597f9dad
 			icon: ChartLine
 		}
 	];
+<<<<<<< HEAD
+
+=======
 	let contextmenuItems = [
 		{
 			name: 'addItem',
@@ -424,6 +472,7 @@ Inspired from: Context Menu https://svelte.dev/repl/3a33725c3adb4f57b46b597f9dad
 	 * @type {Button}
 	 */
 	let buttonrow;
+>>>>>>> master
 </script>
 
 {#if showClickMenu}
@@ -475,6 +524,9 @@ Inspired from: Context Menu https://svelte.dev/repl/3a33725c3adb4f57b46b597f9dad
 	</nav>
 {/if}
 
+<<<<<<< HEAD
+
+=======
 {#if false && showContextMenu}
 	<nav use:getContextMenuDimension style="position: absolute; top:{pos.y}px; left:{pos.x}px">
 		<div class="navbar" id="navbar">
@@ -552,6 +604,7 @@ Inspired from: Context Menu https://svelte.dev/repl/3a33725c3adb4f57b46b597f9dad
 		</div>
 	</nav>
 {/if}
+>>>>>>> master
 <style>
 	* {
 		padding: 0;

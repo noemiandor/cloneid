@@ -9,6 +9,11 @@ export let dimensions = {
     max: { domw: '100%', domh: '90vh', w: -1, h: -1 },
     modal: { domw: '100%', domh: '50vh', w: -1, h: -1 },
     fitwidth: { domw: 'auto', domh: '100%', w: -1, h: -1 },
+<<<<<<< HEAD
+    fit: { domw: '100%', domh: 'auto', w: -1, h: -1 },
+    fullscreen: { domw: '90vw', domh: '90vh', w: -1, h: -1 }
+};
+=======
     // fitwidth: { domw: '100%', domh: '100%', w: -1, h: -1 },
     fit: { domw: '100%', domh: 'auto', w: -1, h: -1 },
     fullscreen: { domw: '90vw', domh: '90vh', w: -1, h: -1 }
@@ -26,3 +31,4 @@ export let dimensions2 = {
     fit: { domw: '100%', domh: 'auto', w: -1, h: -1 },
     fullscreen: { domw: '90vw', domh: '90vh', w: -1, h: -1 }
 };
+>>>>>>> master

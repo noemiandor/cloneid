@@ -2,7 +2,10 @@
     import { createEventDispatcher } from "svelte";
     import { fly, fade } from "svelte/transition";
   
+<<<<<<< HEAD
+=======
     // Props
+>>>>>>> master
     export let min = 0;
     export let max = 100;
     export let initialValue = 0;
@@ -10,13 +13,19 @@
     export let value =
       typeof initialValue === "string" ? parseInt(initialValue) : initialValue;
   
+<<<<<<< HEAD
+=======
     // Node Bindings
+>>>>>>> master
     let container = null;
     let thumb = null;
     let progressBar = null;
     let element = null;
   
+<<<<<<< HEAD
+=======
     // Internal State
+>>>>>>> master
     let elementX = null;
     let currentThumb = null;
     let holding = false;
@@ -37,14 +46,20 @@
       elementX = element.getBoundingClientRect().left;
     }
   
+<<<<<<< HEAD
+=======
     // Allows both bind:value and on:change for parent value retrieval
+>>>>>>> master
     function setValue(val) {
       value = val;
       dispatch("change", { value });
     }
   
     function onTrackEvent(e) {
+<<<<<<< HEAD
+=======
       // Update value immediately before beginning drag
+>>>>>>> master
       updateValueOnEvent(e);
       onDragStart(e);
     }
@@ -54,23 +69,35 @@
     }
   
     function onDragStart(e) {
+<<<<<<< HEAD
+=======
       // If mouse event add a pointer events shield
+>>>>>>> master
       if (e.type === "mousedown") document.body.append(mouseEventShield);
       currentThumb = thumb;
     }
   
     function onDragEnd(e) {
+<<<<<<< HEAD
+      if (e.type === "mouseup") {
+        if (document.body.contains(mouseEventShield))
+          document.body.removeChild(mouseEventShield);
+=======
       // If using mouse - remove pointer event shield
       if (e.type === "mouseup") {
         if (document.body.contains(mouseEventShield))
           document.body.removeChild(mouseEventShield);
         // Needed to check whether thumb and mouse overlap after shield removed
+>>>>>>> master
         if (isMouseInElement(e, thumb)) thumbHover = true;
       }
       currentThumb = null;
     }
   
+<<<<<<< HEAD
+=======
     // Check if mouse event cords overlay with an element's area
+>>>>>>> master
     function isMouseInElement(event, element) {
       let rect = element.getBoundingClientRect();
       let { clientX: x, clientY: y } = event;
@@ -79,7 +106,10 @@
       return true;
     }
   
+<<<<<<< HEAD
+=======
     // Accessible keypress handling
+>>>>>>> master
     function onKeyPress(e) {
       if (keydownAcceleration < 50) keydownAcceleration++;
       let throttled = Math.ceil(keydownAcceleration / 5);
@@ -99,12 +129,20 @@
         }
       }
   
+<<<<<<< HEAD
+=======
       // Reset acceleration after 100ms of no events
+>>>>>>> master
       clearTimeout(accelerationTimer);
       accelerationTimer = setTimeout(() => (keydownAcceleration = 1), 100);
     }
   
     function calculateNewValue(clientX) {
+<<<<<<< HEAD
+      let delta = clientX - (elementX + 10);
+      let percent = (delta * 100) / (container.clientWidth - 10);
+      percent = percent < 0 ? 0 : percent > 100 ? 100 : percent;
+=======
       // Find distance between cursor and element's left cord (20px / 2 = 10px) - Center of thumb
       let delta = clientX - (elementX + 10);
   
@@ -114,6 +152,7 @@
       // Limit percent 0 -> 100
       percent = percent < 0 ? 0 : percent > 100 ? 100 : percent;
   
+>>>>>>> master
       setValue(((percent * (max - min)) / 100) + min);
     }
   
@@ -123,7 +162,10 @@
   
       if (e.stopPropagation) e.stopPropagation();
       if (e.preventDefault) e.preventDefault();
+<<<<<<< HEAD
+=======
   
+>>>>>>> master
       const clientX =
         e.type === "touchmove" || e.type === "touchstart"
           ? e.touches[0].clientX
@@ -133,6 +175,14 @@
     }
   
     $: if (element) elementX = element.getBoundingClientRect().left;
+<<<<<<< HEAD
+    $: holding = Boolean(currentThumb);
+    $: if (progressBar && thumb) {
+      value = value > min ? value : min;
+      value = value < max ? value : max;
+      let percent = ((value - min) * 100) / (max - min);
+      let offsetLeft = (container.clientWidth - 10) * (percent / 100) + 5;
+=======
   
     $: holding = Boolean(currentThumb);
   
@@ -144,6 +194,7 @@
       let offsetLeft = (container.clientWidth - 10) * (percent / 100) + 5;
   
       // Update thumb position + active range track width
+>>>>>>> master
       thumb.style.left = `${offsetLeft}px`;
       progressBar.style.width = `${offsetLeft}px`;
     }

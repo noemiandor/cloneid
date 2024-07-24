@@ -1,4 +1,4 @@
-/.metadata/
+bin/main/.metadata/
 /rpackage/R/revokeCloneExistence.R
 /rpackage/R/deleteSampleClones.R
 /rpackage/R/deleteClones.R
@@ -12,6 +12,8 @@
 .project
 .settings
 .springBeans
+.gradle
+.vscode
 
 ### IntelliJ IDEA ###
 .idea
@@ -19,6 +21,10 @@
 *.iml
 *.ipr
 
+<<<<<<< HEAD
+.DS_Store
+=======
 
 */.DS_Store
 
+>>>>>>> master

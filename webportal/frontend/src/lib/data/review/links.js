@@ -1,3 +1,8 @@
+<<<<<<< HEAD
+export const infos = {
+    'info':         { 'title': "Clonid Module1/Moffitt/contract 23-XXXXXXXX"},
+    'name':         { 'title': "cloneid-module1"},
+=======
 export const linksAndTitles = {
     'overview':     { 'title': "Exhibit A, Module 1 - Overview",                        'text': "Module 1 - Overview",                      'href': "/module1/",                                                            'md': 'Module1_1'  },
     '1.login':      { 'title': "Exhibit A, Module 1 - 1.Login",                         'text': "Module 1 - 1.Login",                       'href': "/module1/1_login/",                                                    'md': 'Module1_1'  },
@@ -22,12 +27,21 @@ export const linksAndTitles2 = {
 export const infos = {
     'info':         { 'title': "Clonid Module1/Moffitt/contract 23-MCC02420"},
     'name':         { 'title': "cloneid-module1:arm64"},
+>>>>>>> master
     'description':  { 'title': "Cloneid Module1"},
     'url':          { 'title': "https://www.cloneredesign.com"},
     'vcs-url':      { 'title': "https://github.com/noemiandor/cloneid"},
     'vendor':       { 'title': "Daniel Hannaby"},
+<<<<<<< HEAD
+    'version':      { 'title': "1.0"},
+    'arch':         { 'title': "amd64"},
+    'build date':   { 'title': "20240512"},
+    'cmd':          { 'title': "docker run --rm -ti -p 4173:4173 cloneid-module1:latest"}
+};
+=======
     'version':      { 'title': "alpha-0.27"},
     'arch':         { 'title': "arm64"},
     'build date':   { 'title': "20240124"},
     'cmd':          { 'title': "docker run --rm -ti -p 4173:4173 cloneid-module1:arm64"}
 };
+>>>>>>> master

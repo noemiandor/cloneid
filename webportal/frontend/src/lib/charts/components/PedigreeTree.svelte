@@ -9,6 +9,14 @@
 	import { drawPedigreeTree } from '$lib/charts/components/PedigreeTree.js';
 	import ChartContainerGenoUmap from '$lib/charts/containers/ChartContainerGenoUMAP.svelte';
 	import ChartContainerGrowthCurve from '$lib/charts/containers/ChartContainerGrowthCurve.svelte';
+<<<<<<< HEAD
+	import ChartContainerTimetable from '$lib/charts/containers/ChartContainerTimetable.svelte';
+	import ChartGenericImgContainer from '$lib/charts/containers/ChartGenericImgContainer.svelte';
+	import ContextMenu from '$lib/components/ContextMenu.svelte';
+	import Range from '$lib/components/Range.svelte';
+	import ModalCellOrIdNotFound from '$lib/components/modals/ModalCellOrIdNotFound.svelte';
+	import { count } from '$lib/js/count';
+=======
 	import ChartGenericImgContainer from '$lib/charts/containers/ChartGenericImgContainer.svelte';
 	import ChartContainerTimetable from '$lib/charts/containers/ChartContainerTimetable.svelte';
 	import ModalGenotypeInfo from '$lib/charts/modals/ModalGenotypeInfo.svelte';
@@ -16,17 +24,23 @@
 	import ModalTimetable from '$lib/charts/modals/ModalTimetable.svelte';
 	import ContextMenu from '$lib/components/ContextMenu.svelte';
 	import ModalCellOrIdNotFound from '$lib/components/modals/ModalCellOrIdNotFound.svelte';
+>>>>>>> master
 	import {
 		fetchGenotypeHEATMAPData,
 		fetchGenotypePieData,
 		fetchGenotypeUMAPData,
 		fetchGrowthCurveData,
+<<<<<<< HEAD
+		fetchTimetableData
+	} from '$lib/js/fetchdata/fetch.js';
+=======
 		fetchHarvestWithMorphologyInfo,
 		fetchTimetableData,
 		fetchTreeForCellId,
 		fetchTreeForCellLine,
 		fetchValidateCellorId
 	} from '$lib/fetchdata/fetch.js';
+>>>>>>> master
 	import {
 		cellInfo,
 		cellInput,
@@ -38,6 +52,18 @@
 	import {
 		Button,
 		ButtonSet,
+<<<<<<< HEAD
+		Form,
+		OverflowMenu,
+		OverflowMenuItem,
+		TextInput
+	} from 'carbon-components-svelte';
+	import { SettingsView, ZoomIn, ZoomOut, ZoomReset } from 'carbon-icons-svelte';
+	import CloseOutline from 'carbon-icons-svelte/lib/CloseOutline.svelte';
+	import throttle from 'just-throttle';
+	import { onMount } from 'svelte';
+	let rangeValue = null;
+=======
 		Column,
 		Content,
 		Form,
@@ -61,6 +87,7 @@
 	import { decoderesponse } from '@/lib/js/misc';
 	let rangeValue = null;
 	let rangeTheme = 'default';
+>>>>>>> master
 
 	let treeDic = {};
 	let cellLinePlaceHolder = 'Cell line or Lineage ID';
@@ -97,6 +124,10 @@
 	 * @type {{ collapse?: any; init: any; addTree: any; viewTree: any; }}
 	 */
 	let pInstance;
+<<<<<<< HEAD
+
+=======
+>>>>>>> master
 	/**
 	 * @type {any[]}
 	 */
@@ -106,7 +137,10 @@
 	 * @param {{ data: any; } | undefined} result
 	 */
 	function convertToNewick(result) {
+<<<<<<< HEAD
+=======
 		console.log('result', result);
+>>>>>>> master
 		if (!result) return {};
 		let kids = result;
 		const kids2 = kids.sort(
@@ -114,8 +148,13 @@
 				/** @type {{ id: string; passage: number; }} */ a,
 				/** @type {{ id: string; passage: number; }} */ b
 			) => {
+<<<<<<< HEAD
+				const nameA = a.id.toUpperCase();
+				const nameB = b.id.toUpperCase();
+=======
 				const nameA = a.id.toUpperCase(); // ignore case
 				const nameB = b.id.toUpperCase(); // ignore case
+>>>>>>> master
 				const valA = a.passage;
 				const valB = b.passage;
 				if (valA == valB) {
@@ -202,7 +241,11 @@
 		pInstance.collapse(item);
 	}
 	async function callbackF(/** @type {string} */ name, /** @type {string} */ y) {
+<<<<<<< HEAD
+
+=======
 		console.log('NAME', name, 'Y', y);
+>>>>>>> master
 		switch (y) {
 			case 'pin_timetable':
 				if (capableOf('Mt2')) pinTimeTable(name);
@@ -248,6 +291,15 @@
 		].forEach((x) => {
 			enabledViews[x] = false;
 		});
+<<<<<<< HEAD
+		if (treeDic[name].count > 2) {
+			enabledViews['curve'] = true;
+		}
+		if (treeDic[name].event == 'seeding') {
+			enabledViews['timetable'] = true;
+		}
+		if (treeDic[name].whichPerspective) {
+=======
 		// if (lineageEventIds2[name] > 2) {
 		if (treeDic[name].count > 2) {
 			// Growth curve
@@ -260,6 +312,7 @@
 		}
 		if (treeDic[name].whichPerspective) {
 			// Have Genotype info
+>>>>>>> master
 			treeDic[name].whichPerspective
 				.map((x) => {
 					return x;
@@ -268,7 +321,10 @@
 					enabledViews[perspective.toLowerCase()] = true;
 				});
 		}
+<<<<<<< HEAD
+=======
 		// console.log(enabledViews);
+>>>>>>> master
 		return enabledViews;
 	}
 
@@ -285,7 +341,10 @@
 		}
 	}
 
+<<<<<<< HEAD
+=======
 	let openContextM = false;
+>>>>>>> master
 	let zoomSetScale = null;
 	let zoomSetData = null;
 
@@ -314,7 +373,10 @@
 				return capabilities;
 			},
 			callbackF: async function (/** @type {string} */ name, /** @type {string} */ y) {
+<<<<<<< HEAD
+=======
 				console.log('NAME', name, 'Y', y);
+>>>>>>> master
 				switch (y) {
 					case 'timetable':
 						if (capableOf('Mt') || capableOf('Mt2')) drawTimeTable(name);
@@ -329,10 +391,15 @@
 						if (capableOf('Mc2')) pinGrowthCurve(name);
 						break;
 					case 'genotype':
+<<<<<<< HEAD
+						break;
+					case 'pin_genotype':
+=======
 						// if (capableOf('Mg') || capableOf('Mg2')) drawAllGenotypeInfo(name);
 						break;
 					case 'pin_genotype':
 						// if (capableOf('Mg2')) pinAllGenotypeInfo(name);
+>>>>>>> master
 						break;
 					default:
 						throw name;
@@ -341,12 +408,18 @@
 				return;
 			},
 			callbackG: function (/** @type {string | number} */ name) {
+<<<<<<< HEAD
+				return treeDic[name] && 'whichPerspective' in treeDic[name]
+					? [...new Set(treeDic[name].whichPerspective)]
+					: null;
+=======
 				// console.log('CALLBACKG', name, treeDic[name]);
 				return treeDic[name] && 'whichPerspective' in treeDic[name]
 					? [...new Set(treeDic[name].whichPerspective)]
 					: null;
 				if (!treeDic[name]) return false;
 				return 'whichPerspective' in treeDic[name] ? true : false;
+>>>>>>> master
 			},
 			callbackH: function (/** @type {string | number} */ name) {
 				if (!treeDic[name]) return false;
@@ -377,7 +450,10 @@
 				}
 			},
 			callbackM: function (/** @type {string} */ item) {
+<<<<<<< HEAD
+=======
 				// checkForCellOrLineageId(item); // JUMP HERE FEATURE
+>>>>>>> master
 				getPediGreeTreeFromCellOrId(item).then(async (tree) => {
 					await prepareAndRender(tree);
 				});
@@ -385,14 +461,20 @@
 			},
 			callbackN: function () {
 				return [innerHeight, innerWidth];
+<<<<<<< HEAD
+=======
 				return [chartHeight, chartWidth];
+>>>>>>> master
 			}
 		};
 
 		try {
 			pInstance = drawPedigreeTree();
 			pInstance.init(treeSettings);
+<<<<<<< HEAD
+=======
 			// tree = pInstance.addTree(convertToNewick(pedigreeTree.rows));
+>>>>>>> master
 			tree = pInstance.addTree(convertToNewick(pedigreeTree));
 			clear();
 			pInstance.viewTree(tree.name, 'pedigreeTree', '');
@@ -401,7 +483,10 @@
 			$pedigreetree = null;
 			console.error('Tree Render error', e);
 		}
+<<<<<<< HEAD
+=======
 		// stopLoading();
+>>>>>>> master
 	}
 
 	function redraw() {
@@ -411,6 +496,8 @@
 		stopLoading();
 	}
 
+<<<<<<< HEAD
+=======
 	/**
 	 * @param {string} text
 	 */
@@ -429,6 +516,7 @@
 		);
 	}
 
+>>>>>>> master
 	onMount(() => {
 		clear();
 	});
@@ -449,10 +537,18 @@
 					'background-color:' +
 					'#f8f8f8' +
 					';' +
+<<<<<<< HEAD
+					
+=======
+>>>>>>> master
 					'height:' +
 					`${HeightValue}` +
 					'px;"' +
 					' id="pedigreeTree"></div>';
+<<<<<<< HEAD
+					
+=======
+>>>>>>> master
 		}
 	}
 
@@ -475,9 +571,15 @@
 		})
 			.then(async (res) => {
 				const result = await res.json();
+<<<<<<< HEAD
+				const data = JSON.parse(result.data);
+				const keys = data[0];
+				return JSON.parse(data[keys['tree']]);
+=======
 				const x = decoderesponse(result);
 				const tree = JSON.parse(x.tree);
 				return tree;
+>>>>>>> master
 			})
 			.catch((e) => {
 				console.log('Analysis', e);
@@ -559,6 +661,8 @@
 		});
 	}
 
+<<<<<<< HEAD
+=======
 	async function setHavingGenotypeList_formaction() {
 		let formData = new FormData();
 
@@ -578,6 +682,7 @@
 		return perspectiveData;
 	}
 
+>>>>>>> master
 	/**
 	 * @param {string | Blob} sampleSource
 	 */
@@ -632,6 +737,11 @@
 	/**
 	 * @param {any} pedigreeTree
 	 */
+<<<<<<< HEAD
+	async function prepareToRender(pedigreeTree) {
+		treeDic = {};
+		perspectiveSet = new Set();
+=======
 	async function prepareToRender(pedigreeTreeRows) {
 							console.log('PEDIGREETREEROWS', pedigreeTreeRows);
 		const pedigreeTree = pedigreeTreeRows;
@@ -641,6 +751,7 @@
 		if (!pedigreeTree) {
 			throw pedigreeTree;
 		}
+>>>>>>> master
 		pedigreeTree.forEach((x) => {
 			x.count = countHarvest(pedigreeTree, x.id);
 			treeDic[x.id] = x;
@@ -648,7 +759,10 @@
 
 		const perspectiveList = await getPerspectiveData($cellInfo);
 		perspectiveList.forEach((x) => {
+<<<<<<< HEAD
+=======
 			// x.count = countHarvest(pedigreeTree, x.id);
+>>>>>>> master
 			if (treeDic[x.origin]) {
 				const ps = perspectiveList
 					.filter((y) => y.origin === x.origin)
@@ -657,11 +771,16 @@
 						return x.whichPerspective;
 					});
 				treeDic[x.origin].whichPerspective = ps;
+<<<<<<< HEAD
+			}
+		});
+=======
 				// x.whichPerspective;
 			}
 		});
 		console.log('perspectiveList', perspectiveList);
 		console.log('perspectiveSet', perspectiveSet);
+>>>>>>> master
 	}
 
 	/**
@@ -671,6 +790,12 @@
 		prepareToRender(pedigreeTree).then(() => {
 			// <!-- WARM CACHE START -->
 			preparePedigreeTable(pedigreeTree);
+<<<<<<< HEAD
+			// <!-- WARM CACHE END -->
+		});
+	}
+
+=======
 			console.log('pedigreeTable', pedigreeTable);
 			// <!-- WARM CACHE END -->
 			// renderTree(pedigreeTree);
@@ -681,6 +806,7 @@
 	let modalGenotypeUUID = 0;
 	let modalGenotypeCellId = '';
 	let modalGenotypePerspective = '';
+>>>>>>> master
 	/**
 	 * @type {never[]}
 	 */
@@ -689,6 +815,9 @@
 	/**
 	 * @param {string} query
 	 */
+<<<<<<< HEAD
+	function pinGenotypeInfo(query, type) {
+=======
 	async function drawAllGenotypeInfo(query) {
 		if (query) {
 			modalGenotypePerspectives =
@@ -708,6 +837,7 @@
 	 */
 	function pinGenotypeInfo(query, type) {
 		// console.log(query, type);
+>>>>>>> master
 		if (typeof addComponent === 'function') {
 			if (query && type) {
 				const p = {
@@ -717,6 +847,11 @@
 				addComponent(ChartContainerGenoUmap, p);
 			}
 		}
+<<<<<<< HEAD
+		return;
+	}
+
+=======
 
 		return;
 	}
@@ -741,6 +876,7 @@
 		}
 		return;
 	}
+>>>>>>> master
 	let modalTimeTableLoaded = false;
 	let modalTimeTableUUID = 0;
 	let modalTimeTableCellId = '';
@@ -763,17 +899,24 @@
 	 * @param {string} query
 	 */
 	function pinTimeTable(query) {
+<<<<<<< HEAD
+=======
 		console.log('QUERY', query);
+>>>>>>> master
 		if (query) {
 			const p = {
 				cellId: query
 			};
 			if (typeof addComponent === 'function') {
+<<<<<<< HEAD
+				if (query) addComponent(ChartContainerTimetable, p);
+=======
 				console.log('QUERY2', query);
 				if (query) {
 					console.log('QUERY3', query);
 					addComponent(ChartContainerTimetable, p);
 				}
+>>>>>>> master
 			}
 		}
 		return;
@@ -833,6 +976,10 @@
 	 */
 	let contexComp;
 
+<<<<<<< HEAD
+	// <!-- WARM CACHE START -->
+=======
+>>>>>>> master
 	pedigreeTable = [];
 	/**
 	 * @param {any} pedigreeTree
@@ -854,20 +1001,46 @@
 	 * @param {undefined} [item]
 	 */
 	async function warmUpCache(item) {
+<<<<<<< HEAD
+
+		const itemCount = pedigreeTable.length;
+		const waitFor = 20;
+
+		// fetchTree
+		// console.log('fetchTree');
+		if (false)
+=======
 		const itemCount = pedigreeTable.length;
 		const waitFor = 20;
 
 		if (!false)
+>>>>>>> master
 			for (let i = 0; i < itemCount; i++) {
 				await new Promise((res) => setTimeout(res, waitFor));
 				const cellId = pedigreeTable[i].id;
 				console.log('Tree for cellId', cellId, i, 'of', itemCount);
 				if (cellId) {
+<<<<<<< HEAD
+					// await checkForCellOrLineageIdWarmUp(cellId);
+					await getPediGreeTreeFromCellOrId(cellId).then(async (tree) => {
+						await prepareToRender(tree);
+						// .then(() => {
+						// 	pedigreeTable = tree;
+						// 	renderTree(tree);
+						// });
+					});
+				}
+			}
+		// return;
+
+		// fetchGrowthCurveData
+=======
 					await getPediGreeTreeFromCellOrId(cellId).then(async (tree) => {
 						await prepareToRender(tree);
 					});
 				}
 			}
+>>>>>>> master
 		console.log('fetchGrowthCurveData');
 		if (!false)
 			for (let i = 0; i < itemCount; i++) {
@@ -876,6 +1049,10 @@
 
 				const cellId = pedigreeTable[i].id;
 				console.log('GrowthCurve for cellId', cellId, i, 'of', itemCount);
+<<<<<<< HEAD
+				// console.log('601 cellId', cellId, i);
+=======
+>>>>>>> master
 				if (cellId) {
 					const ld = await fetchGrowthCurveData(cellId)
 						.then((x) => {
@@ -894,6 +1071,12 @@
 
 				pedigreeTable[i].status = '';
 			}
+<<<<<<< HEAD
+		// return;
+
+		// fetchTimetableData
+=======
+>>>>>>> master
 		console.log('fetchTimetableData');
 		if (!false)
 			for (let i = 0; i < itemCount; i++) {
@@ -902,6 +1085,10 @@
 
 				const cellId = pedigreeTable[i].id;
 				console.log('TimeTable for cellId', cellId, i, 'of', itemCount);
+<<<<<<< HEAD
+				// console.log('619 cellId', cellId, i);
+=======
+>>>>>>> master
 				if (cellId) {
 					const ld = await fetchTimetableData(cellId)
 						.then((x) => {
@@ -919,8 +1106,16 @@
 				}
 				pedigreeTable[i].status = '';
 			}
+<<<<<<< HEAD
+		// return;
+
+		// fetchGenotypePieData
+		console.log('fetchGenotypePieData');
+		if (!false)
+=======
 		console.log('fetchGenotypePieData');
 		if (false)
+>>>>>>> master
 			for (let i = 0; i < itemCount; i++) {
 				pedigreeTable[i].status = 'Loading';
 				await new Promise((res) => setTimeout(res, waitFor));
@@ -952,7 +1147,11 @@
 
 		// fetchGenotypeUMAPData
 		console.log('fetchGenotypeUMAPData');
+<<<<<<< HEAD
+		if (!false)
+=======
 		if (false)
+>>>>>>> master
 			for (let i = 0; i < itemCount; i++) {
 				pedigreeTable[i].status = 'Loading';
 				await new Promise((res) => setTimeout(res, waitFor));
@@ -981,6 +1180,48 @@
 				}
 				pedigreeTable[i].status = '';
 			}
+<<<<<<< HEAD
+		// return;
+
+		// fetchGenotypeHEATMAPData
+		console.log('fetchGenotypeHEATMAPData');
+		if (!false)
+			for (let i = 0; i < itemCount; i++) {
+				pedigreeTable[i].status = 'Loading';
+				await new Promise((res) => setTimeout(res, waitFor));
+
+				const cellId = pedigreeTable[i].id;
+				console.log('GenotypeHEATMAP for cellId', cellId, i, 'of', itemCount);
+				const genotypeInfo = pedigreeTable[i].genotypeInfo;
+
+				if (cellId && genotypeInfo && genotypeInfo.length) {
+					for (const j in genotypeInfo) {
+						console.log('659 cellId', cellId, genotypeInfo[j], i);
+						const ld = await fetchGenotypeHEATMAPData(cellId, genotypeInfo[j])
+							.then((x) => {
+								console.log(
+									'fetchGenotypeHEATMAPData',
+									i,
+									cellId,
+									genotypeInfo[j],
+									x.data ? count(x.data) : 'ERROR'
+								);
+							})
+							.catch((e) => {
+								console.log('fetchGenotypeHEATMAPData', cellId, e);
+							});
+					}
+				}
+				pedigreeTable[i].status = '';
+			}
+
+		stopLoading();
+	}
+	// <!-- WARM CACHE END -->
+
+	const showWarmup = false;
+	const showButtonStack = false;
+=======
 	
 
 		stopLoading();
@@ -989,6 +1230,7 @@
 	const showWarmup = true;
 	const showButtonStack = true;
 
+>>>>>>> master
 
 	$: treeAvail = false;
 	let HeightValue = 0;
@@ -1013,6 +1255,10 @@
 	<script type="text/javascript" src="/pedigreetree/js/d3_3.5.17.min.js"></script>
 	<link rel="stylesheet" type="text/css" href="/pedigreetree/css/style.css" />
 </svelte:head>
+<<<<<<< HEAD
+
+=======
+>>>>>>> master
 <svelte:window bind:innerHeight bind:innerWidth on:resize={throttle(redraw, 1000)} />
 <div style="background-color:{bgmain};height:100%;padding:{pdmain};">
 	{#if $cellInfo}
@@ -1028,6 +1274,10 @@
 					clear(true);
 				}}><strong>{$cellInfo}</strong></Button
 			>
+<<<<<<< HEAD
+
+=======
+>>>>>>> master
 			<div style="align-text:center; padding:2px;font-size:0.7rem;background-color:#ddd;">
 				&nbsp;
 				<span style="color:blue;font-weight:900;">Seeding</span> &dash;
@@ -1058,6 +1308,15 @@
 					rangeValue = rangeValue;
 				}}
 			>
+<<<<<<< HEAD
+				
+				<OverflowMenuItem hasDivider text="<br>" style="padding=10px;height:60px;">
+					<div style="margin-bottom:20px;margin-top:20px;padding=0px;width:100%;">
+						<br />
+						Zoom <Range
+							bind:value={rangeValue}
+							on:change={(e) => {
+=======
 				<OverflowMenuItem hasDivider text="<br>" style="padding=10px;height:60px;">
 					<div style="margin-bottom:20px;margin-top:20px;padding=0px;width:100%;">
 						<br />
@@ -1066,6 +1325,7 @@
 							bind:value={rangeValue}
 							on:change={(e) => {
 								// console.log(zoomSetScale, zoomSetData, e.detail.value);
+>>>>>>> master
 								if (zoomSetScale && zoomSetData) zoomSetScale(e.detail.value, zoomSetData);
 							}}
 							min={0.05}
@@ -1129,8 +1389,11 @@
 								if (zoomSetScale && zoomSetData) zoomSetScale(rangeValue, zoomSetData);
 							}}
 						/>
+<<<<<<< HEAD
+=======
 
 						<!-- <br /> -->
+>>>>>>> master
 					</div>
 				</OverflowMenuItem>
 				<OverflowMenuItem primaryFocus disabled text="" style="display:none;" />
@@ -1143,8 +1406,12 @@
 				type="submit"
 				on:click={async () => {
 					startLoading();
+<<<<<<< HEAD
+					await getPediGreeTreeFromCellOrId($cellInfo).then(async (tree) => {
+=======
 					await getPediGreeTreeFromCellOrId($cellInfo)
 					.then(async (tree) => {
+>>>>>>> master
 						await prepareToRenderWarmup(tree).then(() => {
 							warmUpCache();
 						});
@@ -1156,7 +1423,10 @@
 			<!-- WARM CACHE END -->
 		{/if}
 		<hr />
+<<<<<<< HEAD
+=======
 	
+>>>>>>> master
 
 		<div bind:this={pedigree_tree_wrapper}></div>
 
@@ -1168,11 +1438,17 @@
 				e.preventDefault();
 				fitTree = false;
 				$cellInfo = $cellInput;
+<<<<<<< HEAD
+				await getPediGreeTreeFromCellOrId($cellInput).then(async (tree) => {
+					if (tree) {
+						return await prepareToRender(tree).then(() => {
+=======
 				console.log($cellInput);
 				await getPediGreeTreeFromCellOrId($cellInput)
 				.then(async (tree) => {
 					if (tree) {
 						await prepareToRender(tree).then(() => {
+>>>>>>> master
 							pedigreeTable = tree;
 							renderTree(tree);
 						});
@@ -1204,7 +1480,24 @@
 
 		</Form>
 
+<<<<<<< HEAD
+		{#if showWarmup}
+			<!-- WARM CACHE START -->
 
+			<hr />
+			<Button
+				type="submit"
+				on:click={() => {
+					warmUpCache();
+				}}
+				>WarmUp {$cellInfo} {$cellInput}
+			</Button>
+
+			<!-- WARM CACHE END -->
+		{/if}
+=======
+
+>>>>>>> master
 	{/if}
 </div>
 
@@ -1225,4 +1518,19 @@
 		color: rgb(0, 0, 0);
 		font-size: 0.3rem;
 	}
+<<<<<<< HEAD
+	.hasborder0 {
+		display: flex;
+		flex-direction: row;
+		align-items: center;
+		border-style: solid;
+		border-color: #000;
+		border-width: 0px;
+		padding: 3px;
+		vertical-align: middle;
+		color: rgb(0, 0, 0);
+		font-size: 0.3rem;
+	}
+=======
+>>>>>>> master
 </style>

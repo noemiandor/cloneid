@@ -1,3 +1,17 @@
+<<<<<<< HEAD
+import { vitePreprocess } from '@sveltejs/kit/vite';
+import adapter from '@sveltejs/adapter-node';
+
+/** @type {import('@sveltejs/kit').Config} */
+const config = {
+  extensions: ['.svelte'],
+	preprocess: [vitePreprocess()],
+  kit: {
+    adapter: adapter(),
+		csrf: false,
+  },
+checkOrigin: false
+=======
 import { mdsvex } from 'mdsvex';
 import mdsvexConfig from './mdsvex.config.js';
 import adapter from '@sveltejs/adapter-node';
@@ -20,6 +34,7 @@ const config = {
 		},
 	},
 	checkOrigin: false
+>>>>>>> master
 };
 
 export default config;

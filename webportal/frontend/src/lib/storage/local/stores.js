@@ -6,7 +6,10 @@ export const showModalLogin = writable();
 export const showModalLogout = writable();
 export const showModalLoginInvalid = writable();
 export const userIsLoggedIn = writable();
+<<<<<<< HEAD
+=======
 export const certifieduser = writable();
+>>>>>>> master
 export const userName = writable();
 export const userPassword = writable();
 export const loginIconBGColor = writable();
@@ -29,6 +32,8 @@ export const pedigreetree = writable();
 export const genotypeInfoCellId = writable();
 export const genotypeInfoPerspective = writable();
 export const UUIDS = writable();
+<<<<<<< HEAD
+=======
 
 export const wm1 = writable();
 export const wm2 = writable();
@@ -47,3 +52,4 @@ export const C3 = writable();
 export const C4 = writable();
 
 export const waitingForAnswer = writable();
+>>>>>>> master

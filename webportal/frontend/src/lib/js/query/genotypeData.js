@@ -1,5 +1,20 @@
 import { dev } from "$app/environment";
 import { getShard, saveShard } from '$lib/cache/cacheproxyfs';
+<<<<<<< HEAD
+import { Manager } from '@/lib/cloneid/cloneid/Manager';
+import { CLONEID } from '@/lib/cloneid/database/CLONEID';
+import { QueryManager } from '@/lib/cloneid/database/QueryManager';
+import { fetchStmtRows } from '@/lib/mysql/fetchFromProxy';
+import { spawn } from "node:child_process";
+import fs from "node:fs";
+import { mkdir } from 'node:fs/promises';
+import { count } from '../count';
+import { descendants } from './funcs';
+import { genomicProfileForSubPopulation } from './geno';
+import { pie } from './pie';
+import { heatmap, umap } from './umap.js';
+import { projectRoot } from "./util.server";
+=======
 import { genomicProfileForSubPopulation } from './geno';
 import { pie } from './pie';
 import { heatmap, umap } from './umap.js';
@@ -15,10 +30,22 @@ import { projectRoot } from "./util.server";
 import fs from "node:fs";
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { spawn } from "node:child_process";
+>>>>>>> master
 
 
 async function preferHeatmap(cellId, whichPerspective) {
     const tN = CLONEID.getTableNameForClass(whichPerspective);
+<<<<<<< HEAD
+
+    const stmtOrigin1 = `SELECT distinct origin o
+    FROM Perspective t1
+    JOIN Passaging t2 ON t1.origin = t2.id
+    WHERE t2.passaged_from_id1="${cellId}" AND (t2.passaged_from_id1 IS NOT NULL) AND NOT EXISTS (SELECT  distinct origin FROM Perspective t1 where origin=t2.passaged_from_id1);`;
+    const originEntries1 = await fetchStmtRows(stmtOrigin1);
+
+    const stmtOrigin2 = `SELECT cloneID, size from ${tN} where origin='${cellId}' AND whichPerspective='${whichPerspective}' ORDER BY size DESC`;
+    const originEntries2 = await fetchStmtRows(stmtOrigin2);
+=======
     console.log(`GENOTYPEDATA::preferHeatmap::11::(${cellId}, ${whichPerspective})`);
     // const selstmt = `SELECT cloneID, size from ${tN} where parent IS NULL AND hasChildren=true AND origin='${sampleName}' AND whichPerspective='${which.name()}' ORDER BY size DESC;`;
 
@@ -47,11 +74,27 @@ async function preferHeatmap(cellId, whichPerspective) {
     const stmtOrigin2 = `SELECT cloneID, size from ${tN} where origin='${cellId}' AND whichPerspective='${whichPerspective}' ORDER BY size DESC`;
     const originEntries2 = await fetchStmtRows(stmtOrigin2);
     console.log(`GENOTYPEDATA::preferHeatmap::14::originEntries=${originEntries2.length}::selstmt="${stmtOrigin2}"`);
+>>>>>>> master
     return (originEntries1 && originEntries1.length > 0) || (originEntries2 && originEntries2.length < 20);
 }
 
 
 async function getHeatmapData(cellId, whichPerspective) {
+<<<<<<< HEAD
+    const tN = CLONEID.getTableNameForClass(whichPerspective);
+    const descendantsOf = await descendants([cellId]);
+    const originList = descendantsOf.map((x) => { return "'" + x.id.toString() + "'"; }).join(",");
+
+    const rootIdStmt = `SELECT cloneID FROM ${tN} WHERE whichPerspective='${whichPerspective}' AND sampleSource='${cellId}' AND parent IS NULL`;
+    const rootIdRslt = await QueryManager.executeQuery(rootIdStmt);
+    rootIdRslt.next();
+    const shortId = rootIdRslt.getString('cloneID');
+    const sbprofiles = await Manager.profiles(shortId, whichPerspective, false);
+    return sbprofiles;
+}
+
+async function uploadHeatmapData(data) {
+=======
 
     // out=findAllDescendandsOf("P06270_19495_mp", recursive = T)
     // mydb = cloneid::connect2DB()
@@ -114,6 +157,7 @@ async function uploadHeatmapData(data) {
     // const formdata = await request.formData();
 
     // console.log("formdata", formdata);
+>>>>>>> master
     const cellid = data.cellid;
     const perspective = data.perspective;
     const origtype = data.origtype;
@@ -122,6 +166,14 @@ async function uploadHeatmapData(data) {
     const rown = data.rown;
     const values = data.data;
 
+<<<<<<< HEAD
+    let ls = {};
+    
+    let dirpath = `/heatmaps/${cellid}/`;
+    const urlpath = dirpath;
+
+    /** @type {string} */
+=======
     // const userHash = formdata.get("userhash");
     // const file = formdata.get("image");
     // const index = formdata.get("index");
@@ -146,6 +198,7 @@ async function uploadHeatmapData(data) {
 
     /** @type {string} */
     // let filepath;
+>>>>>>> master
     if (dev) {
         dirpath = `static${dirpath}`;
     } else {
@@ -172,6 +225,12 @@ async function uploadHeatmapData(data) {
         let valuesjson;
         let wr;
 
+<<<<<<< HEAD
+        if (values) {
+            filepath = dirpath + "data.json";
+            valuesjson = JSON.stringify(values);
+            wr = fs.writeFileSync(filepath, valuesjson);
+=======
         // const buffer = Buffer.from(await valuesjson.arrayBuffer());
 
         if (values) {
@@ -179,18 +238,35 @@ async function uploadHeatmapData(data) {
             valuesjson = JSON.stringify(values);
             wr = fs.writeFileSync(filepath, valuesjson); //, "base64");
             // console.log("filepath", filepath, wr, valuesjson);
+>>>>>>> master
         }
 
         if (coln) {
             filepath = dirpath + "coln.json";
             valuesjson = JSON.stringify(coln);
+<<<<<<< HEAD
+            wr = fs.writeFileSync(filepath, valuesjson);
+=======
             wr = fs.writeFileSync(filepath, valuesjson); //, "base64");
             // console.log("filepath", filepath, wr, valuesjson);
+>>>>>>> master
         }
 
         if (rown) {
             filepath = dirpath + "rown.json";
             valuesjson = JSON.stringify(rown);
+<<<<<<< HEAD
+            wr = fs.writeFileSync(filepath, valuesjson);
+        }
+
+        ls = spawn('docker', ['exec', 'qo_c1', 'Rscript', "--vanilla", "/home/docker/containerdir/20240121.R", `${cellid}`]);
+
+        ls.stdout.on('data', (data) => {
+            fs.writeFileSync(dirpath + "stdout.txt", data);
+        });
+        ls.stderr.on('data', (data) => {
+            fs.writeFileSync(dirpath + "stderr.txt", data);
+=======
             wr = fs.writeFileSync(filepath, valuesjson); //, "base64");
             // console.log("filepath", filepath, wr, valuesjson);
         }
@@ -214,6 +290,7 @@ async function uploadHeatmapData(data) {
         ls.stderr.on('data', (data) => {
             // console.log(`stderr: ${data}`);
             fs.writeFileSync(dirpath + "stderr.txt", data); //, "base64");
+>>>>>>> master
         });
 
         while (!fs.existsSync(dirpath + "heatmap.png")) {
@@ -224,6 +301,8 @@ async function uploadHeatmapData(data) {
     const imgdata = fs.readFileSync(dirpath + "heatmap.png");
     const imgdata64 = "data:image/png;base64," + imgdata.toString('base64');
 
+<<<<<<< HEAD
+=======
     // return ls.exitCode;
     // const cellid = data.cellid;
     // const perspective = data.perspective;
@@ -232,6 +311,7 @@ async function uploadHeatmapData(data) {
     // const coln = data.coln;
     // const rown = data.rown;
     // const values = data.data;
+>>>>>>> master
     return {
         timestamp: new Date(),
         dirpath: dirpath,
@@ -258,6 +338,12 @@ async function uploadHeatmapData(data) {
  */
 export async function genotypeData(args) {
 
+<<<<<<< HEAD
+    const cellId = args[0];
+    const whichPerspective = args[1];
+    const showHeatmap = await preferHeatmap(cellId, whichPerspective);
+    const infoType = (whichPerspective.toLowerCase() === "genomeperspective" && showHeatmap) ? "heatmap" : args[2];
+=======
     console.log("genotypeData(args)", args);
 
     const cellId = args[0];
@@ -268,12 +354,47 @@ export async function genotypeData(args) {
     // const infoType = (whichPerspective.toLowerCase() === "genomeperspective" && showHeatmap) ? "heatmap" : args[2];
     const showHeatmap = false;
     const infoType = args[2];
+>>>>>>> master
     const query = args[3];
 
     let status = 200;
     let rows = [];
     let data = {};
 
+<<<<<<< HEAD
+    if (showHeatmap && infoType === 'heatmap') {
+        const hmd = await getHeatmapData(cellId, whichPerspective);
+        if (count(hmd)) data = heatmap(hmd);
+        data['cellid'] = cellId;
+        data['perspective'] = whichPerspective;
+        data['origtype'] = args[2];
+        data['type'] = infoType;
+        return await uploadHeatmapData(data);
+    }
+
+    let d = null;
+    if (!((whichPerspective.toLowerCase() === "genomeperspective" && showHeatmap))) { d = await getShard(query.toString()); }
+    d = null;
+    if (d) {
+        data = d;
+    } else {
+        data = await genomicProfileForSubPopulation(cellId, whichPerspective, showHeatmap)
+                .then(async (data) => {
+                    switch (infoType) {
+                        case 'pie':
+                            data = pie(data);
+                            break;
+                        case 'umap':
+                            data = await umap(data);
+                            break;
+                        case 'heatmap':
+                            data = heatmap(data);
+                            break;
+                        default:
+                            throw query.toString();
+                    }
+                    return data;
+=======
     // if (showHeatmap && infoType === 'heatmap') {
     //     const hmd = await getHeatmapData(cellId, whichPerspective);
     //     // data = umap(hmd);
@@ -331,12 +452,22 @@ export async function genotypeData(args) {
                         return null;
                     }
                     if (data) { return data; } else { return null; }
+>>>>>>> master
                 })
                 .catch((err) => {
                     console.log(`DBQUERYGENOTYPEINFO::GENOTYPEDATA::ERROR::`, query, err);
                     data = null;
                     throw new Error(err);
                 })
+<<<<<<< HEAD
+            ;
+    }
+    if (data) {
+        if (d == null) { await saveShard(query.toString(), data) };
+        return data;
+    }
+    throw query.toString();
+=======
             // .finally(() => {
             //     if (false) console.log( "idString", cellId, "status", status, "data", data);
             // })
@@ -350,4 +481,5 @@ export async function genotypeData(args) {
     }
     console.log(`DBQUERYGENOTYPEINFO::GENOTYPEDATA::67::`);
     // throw query.toString();
+>>>>>>> master
 }

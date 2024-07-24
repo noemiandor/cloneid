@@ -1,19 +1,33 @@
 import { getShard, saveShard } from '$lib/cache/cacheproxyfs';
+<<<<<<< HEAD
+import { Perspectives } from '$lib/cloneid/core/utils/Perspectives';
+import { Manager } from "@/lib/cloneid/cloneid/Manager";
+import compare from 'just-compare';
+=======
 import { Manager } from "@/lib/cloneid/cloneid/Manager";
 import compare from 'just-compare';
 import { Perspectives } from '$lib/cloneid/core/utils/Perspectives';
+>>>>>>> master
 
 import { TMP } from '$env/static/private';
 import { Buffer } from 'node:buffer';
 import { mkdir, writeFile } from 'node:fs/promises';
 
+<<<<<<< HEAD
+import { count } from '../count';
+import { _view } from './umapjs';
+=======
 import { _view } from './umapjs';
 import { count } from '../count';
+>>>>>>> master
 
 const dir = TMP;
 
 export function savePath(n, ext) {
+<<<<<<< HEAD
+=======
     // const ext = '.json';
+>>>>>>> master
     const p = dir + '/' + n + ext;
     return {
         dir: dir,
@@ -30,6 +44,11 @@ export function savePath(n, ext) {
 export async function saveFile(n, d, e = '.csv') {
     let error = false;
     const px = savePath(n, e);
+<<<<<<< HEAD
+    try {
+        const createDir = await mkdir(px['shard'], { recursive: true });
+    } catch (err) {
+=======
     console.log('savePath(q, v)', px);
     try {
         const createDir = await mkdir(px['shard'], { recursive: true });
@@ -37,18 +56,25 @@ export async function saveFile(n, d, e = '.csv') {
         console.log('59::UMAP::saveFile::created ', createDir, px['shard']);
     } catch (err) {
         console.log(`61::UMAP::saveFile::created  ${createDir} ${px['shard']}`);
+>>>>>>> master
         console.error(err);
         error = true;
     }
     if (error) return !error;
+<<<<<<< HEAD
+=======
     // const d = JSON.stringify({ k: q, v: v });
+>>>>>>> master
     const data = new Uint8Array(Buffer.from(d));
     try {
         await writeFile(px['path'], data);
     } catch (err) {
         error = true;
     }
+<<<<<<< HEAD
+=======
     console.log(`saveFile(q, v)  ${n}`);
+>>>>>>> master
     return !error;
 }
 
@@ -59,6 +85,8 @@ export async function saveFile(n, d, e = '.csv') {
 export function pie(subClones) {
 
     let pG = subClones;
+<<<<<<< HEAD
+=======
     // console.log("subProfile_keys", Object.keys(subClones['SP_0.0549219_ID69283'])[0],
     //     subClones['SP_0.0549219_ID69283']['SP_0.0157661_ID69301']['values'].length,
     //     subClones['SP_0.0549219_ID69283']['SP_0.0157661_ID69301']['loci'][0],
@@ -90,6 +118,7 @@ export function pie(subClones) {
     // console.log("#################################################################################################################");
     // console.log("#################################################################################################################");
     // console.log("#################################################################################################################");
+>>>>>>> master
     let ploci = [];
     let cloneindex = 0;
     let columns = {};
@@ -100,14 +129,25 @@ export function pie(subClones) {
     let rowheader = [];
     let columnheader = [];
     for (const [subClone, subProfiles] of Object.entries(subClones)) {
+<<<<<<< HEAD
+        for (const [subProfile, lociAndValues] of Object.entries(subProfiles)) {
+=======
         // console.log(subClone, Object.keys(subProfiles).length);
         for (const [subProfile, lociAndValues] of Object.entries(subProfiles)) {
             // if(cloneindex>10) throw 10;
             // console.log(subClone, subProfile);
+>>>>>>> master
             for (const [lociOrValue, values] of Object.entries(lociAndValues)) {
                 let index = 0;
                 if (lociOrValue == 'loci') {
                     if (!compare(values, ploci)) {
+<<<<<<< HEAD
+                        headers['row'] = values;
+                        ploci = values;
+                    }
+                }
+                if (lociOrValue == 'values') {
+=======
                         // console.log(subClone, values.length, values.map((x) => { return `${index++}@${x}` }).join("::"));
                         // console.log("\nLOCI", values.map((x) => { return `${x}`; }).join(","));
                         headers['row'] = values;
@@ -120,16 +160,26 @@ export function pie(subClones) {
                 if (lociOrValue == 'values') {
                     // console.log(subProfile, values.length, values.map((x) => { return `${index++}@${x}` }).join("::"));
                     // console.log(cloneindex++, subProfile,  values.map((x) => { return `${x}`; }).join(","));
+>>>>>>> master
                     columns[subProfile] = values;
                     membership[subProfile] = subClone;
                     columnheader.push(subProfile);
                 }
             }
+<<<<<<< HEAD
+=======
             // console.log()
+>>>>>>> master
         }
     }
     headers['column'] = columnheader;
     matrix = { columns: columns, headers: headers };
+<<<<<<< HEAD
+    let clonemembershipG = [];
+    for (const subProfile in subClones) {
+        const subProfile_keys = Object.keys(subProfile);
+        Object.keys(subClones[subProfile]).forEach((key) => {
+=======
     // console.log("MATRIX",matrix);
     // console.log("Membership",membership);
 
@@ -170,10 +220,13 @@ export function pie(subClones) {
         // console.log("subProfile_keys", subProfile,  subProfile_keys);
         Object.keys(subClones[subProfile]).forEach((key) => {
             // console.log("subProfile_keys::", key, subProfile);
+>>>>>>> master
             clonemembershipG[key] = subProfile;
         })
     }
 
+<<<<<<< HEAD
+=======
     // console.log("clonemembershipG", clonemembershipG);
 
     // // clonesizesG <- sapply(pG, ncol)
@@ -181,10 +234,17 @@ export function pie(subClones) {
     // console.log("clonesizesG", clonesizesG);
 
     // clonesizesG <- sapply(pG, ncol)
+>>>>>>> master
     let clonesizesG = {};
     for (const [key, value] of Object.entries(pG)) {
         clonesizesG[key] = Object.keys(value).length;
     };
+<<<<<<< HEAD
+
+    let cellcountG = Object.values(clonesizesG).reduce((total, size) => total + size, 0);
+
+    let nameG = [...new Set(Object.values(clonemembershipG))];
+=======
     console.log("clonesizesG 229", clonesizesG);
 
     // cellcountG <- sum(clonesizesG)
@@ -272,6 +332,7 @@ export function pie(subClones) {
     // let tp1G = transpose(p1G);
 
 
+>>>>>>> master
 
     return clonesizesG;
 }
@@ -281,6 +342,16 @@ export function pie(subClones) {
  * @param {any} subClones
  */
 export function heatmap(subClones) {
+<<<<<<< HEAD
+    let rows = [];
+    let rowheader = null;
+
+    const subClones_entries = Object.entries(subClones);
+    for (const [subClone, subProfiles] of subClones_entries) {
+
+        if (!rowheader) {
+            rowheader = { loci: subProfiles.loci };
+=======
     // let pG = subClones;
     let ploci = [];
     let columns = {};
@@ -301,11 +372,28 @@ export function heatmap(subClones) {
         if (!rowheader) {
             rowheader = { loci: subProfiles.loci };
             // rows.push(rowheader);
+>>>>>>> master
         }
         let row = {};
         row['subClone'] = subClone;
         row['values'] = subProfiles.values;
         rows.push(row);
+<<<<<<< HEAD
+    }
+
+    const rowscount = count(rows);
+    const colscount = count(rowheader.loci);;
+    var tmpDATA = new Array(rowscount)
+    for (let j = 0; j < rowscount; j++) {
+        let row = {};
+        row['subClone'] = rows[j].subClone;
+        for (let i = 0; i < colscount; i++) {
+            row[rowheader?.loci[i]] = rows[j].values[i];
+        }
+        tmpDATA[j] = row;
+    }
+    return ({ coln: rowheader.loci, rown: rows.map((x) => { return x.subClone; }), data: rows.map((x) => { return x.values; }) });
+=======
 
         // const subProfiles_entries = Object.entries(subProfiles);
         // // if (Object.keys(subProfiles).length) {
@@ -358,6 +446,7 @@ export function heatmap(subClones) {
     // console.log(`UMAP::359::row`, tmpDATA);
     // return _view("", 100, 100, tmpDATA);
     return ({coln:rowheader.loci, rown:rows.map((x)=>{return x.subClone;}), data:rows.map((x)=>{return x.values;})});
+>>>>>>> master
 }
 
 
@@ -367,12 +456,23 @@ export function heatmap(subClones) {
  * @param {any} subClones
  */
 export function umap(subClones) {
+<<<<<<< HEAD
+=======
     console.log("UMAP::UMAP::SUBCLONES::", subClones);
     // let pG = subClones;
+>>>>>>> master
     let ploci = [];
     let columns = {};
     let membership = {};
     let headers = {};
+<<<<<<< HEAD
+    let columnheader = [];
+    let clonemembership = [];
+        for (const [subClone, subProfiles] of Object.entries(subClones)) {
+            if (subProfiles && Object.keys(subProfiles) && Object.keys(subProfiles).length)
+                for (const [subProfile, lociAndValues] of Object.entries(subProfiles)) {
+                    for (const [lociOrValue, values] of Object.entries(lociAndValues)) {
+=======
     // let matrix = {};
     let columnheader = [];
     let clonemembership = [];
@@ -387,6 +487,7 @@ export function umap(subClones) {
                     for (const [lociOrValue, values] of Object.entries(lociAndValues)) {
                         // console.log("dbqgenoInfo::UMAP2.JS::316:", Object.keys(lociOrValue).length);
                         // let index = 0;
+>>>>>>> master
                         if (lociOrValue == 'loci') {
                             if (!compare(values, ploci)) {
                                 headers['row'] = values;
@@ -402,6 +503,11 @@ export function umap(subClones) {
                     }
                 }
         }
+<<<<<<< HEAD
+    headers['column'] = columnheader;
+
+    const colscount = columnheader.length;
+=======
     }
     headers['column'] = columnheader;
     // matrix = { columns: columns, headers: headers, membership: clonemembership, uniques: [...new Set(clonemembership)] };
@@ -412,10 +518,20 @@ export function umap(subClones) {
     // console.log(`UMAP::338::clonemembership.length`,Object.keys(clonemembership).length);
     // console.log(`UMAP::338::columns.length`,Object.keys(columns).length);
     // console.log(`UMAP::338::headers.length`,Object.keys(headers).length);
+>>>>>>> master
 
     var tmpDATA = new Array(colscount)
     if (headers && headers.row && headers.row.length) {
         const rowscount = headers.row.length;
+<<<<<<< HEAD
+        for (let j = 0; j < colscount; j++) {
+            let row = {};
+            row['subClone'] = membership[columnheader[j]];
+            row['subProfile'] = columnheader[j];
+            for (let i = 0; i < rowscount; i++) {
+                row[headers.row[i]] = columns[columnheader[j]][i];
+            }
+=======
         // tmpDATA['columns'] = ['a']; //Object.keys(tmpDATA[0]);
         for (let j = 0; j < colscount; j++) {
             // for (let j = 0; j < 1; j++) {
@@ -429,10 +545,17 @@ export function umap(subClones) {
             }
             // console.log(`UMAP::351::row`,row);
             // tmpDATA.push(row);
+>>>>>>> master
             tmpDATA[j] = row;
         }
     }
 
+<<<<<<< HEAD
+    return _view("", 100, 100, tmpDATA);
+}
+
+export async function genomicProfileForSubPopulation(origin, perspective = new Perspectives("GenomePerspective"), use_cache = true) {
+=======
     // let json = JSON.stringify(tmpDATA);
 
     // saveFile("transpose_labeled", json, '.json');
@@ -447,10 +570,15 @@ export async function genomicProfileForSubPopulation(origin, perspective = new P
 
     // console.log("origin", origin, "perspective", perspective, "use_cache", use_cache);
 
+>>>>>>> master
     let subProfiles = {}
     if (use_cache) {
         const subProfiles = await getShard(origin);
         if (subProfiles) {
+<<<<<<< HEAD
+            return subProfiles;
+        } else {
+=======
             // subProfiles = exist.v;
             // return exist.v;
             // subProfiles['@@date'] = new Date();
@@ -458,6 +586,7 @@ export async function genomicProfileForSubPopulation(origin, perspective = new P
         } else {
             // return genomicProfileForSubPopulation(origin, perspective, use_cache = false);
             // throw origin;
+>>>>>>> master
             use_cache = false;
         }
     }
@@ -468,11 +597,18 @@ export async function genomicProfileForSubPopulation(origin, perspective = new P
             const longId = subClones_keys[i].long;
             const shortId = subClones_keys[i].short;
             const startTime = new Date();
+<<<<<<< HEAD
+=======
             // const subProfile =
+>>>>>>> master
             await Manager.profiles(shortId, new Perspectives("GenomePerspective"), false)
                 .then((subProfile) => {
                     subProfiles[longId] = subProfile;
                     const keys = Object.keys(subProfile);
+<<<<<<< HEAD
+                    const endTime = new Date();
+                    const duration = endTime.getTime() - startTime.getTime()
+=======
                     // keys.forEach((y)=>{
                     //     const sk = Object.keys(subProfile[y]);
                     //     console.log(longId,y,subProfile[y][sk[0]].length);
@@ -480,6 +616,7 @@ export async function genomicProfileForSubPopulation(origin, perspective = new P
                     const endTime = new Date();
                     const duration = endTime.getTime() - startTime.getTime()
                     // console.log(longId, keys.length, dhms(duration));
+>>>>>>> master
                 },
                     (rejected) => {
                         console.error(rejected)
@@ -488,6 +625,12 @@ export async function genomicProfileForSubPopulation(origin, perspective = new P
                         console.error(e)
                         throw e;
                     })
+<<<<<<< HEAD
+                ;
+        }
+        ;
+        saveShard(origin, subProfiles)
+=======
                 .finally(() => {
                     // console.log("DONE", i);
                     // console.log("DONE", i, subProfile, dhms((new Date()).getTime() - date.getTime()));
@@ -497,6 +640,7 @@ export async function genomicProfileForSubPopulation(origin, perspective = new P
         // if (use_cache){
         saveShard(origin, subProfiles)
         // }
+>>>>>>> master
     }
     return subProfiles;
 }
@@ -506,8 +650,11 @@ export async function genomicProfileForSubPopulation(origin, perspective = new P
  * @param {number} duration
  */
 function dhms(duration) {
+<<<<<<< HEAD
+=======
     // export const timeDistance = (date1, date2) => {
     //     let distance = Math.abs(date1 - date2);
+>>>>>>> master
     const days = Math.floor(duration / (24 * 3600000));
     duration -= days * (24 * 3600000);
     const hours = Math.floor(duration / 3600000);
@@ -517,8 +664,11 @@ function dhms(duration) {
     const seconds = Math.floor(duration / 1000);
     duration -= seconds * 1000;
     const milliseconds = Math.floor(duration);
+<<<<<<< HEAD
+=======
     // return `${days}:${hours}:${('0' + minutes).slice(-2)}:${('0' + seconds).slice(-2)}`;
     // return `${days}d${hours}h${('0' + minutes).slice(-2)}m${('0' + seconds).slice(-2)}s`;
+>>>>>>> master
     return days > 0 ?
         `${days}d${('0' + hours).slice(-2)}h${('0' + minutes).slice(-2)}m`
         : (
@@ -542,7 +692,10 @@ function dhms(duration) {
  * @param {any[]} fargs
  */
 export async function timeThis(coment, f, ...fargs) {
+<<<<<<< HEAD
+=======
     // console.log(fargs);
+>>>>>>> master
     const startTime = new Date();
     const res = await f(...fargs);
     const endTime = new Date();

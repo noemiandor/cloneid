@@ -1,9 +1,14 @@
+<<<<<<< HEAD
+=======
 // import { Inspector, Runtime } from '@observablehq/runtime';
+>>>>>>> master
 import * as d from 'umap-js';
 import * as d3 from 'd3';
 import * as os from 'os';
 import seedrandom from 'seedrandom';
 
+<<<<<<< HEAD
+=======
 // export function context2d(width, height, dpi) {
 //   if (dpi == null) dpi = devicePixelRatio;
 //   var canvas = document.createElement("canvas");
@@ -19,6 +24,7 @@ import seedrandom from 'seedrandom';
 
 //TODO: CHANGE 1000  to something else
 
+>>>>>>> master
 function __labels(d3, data) {
 
   let labels = data.map(d => d.label);
@@ -42,8 +48,11 @@ function __numericfields(d3, data) {
 
 function __vectors(d3, data, numericfields) {
   const maxpoints = 10000; //MAXPOINTS;
+<<<<<<< HEAD
+=======
   console.log("46 DATA", data.length);
   console.log("43 __vect os.freemem", os.freemem());
+>>>>>>> master
 
   const vectors = data.map(d => numericfields.map(f => d[f]));
   const normalize = false;
@@ -59,6 +68,10 @@ function __vectors(d3, data, numericfields) {
   return vectors.slice(0, maxpoints);
 }
 
+<<<<<<< HEAD
+
+function __distances(d3, vectors, distanceType) {
+=======
 // const __config = {
 //   nComponents: 2,
 //   minDist: 0.1,
@@ -68,6 +81,7 @@ function __vectors(d3, data, numericfields) {
 
 function __distances(d3, vectors, distanceType) {
   console.log("43 __dist os.freemem", os.freemem());
+>>>>>>> master
   const D = {
     one: (a, b) => 1,
     random: (a, b) => Math.random(),
@@ -100,7 +114,10 @@ function __distances(d3, vectors, distanceType) {
 function __fit(d3, UMAP, distances, labels) {
 
   const time = performance.now();
+<<<<<<< HEAD
+=======
   console.log("100 __fit", os.freemem());
+>>>>>>> master
 
   const cfg = {
     nComponents: 2,
@@ -112,6 +129,13 @@ function __fit(d3, UMAP, distances, labels) {
     negativeSampleRate: 5,
     localConnectivity: 1,
     setOpMixRatio: 1,
+<<<<<<< HEAD
+  };
+  const umap = new UMAP(cfg);
+  if (labels) umap.setSupervisedProjection(labels);
+  const N = Math.sqrt(distances.length);
+
+=======
 
     // random: ()=>{} 
   };
@@ -133,6 +157,7 @@ function __fit(d3, UMAP, distances, labels) {
   //   : function (i, j) {
   //     return distances[i] ? distances[i][j] : 1000;
   //   };
+>>>>>>> master
   umap.distanceFn = function (i, j) {
     return distances[i + N * j];
   }
@@ -152,6 +177,15 @@ function __fit(d3, UMAP, distances, labels) {
  * @param {any[]} rawdata
  */
 function _chart(d3, UMAP, DOM, width, height, rawdata) {
+<<<<<<< HEAD
+  let classify = d3.scaleOrdinal(d3.schemeCategory10);
+
+  classify = d3
+    .scaleOrdinal()
+    .domain(rawdata.map((d) => d.subClone))
+    .range(d3.quantize((t) => d3.interpolateSpectral(t * 0.8 + 0.1), rawdata.length).reverse());
+
+=======
   console.log("_chart 153", DOM, width, height);
   console.log("154 _chart", os.freemem());
   // const d3 = await import("https://cdn.skypack.dev/d3@5");
@@ -182,11 +216,14 @@ function _chart(d3, UMAP, DOM, width, height, rawdata) {
   // classify = d3.scaleOrdinal(d3.schemeAccent);
 
   // const rawdata = transpose_labeled.data;
+>>>>>>> master
   const data = rawdata.map(d => {
     d.color = classify(d.subClone);
     d.label = d.subProfile;
     return d;
   });
+<<<<<<< HEAD
+=======
   console.log("175 UMAPSERVER", data.length);
   // $0.value = result;
 
@@ -196,38 +233,58 @@ function _chart(d3, UMAP, DOM, width, height, rawdata) {
   // console.log("R", Math.random(), Math.random());
 
   // console.log("D3", d3);
+>>>>>>> master
 
   const labels = __labels(d3, data);
   const numericfields = __numericfields(d3, data);
   const vectors = __vectors(d3, data, numericfields);
   const distances = __distances(d3, vectors, 'euclidean');
+<<<<<<< HEAD
+=======
   // const dynamic = false;
 
   // const UMAP = d.UMAP;
+>>>>>>> master
 
   const res = __fit(d3, UMAP, distances, labels)
   const pos = res.result || vectors;
 
+<<<<<<< HEAD
+=======
   console.log("LINE196 UMAPJS", pos.length);
 
   // return pos;
 
+>>>>>>> master
   const columns = data.columns || Object.keys(data[0]);
 
 
   var color0 = d3
     .scaleLinear()
+<<<<<<< HEAD
+    .range(["red", "lime"])
+=======
     // .scaleOrdinal()
     // .scaleLog()
     .range(["red", "lime"])
     // .range(["#f00", "#00f"])
     // .range(["white", "black"])
+>>>>>>> master
     .domain([0, vectors.length])
 
 
 
   // Create the color scale.
   var color = d3.scaleOrdinal()
+<<<<<<< HEAD
+    .domain(data.map(d => d.subClone))
+    .range(d3.quantize(t => d3.interpolateSpectral(t * 0.8 + 0.1), data.length).reverse())
+  return pos.map((d, i) => {
+    const row = ({ x: d[0], y: d[1], color: color(i), subclone: data[i].subClone });
+    return row;
+  });
+
+=======
   .domain(data.map(d => d.subClone))
   .range(d3.quantize(t => d3.interpolateSpectral(t * 0.8 + 0.1), data.length).reverse())
 
@@ -274,11 +331,20 @@ function _chart(d3, UMAP, DOM, width, height, rawdata) {
     });
   }
   return pos;
+>>>>>>> master
 
   function coords(i) {
     return [x(pos[i][0] || 0), y(pos[i][1] || pos[i][0] || 0)];
   }
 
+<<<<<<< HEAD
+}
+
+export async function _view(DOM, width, height, data) {
+
+  seedrandom("593335098", { global: true });
+
+=======
   const path = d3.geoPath(d3.geoIdentity()).context(context);
   pos.forEach((d, i) => {
     context.beginPath();
@@ -330,6 +396,7 @@ export async function _view(DOM, width, height, data) {
   // const height = width * 0.8;
   // const context = DOM.context2d(width, height);
   // const points = Array.from({ length: 33 }, () => Array.from({ length: 92 }, Math.random));
+>>>>>>> master
   const UMAP = d.UMAP;
 
   return _chart(d3, UMAP, DOM, width, height, data);

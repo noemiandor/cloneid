@@ -12,7 +12,11 @@ vim .env
 
 ```
 
+<<<<<<< HEAD
+## Installing pnpm if needed
+=======
 ## Installing pnpm
+>>>>>>> master
 
 ```bash
 
@@ -26,7 +30,11 @@ curl -fsSL https://get.pnpm.io/install.sh | sh -
 
 ```bash
 
+<<<<<<< HEAD
+npm i
+=======
 pnpm i
+>>>>>>> master
 
 ```
 
@@ -35,7 +43,11 @@ pnpm i
 
 ```bash
 
+<<<<<<< HEAD
+npm run build
+=======
 pnpm run build
+>>>>>>> master
 
 ```
 
@@ -43,13 +55,21 @@ pnpm run build
 
 ```bash
 
+<<<<<<< HEAD
+npm run preview
+=======
 pnpm run preview
+>>>>>>> master
 
 # Project will be accessible through port 4173 in your browser
 
 ```
 
+<<<<<<< HEAD
+> Or You can use a dockerized version of the project using the dockerize script
+=======
 > Or You can use a dockerized version of the project using the following console commands:
+>>>>>>> master
 
 ## Updating the database information
 
@@ -63,6 +83,8 @@ vim .env
 
 ```
 
+<<<<<<< HEAD
+=======
 ## Build the the docker Image
 
 ```bash
@@ -86,3 +108,4 @@ docker run --rm --name=cloneid-module1 -p 4173:4173 cloneid-module1
 # Project will be accessible on localhost, through port 4173 in your browser
 
 ```
+>>>>>>> master
