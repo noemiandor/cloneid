@@ -92,7 +92,7 @@ public abstract class Clone {
 	private String alias;
 
 
-
+	static Map<String, String> cmap = new HashMap<String, String>();
 
 	/**
 	 * Instantiates a clone from:
@@ -217,15 +217,20 @@ public abstract class Clone {
 		if(!this.getClass().equals(Identity.class)) {
 			((Perspective)this).origin = origin2;
 		}
-		
+		String cellLine = Clone.cmap.get(origin2);
+		if (cellLine != null) {
+			this.sampleSource = cellLine;
+			return;
+		}	
 		CLONEID db= new CLONEID();
 		db.connect();
-		
+
 		String selstmt="SELECT cellLine from Passaging where id = '"+origin2+"';";
 		ResultSet rs =db.getStatement().executeQuery(selstmt);
 		rs.next();
-		this.sampleSource = rs.getString("cellLine");
-		
+		cellLine = rs.getString("cellLine");
+		this.sampleSource = cellLine;
+		Clone.cmap.put(origin2, cellLine);
 		db.close();
 	} 
 	
@@ -447,7 +452,7 @@ public abstract class Clone {
 
 	@Override
 	public String toString(){
-		return CloneColumnPrefix.getValue(Perspectives.valueOf(this.getClass().getSimpleName()))+"_"+size+"_ID"+cloneID;
+		return CloneColumnPrefix.getValue(this.getClass().getSimpleName())+"_"+size+"_ID"+cloneID;
 	}
 
 	protected Clone getChild(float size){

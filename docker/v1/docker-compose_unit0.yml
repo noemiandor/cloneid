@@ -1,0 +1,58 @@
+services:
+
+  dbv2:
+    image: "mysql:latest"
+    container_name: "sql2"
+    restart: "always"
+    environment:
+      MYSQL_ROOT_PASSWORD: "xxxxx"
+      MYSQL_DATABASE: "CLONEID"
+      MYSQL_ALLOW_EMPTY_PASSWORD: 1
+      MYSQL_LOG_CONSOLE: true
+      INDOCKER: true
+      DOCKERNAME: sql
+      MYSQL_USER: 'u2'
+      MYSQL_PASSWORD: 'p2'
+    ports:
+      - "13307:3306"
+    volumes:
+      - "/data/lake/cloneid/db/SQL/00.sql:/docker-entrypoint-initdb.d/00.sql"
+      - "/data/lake/cloneid/db/SQL/01.sql:/docker-entrypoint-initdb.d/01.sql"
+      - "/data/lake/cloneid/db/SQL/02.sql:/docker-entrypoint-initdb.d/02.sql"
+      - "/data/lake/cloneid/db/SQL/03.sql:/docker-entrypoint-initdb.d/03.sql"
+      - "/data/lake/cloneid/db/SQL/04.sql:/docker-entrypoint-initdb.d/04.sql"
+      - "/data/lake/cloneid/db/SQL/05.sql:/docker-entrypoint-initdb.d/05.sql"
+      - "/data/lake/cloneid/db/SQL/06.sql:/docker-entrypoint-initdb.d/06.sql"
+      - "/data/lake/cloneid/db/SQL/07.sql:/docker-entrypoint-initdb.d/07.sql"
+      - "/data/lake/cloneid/db/SQL/08.sql:/docker-entrypoint-initdb.d/08.sql"
+      - sql-config:/etc/mysql
+      - sql-data:/var/lib/mysql
+    networks:
+      - io-backend
+
+  module3-unit0:
+    image: "cloneid-module3-jdk21_unit0-amd64:latest"
+    container_name: "module3-unit0"
+    restart: "always"
+    environment:
+      - INSIDE_DOCKER=true
+      - INDOCKER=true
+      - DOCKERNAME=module3-unit0
+    networks:
+      - io-backend
+    depends_on:
+      - dbv2
+    volumes:
+      - type: bind
+        source: /data/lake/cloneid/module3/docker/v1/git/cloneid
+        target: /data/lake/cloneid/module3/cloneid
+      - type: bind
+        source: /data/lake/cloneid/module3/test
+        target: /data/lake/cloneid/module3/test
+
+networks:
+  io-backend: {}
+
+volumes:
+  sql-config:
+  sql-data:

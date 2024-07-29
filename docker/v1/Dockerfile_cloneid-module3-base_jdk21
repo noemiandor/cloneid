@@ -1,0 +1,142 @@
+FROM --platform=${BUILDPLATFORM}  cloneid-module3-base-amd64:latest
+
+ARG IMAGE_BUILD_ARCH=amd64
+ARG IMAGE_BUILD_INFO="Cloneid Module3"
+ARG IMAGE_BUILD_NAME="cloneid-module3"
+ARG IMAGE_BUILD_DATE
+ARG IMAGE_BUILD_VERSION="1.0𝛂"
+ARG IMAGE_AUTHOR_FNAME="Daniel"
+ARG IMAGE_AUTHOR_LNAME="Hannaby"
+ARG IMAGE_AUTHOR_EMAIL="<legwork_02land@icloud.com>"
+ARG IMAGE_VENDOR="Moffitt"
+ARG IMAGE_LICENSE="MIT"
+ARG IMAGE_TITLE="${IMAGE_BUILD_NAME}:latest"
+ARG IMAGE_BUILD_REVISION="1.0"
+
+ARG CLONEID_URL_WEB=${CLONEID_URL_WEB}
+ARG CLONEID_URL_GIT=${CLONEID_URL_GIT}
+ARG CLONEID_URL_ZIP=${CLONEID_URL_ZIP}
+ARG CLONEID_TAR=${CLONEID_TAR}
+ARG CLONEID_HOME=${CLONEID_HOME}
+ARG CLONEID_GIT=${CLONEID_GIT}
+
+ARG JAVA_PACKAGE=${JAVA_PACKAGE}
+
+ARG GRADLE_VERSION=8.9
+ARG JAVA_VERSION=21.0.3-oracle 
+ARG JAVA_HOME=/root/.sdkman/candidates/java/current
+
+ARG CLONEID_MODULE3_PERFORMANCE_TEST_DIR=${CLONEID_MODULE3_PERFORMANCE_TEST_DIR}
+ARG CLONEID_MODULE3_PERFORMANCE_TEST_REFERENCE=${CLONEID_MODULE3_PERFORMANCE_TEST_REFERENCE}
+ARG CLONEID_MODULE3_PERFORMANCE_TEST_UNIT0=${CLONEID_MODULE3_PERFORMANCE_TEST_UNIT0}
+ARG CLONEID_MODULE3_PERFORMANCE_TEST_UNIT1=${CLONEID_MODULE3_PERFORMANCE_TEST_UNIT1}
+
+ENV JAVA_HOME=/root/.sdkman/candidates/java/current
+ENV GRADLE_VERSION=8.9
+ENV DEBIAN_FRONTEND=noninteractive 
+ENV CLONEID_MODULE3_PERFORMANCE_TEST_DIR=${CLONEID_MODULE3_PERFORMANCE_TEST_DIR}
+ENV CLONEID_MODULE3_PERFORMANCE_TEST_REFERENCE=${CLONEID_MODULE3_PERFORMANCE_TEST_REFERENCE}
+ENV CLONEID_MODULE3_PERFORMANCE_TEST_UNIT0=${CLONEID_MODULE3_PERFORMANCE_TEST_UNIT0}
+ENV CLONEID_MODULE3_PERFORMANCE_TEST_UNIT1=${CLONEID_MODULE3_PERFORMANCE_TEST_UNIT1}
+
+ENV IMAGE_AUTHOR_FNAME="${IMAGE_AUTHOR_FNAME}" \
+    IMAGE_AUTHOR_LNAME="${IMAGE_AUTHOR_LNAME}" \
+    IMAGE_AUTHOR_EMAIL="${IMAGE_AUTHOR_EMAIL}"
+    
+LABEL IMAGE_maintainer="${IMAGE_AUTHOR_FNAME} ${IMAGE_AUTHOR_LNAME} ${IMAGE_AUTHOR_EMAIL}"
+LABEL IMAGE_info=${IMAGE_BUILD_INFO}
+LABEL iteration="${IMAGE_BUILD_NAME}_${IMAGE_BUILD_VERSION}_${IMAGE_BUILD_DATE}"
+
+LABEL org.cloneid.module3.image.schema-version="1.0"
+LABEL org.cloneid.module3.image.build-date="${IMAGE_BUILD_DATE}"
+LABEL org.cloneid.module3.image.name="${IMAGE_BUILD_NAME}"
+LABEL org.cloneid.module3.image.description="${IMAGE_BUILD_INFO}"
+LABEL org.cloneid.module3.image.url="${CLONEID_URL_WEB}"
+LABEL org.cloneid.module3.image.vcs-url="${CLONEID_URL_GIT}"
+LABEL org.cloneid.module3.image.authors="${IMAGE_AUTHOR_FNAME} ${IMAGE_AUTHOR_LNAME} ${IMAGE_AUTHOR_EMAIL}"
+LABEL org.cloneid.module3.image.vendor="${IMAGE_VENDOR}"
+LABEL org.cloneid.module3.image.licenses="${IMAGE_LICENSE}"
+LABEL org.cloneid.module3.image.title="${IMAGE_TITLE}"
+LABEL org.cloneid.module3.image.version="${IMAGE_BUILD_VERSION}"
+LABEL org.cloneid.module3.image.revision="${IMAGE_BUILD_REVISION}"
+LABEL org.cloneid.module3.image.architecture="${IMAGE_BUILD_ARCH}"
+LABEL org.cloneid.module3.image.docker.cmd="docker run --rm -ti --name ${IMAGE_BUILD_NAME} ${IMAGE_BUILD_NAME}-${IMAGE_BUILD_ARCH}:latest"
+
+SHELL ["/bin/bash", "-c"]
+
+RUN apt-get clean all && \
+    apt-get update && \
+    apt-get upgrade -y && \
+    apt-get install -yq \
+        curl \
+        git \
+        iputils-ping \
+        mariadb-client \
+        net-tools \
+        openssh-server \
+        psmisc \
+        sudo \
+        sysstat \
+        tree \
+        vim \
+        virt-what \
+        wget \
+        && \
+    dpkg --purge ${JAVA_PACKAGE} && \
+    apt-get clean all && \
+    apt-get purge && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+
+# Allow root login with SSH keys
+RUN sed -i 's/PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config && \
+    mkdir -p /root/.ssh && \
+    echo 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCaMU/b+4BiVK8VRx8UVhXOQ4kofGJfN+TSKRh0cV/ZDD6W1J0ofRvM/t9gFyuU88XRBKgzY1v4raKIcHPckq5AgO9dFrXulhVjr0N7/pgO8nvV+sjEPOCUu8rFo9ecLx7b1Z+nMTTWj3vH0kRn+8+ilJ7KlWccDtHXJfF3i8gDzwHf0z50F4T/GFB6Add/K7Aiztwk6ocObA0IRRthPULYhQZG/+nnwCoMCnakBAR6y5pucpMHFr6dBzrsMZQQ08ztfA/KtL6wgGpIaD3pGy/PZBRaa2F7UJPkQ5bBxWgk6QCY3Y9w1uOa76WF6k1kT0fxYd2P7yG5mC0a8wLbajGUiHXM8t7miIYDijh9kPJCXqTNw/v3pv6UthCwVDU/Qt6co4LGrFa3gI5ytytiBv0aJ34Tsi0WA9LtpV5qkqNAbvJfUBX6o2GypkqcyOrGggIgNVT8pKBe8DEHijQAJgafv5TKfz0Aegch4gQfByJ7lhz82WNb7hYPe/haZZONcJM= root@toto-Latitude-E6420-4G' > /root/.ssh/authorized_keys && \
+    chmod 600 /root/.ssh/authorized_keys && \
+    echo "Added Root login with SSH key"
+
+# Create a new user 'clid' with a home directory and Bash as the default shell.
+RUN useradd -m -s /bin/bash clid
+
+# Set the password for the 'clid' user to 'clid'.
+RUN echo "clid:clid" | chpasswd
+
+# Set the password for the 'root' user to 'clid'.
+RUN echo "root:clid" | chpasswd
+
+# Expose port 22 for SSH access.
+EXPOSE 22
+
+
+# Remove all existing Message of the Day (MOTD) scripts to prevent default login messages.
+RUN rm /etc/update-motd.d/*
+
+# Disable MOTD news feature which fetches messages over the internet.
+RUN echo "ENABLED=0" > /etc/default/motd-news
+
+# Create an empty MOTD file to clear any existing message.
+RUN echo > /etc/motd
+
+# Comment out the pam_motd module in PAM configuration to disable MOTD display on login.
+RUN sed -i 's/^.*pam_motd.so/#/' /etc/pam.d/login
+
+
+# Download and install the SDKMAN! tool for managing parallel versions of software development kits.
+RUN curl -s "https://get.sdkman.io" | bash
+
+# Initialize SDKMAN! and use it to install the specified versions of Gradle and Java.
+# 1. Source the SDKMAN! initialization script.
+# 2. Use SDKMAN! to install the required Gradle and Java versions.
+RUN . "/root/.sdkman/bin/sdkman-init.sh" && \
+    sdk install gradle ${GRADLE_VERSION} && \
+    sdk install java ${JAVA_VERSION}
+
+
+
+WORKDIR ${CLONEID_HOME}
+RUN rm -rf cloneid cloneid-master
+# RUN git clone https://github.com/noemiandor/cloneid.git
+# # OR
+RUN wget ${CLONEID_URL_ZIP} &&  unzip master.zip && mv cloneid-master cloneid && rm master.zip
+# # OR
+## COPY git/cloneid cloneid

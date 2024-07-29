@@ -207,7 +207,31 @@ public final class Helper {
 		String[] object = dubs.toArray(new String[dubs.size()]);
 		return(object);
 	}
+public static String[] byte2String2(byte[] bytes) throws IOException {
+        List<String> dubs = new ArrayList<>();
 
+        try (ByteArrayInputStream bin = new ByteArrayInputStream(bytes);
+             DataInputStream din = new DataInputStream(bin)) {
+
+            StringBuilder sb = new StringBuilder();
+            while (din.available() > 0) {
+                char c = din.readChar();
+                if (c == '\n') {
+                    dubs.add(sb.toString().trim());
+                    sb.setLength(0); // Clear the StringBuilder
+                } else {
+                    sb.append(c);
+                }
+            }
+
+            // Add the last collected string if it does not end with a newline
+            if (sb.length() > 0) {
+                dubs.add(sb.toString().trim());
+            }
+        }
+
+        return dubs.toArray(new String[0]);
+    }
 	public static int[] string2int(String[] split) {
 		int[] o=new int[split.length];
 		for(int i =0; i<split.length; i++){

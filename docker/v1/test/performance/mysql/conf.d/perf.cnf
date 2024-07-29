@@ -1,0 +1,4 @@
+[mysqld]
+performance_schema                                              = ON
+performance_schema_events_statements_history_long_size          = 1048576
+performance-schema-events-statements-history-size               = 1024

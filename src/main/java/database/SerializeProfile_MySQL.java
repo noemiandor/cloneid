@@ -14,13 +14,19 @@ import core.utils.Perspectives;
 import core.utils.Profile;
 import core.utils.Transcriptome;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 /**
  * Interacts with MySql DB, by saving and loading the profile of a clone.
  * @author noemi
  *
  */
 public class SerializeProfile_MySQL {
-	private static final CharSequence TABLE_PLACEHOLDER = "XX";
+	static final CharSequence TABLE_PLACEHOLDER = "XX";
 	private static final CharSequence CLONEID_PLACEHOLDER = "YY";
 
 	private String wRITE_PROFILE_LOCI_SQL = "INSERT INTO Loci(content, hash) VALUES(?, ?)";
@@ -33,6 +39,7 @@ public class SerializeProfile_MySQL {
 
 	private int clone;
 
+	static Map<Integer, String[]> s_cmap = new HashMap<Integer, String[]>();
 
 	public  SerializeProfile_MySQL(int cloneID, String cloneClass){
 		this.clone=cloneID;
@@ -79,6 +86,29 @@ public class SerializeProfile_MySQL {
 		pstmt.close();
 	}
 
+	private Profile createProfile(String perspective, String[] loci, Double[] object) {
+		Profile p = null;
+		switch (Perspectives.valueOf(perspective)) {
+			case Identity:
+			case MorphologyPerspective:
+				p = new Profile(loci);
+				break;
+			case GenomePerspective:
+			case KaryotypePerspective:
+			case ExomePerspective:
+				p = new Genome(loci);
+				break;
+			case TranscriptomePerspective:
+				p = new Transcriptome(loci);
+				break;
+			default:
+				throw new IllegalArgumentException("Unknown perspective: ");
+		}
+
+		p.setValues(object);
+
+		return p;
+	}
 	/**
 	 * Loads profile from DB
 	 * @param conn
@@ -95,31 +125,22 @@ public class SerializeProfile_MySQL {
 		int lociID= rs.getInt(3);
 		rs.close();
 
+		String[] loci = SerializeProfile_MySQL.s_cmap.get(lociID);
 
-		//Read profile loci
-		pstmt = conn.prepareStatement(rEAD_PROFILE_LOCI_SQL);
-		pstmt.setInt(1, lociID);
-		rs = pstmt.executeQuery();
-		rs.next();
-		String[] loci = Helper.byte2String(rs.getBytes(1));
-
-		pstmt.close();
+		if (loci == null) {
+			//Read profile loci
+			pstmt = conn.prepareStatement(rEAD_PROFILE_LOCI_SQL);
+			pstmt.setInt(1, lociID);
+			rs = pstmt.executeQuery();
+			rs.next();
+			loci = Helper.byte2String2(rs.getBytes(1));
+			SerializeProfile_MySQL.s_cmap.put(lociID,loci)
+			pstmt.close();
+		}	
 
 		//Create profile from double array
-		Profile p=null;
-		if(perspective.equals(Perspectives.Identity.name())){
-			p=new Profile(loci);
-		} else if(perspective.equals(Perspectives.GenomePerspective.name()) || perspective.equals(Perspectives.KaryotypePerspective.name()) || perspective.equals(Perspectives.ExomePerspective.name())){
-			p=new Genome(loci);
-		}else if(perspective.equals(Perspectives.TranscriptomePerspective.name())){
-			p=new Transcriptome(loci);
-		}else if(perspective.equals(Perspectives.MorphologyPerspective.name())){
-			p=new Profile(loci);
-		}
-		for(int i=0; i<object.length; i++){
-			p.modify(i, object[i]);
-		}		
-		return p;
+		return createProfile(perspective, loci, object);	
+
 	}
 
 }

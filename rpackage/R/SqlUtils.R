@@ -1,6 +1,6 @@
 connect2DB <-function(){
   library(RMySQL)
-  tmp = suppressWarnings(try(lapply( dbListConnections( dbDriver( drv = "MySQL")), dbDisconnect)))
+  try(lapply( dbListConnections( dbDriver( drv = "MySQL")), dbDisconnect))
   yml = yaml::read_yaml(paste0(system.file(package='cloneid'), '/config/config.yaml'))
   mydb = dbConnect(MySQL(), user=yml$mysqlConnection$user, password=yml$mysqlConnection$password, dbname=yml$mysqlConnection$database,host=yml$mysqlConnection$host, port=as.integer(yml$mysqlConnection$port))
   return(mydb)

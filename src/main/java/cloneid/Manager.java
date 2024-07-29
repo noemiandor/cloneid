@@ -15,6 +15,7 @@ import services.DatabaseService;
 import java.sql.ResultSet;
 import java.util.HashMap;
 import java.util.Map;
+// import static java.lang.Integer.parseInt;
 
 /**
  * Static class providing user-interface methods to query the database. 
@@ -50,14 +51,12 @@ public final class Manager {
 	}
 
 	public static Map<String, Profile> profiles(String sampleName, Perspectives which, boolean includeRoot) throws Exception {
-		String tN = CLONEID.getTableNameForClass(which.name());
-		String selstmt="SELECT size,cloneID from "+tN+" where hasChildren=true AND origin=\'"+sampleName+"\' AND whichPerspective=\'"+which+"\' ORDER BY size DESC;"; 
+		String selstmt="SELECT size,cloneID from "+which.getTableName()+" where hasChildren=true AND origin=\'"+sampleName+"\' AND whichPerspective=\'"+which+"\' ORDER BY size DESC;"; 
 		return(gatherProfiles(selstmt,which,includeRoot));
 	}
 
 	public static Map<String, Profile> profiles(int cloneID, Perspectives which, boolean includeRoot) throws Exception {
-		String tN = CLONEID.getTableNameForClass(which.name());
-		String selstmt="SELECT size,cloneID from "+tN+" where hasChildren=true AND cloneID="+cloneID+" AND whichPerspective=\'"+which+"\' ORDER BY size DESC;"; 
+		String selstmt="SELECT size,cloneID from "+which.getTableName()+" where hasChildren=true AND cloneID="+cloneID+" AND whichPerspective=\'"+which+"\' ORDER BY size DESC;"; 
 		return(gatherProfiles(selstmt,which,includeRoot));
 	}
 
@@ -73,39 +72,34 @@ public final class Manager {
 		return(profiles);
 	}
 
-	private static Map<String, Profile> gatherProfiles(String selstmt, Perspectives which, boolean includeRoot) throws Exception {
-		CLONEID cloneid= new CLONEID();
+   private static Map<String, Profile> gatherProfiles(String selstmt, Perspectives which, boolean includeRoot) throws Exception {
+		CLONEID cloneid = new CLONEID();
 		cloneid.connect();
+		Map<String, Profile> profiles = new HashMap<>();
+		ResultSet rs = cloneid.getStatement().executeQuery(selstmt);
+		if (rs.next()) {
+			Clone root = cloneid.getClone(rs.getInt("cloneID"), which);
 
-		ResultSet rs =cloneid.getStatement().executeQuery(selstmt);
-		rs.next();
-		Clone root=cloneid.getClone(rs.getInt("cloneID"),which);
-		
-		int[] kids = cloneid.getChildrenForParent(root.getID(), which);
-		Map<String,Profile> profiles=new HashMap<String,Profile>();
-		for(int kid:kids){
-			Clone clone=cloneid.getClone(kid,which);
-			profiles.put(clone.toString(), clone.getProfile());
+			int[] kids = cloneid.getChildrenForParent(root.getID(), which);
+			for (int kid : kids) {
+				Clone clone = cloneid.getClone(kid, which);
+				profiles.put(clone.toString(), clone.getProfile());
+			}
+			if (includeRoot) {
+				profiles.put(root.toString(), root.getProfile());
+			}
 		}
-		cloneid.close();
-
-		if(includeRoot){
-			profiles.put(root.toString(), root.getProfile());
-		}
-
-		return(profiles);
-	}
+		return profiles;
+    }
 
 	public static Map<String, Clone> display(int cloneID, Perspectives which) throws Exception{
-		String tN = CLONEID.getTableNameForClass(which.name());
-		String selstmt="SELECT parent,cloneID,size from "+tN+" where cloneID="+cloneID+" AND whichPerspective=\'"+which+"\' ORDER BY size DESC;";
+		String selstmt="SELECT parent,cloneID,size from "+which.getTableName()+" where cloneID="+cloneID+" AND whichPerspective=\'"+which+"\' ORDER BY size DESC;";
 		Map<String, Clone> cloneSizes=gatherForDisplay(selstmt,cloneID+"", which);
 		return(cloneSizes);
 	}
 
 	public static Map<String, Clone> display(String sampleName, Perspectives which) throws Exception{
-		String tN = CLONEID.getTableNameForClass(which.name());
-		String selstmt="SELECT cloneID,size from "+tN+" where parent IS NULL AND hasChildren=true AND origin=\'"+sampleName+"\' AND whichPerspective=\'"+which+"\' ORDER BY size DESC;";
+		String selstmt="SELECT cloneID,size from "+which.getTableName()+" where parent IS NULL AND hasChildren=true AND origin=\'"+sampleName+"\' AND whichPerspective=\'"+which+"\' ORDER BY size DESC;";
 		Map<String, Clone> cloneSizes=gatherForDisplay(selstmt,sampleName, which);
 		return(cloneSizes);
 	}
@@ -148,85 +142,31 @@ public final class Manager {
 
 	}
 
-	public static void main(String[] args) {
-		/*
-			String[] sName=args[0].split("\\.");
-			try {
-				display("Rand1_NCI-N87NCI-N87", Perspectives.Identity);
-				System.out.println("tmp");
-			} catch (Exception e2) {
-				e2.printStackTrace();
-			}
-			try {
-				Map<String, Clone> x = display("LGG174T" , Perspectives.valueOf("Identity"));
-				GenomePerspective gp=new GenomePerspective(new File("/Users/noemi/Projects/PMO/InferringMultiSamplePhylo/data/Kyoto-LGG/processed_against_LGG174N//A05_170412_expands/LGG174T2.sps"), "CN_Estimate");
-				gp.setCoordinates(4.0, 3.0);
-				Identity gp=new Identity(new File(args[0]), "CN_Estimate", new File(args[1]));
-				gp.save2DB();
-				System.out.println(gp.getCoordinates()[0]);;
-				System.out.println(gp.toString());
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-
-				try {
-					Map<String, Profile> ip=profiles("KATOIII", Perspectives.TranscriptomePerspective,false);
-				} catch (Exception e1) {
-					e1.printStackTrace();
-				}
-
-
-			try {
-				compare(3, Perspectives.GenomePerspective, 4, Perspectives.GenomePerspective);
-			} catch (Exception e1) {
-				e1.printStackTrace();
-			}
-		*/
-
-			
-//		YamlReaderService yamlReader = new YamlReaderService();
-//		Boolean forceCreateSchema = false;
-//
-//		for (String arg : args) {
-//
-//			if (arg.equals("-c") || arg.equals("--create-schema") || arg.equals("-f") || arg.equals("--force-create-schema")) {
-//
-//				if (arg.equals("-f") || arg.equals("--force-create-schema")) { forceCreateSchema = true; }
-//				createSchema(yamlReader, forceCreateSchema);
-//
-//			} 
-//
-//		}
-		
-		try {
-			/*
-				Map<String, Clone> tmp = display("SNU-16", Perspectives.Identity);
-				tmp.values().iterator().next().getPerspective(Perspectives.TranscriptomePerspective);
-				Identity p =new Identity(new File("/Users/noemi/Projects/PMO/InferringMultiSamplePhylo/data/Kyoto-LGG/SNParray/LGG174/A06_170603_expands/LGG174T.identity.sps"),"CN_Estimate",new File("/Users/noemi/Projects/PMO/InferringMultiSamplePhylo/data/Kyoto-LGG/SNParray/LGG174/A06_170603_expands/LGG174T.identity.source"));
-				Perspective p_ = new TranscriptomePerspective(new File("/Users/noemi/Projects/PMO/MeasuringGIperClone/data/GastricCancerCLs/scRNAseq/B07_180109_LIAYSON/NCI-N87.sps.cbs"),"CN_Estimate");
-				p_.save2DB();
-				Perspective p =new ExomePerspective(new File(args[0]),"CN_Estimate");
-				Perspective p = new TranscriptomePerspective(new File("/Users/noemi/Projects/PMO/MeasuringGIperClone/data/GastricCancerCLs/scRNAseq/B07_180109_LIAYSON/SNU-16.0.07274.sps.cbs"),"Clone_0.07274");
-			*/
-//			Perspective p =new MorphologyPerspective(new File("/Users/4470246/Desktop/tmp/NUGC-4_A4_seedTPd13/NUGC-4_A4_seedTPd13.0.99.sps.csv"),"SP_0.990000009536743");
-//			System.out.println(p.toString());	
-//			p.save2DB();
-//			profile(3456, Perspectives.GenomePerspective);
-//			Perspective p2 = new GenomePerspective(new File("/Users/noemi/Projects/PMO/MeasuringGIperClone/data/GastricCancerCLs/scDNAseq/E07_180831_clones/HGC-27.sps.cbs"), "CN_Estimate");
-//			Perspective p2 = new TranscriptomePerspective(new File("~/Downloads/testViewPerspective/TranscriptomePerspective/SNU-16.sps.cbs"), "CN_Estimate");
-//			System.out.println(p2.getChildrensSizes());
-			//			p2.save2DB();
-//			display(253823, Perspectives.MorphologyPerspective);
-//			profiles(257274, Perspectives.MorphologyPerspective,false);
-//			display("SNU-601_A4_seedT5", Perspectives.MorphologyPerspective);
-//			profiles(134018, Perspectives.GenomePerspective, false);
-//			TranscriptomePerspective tmp = new TranscriptomePerspective(new File("/Users/4470246/Projects/PMO/MeasuringGIperClone/data/GastricCancerCLs/scRNAseq/C07_190610_LIAYSON//SNU-16_3.sps.cbs"), "CN_Estimate");
-//			TranscriptomePerspective tmp = new TranscriptomePerspective(new File("/Users/4470246/Projects/PMO/MeasuringGIperClone/data/GastricCancerCLs/scRNAseq/C07_190610_LIAYSON//SNU-16_3.0.1914997.sps.cbs"), "Clone_0.191499695181847");
-//tmp.save2DB();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-
-	}
-
+    // public static String extractID(String cloneString) {
+    //     String[] parts = cloneString.split("ID");
+    //     if (parts.length >= 2) {
+    //         return parts[1];
+    //     } else {
+    //         return parts[0];
+    //     }
+    // }
+    // public static void main(String[] args) {
+    //     try {
+    //         Map<String, Clone> X = Manager.display("SNU-668", Perspectives.GenomePerspective);
+    //         for (Clone clone : X.values()) {
+    //             System.out.println(clone.toString());
+    //             String Y = Manager.extractID(clone.toString());
+    //             Map<String, Profile> Z = Manager.profiles(parseInt(Y), Perspectives.GenomePerspective, false);
+    //             System.out.println(Z);
+    //         }
+    //     } catch (Exception e) {
+    //         e.printStackTrace();
+    //     }
+    // }
+	// public static void _main(String[] args) {
+	// 	try {
+	// 	} catch (Exception e) {
+	// 		e.printStackTrace();
+	// 	}
+	// }
 }
