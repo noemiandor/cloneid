@@ -22,8 +22,10 @@ trap 'LOOP=0;' SIGUSR1
 NEXTSTART=0
 
 export CLONEID_MODULE3_PERFORMANCE_TEST_DIR=/data/lake/cloneid/module3/test/performance
+export CLONEID_MODULE3_PERFORMANCE_TEST_DIR=${DIR0}
 export CLONEID_MODULE3_PERFORMANCE_TEST_REFERENCE=${CLONEID_MODULE3_PERFORMANCE_TEST_DIR}/bin/sh/reference.sh
-export CLONEID_MODULE3_PERFORMANCE_TEST_UNIT1=${CLONEID_MODULE3_PERFORMANCE_TEST_DIR}/bin/sh/unit-test-1.sh
+export CLONEID_MODULE3_PERFORMANCE_TEST_REFERENCE=${CLONEID_MODULE3_PERFORMANCE_TEST_DIR}/reference.sh
+export CLONEID_MODULE3_PERFORMANCE_TEST_UNIT0=${CLONEID_MODULE3_PERFORMANCE_TEST_DIR}/bin/sh/unit-test-0.sh
 
 collect_mysql_data() {
 	local status=$1
@@ -100,12 +102,16 @@ run_rscript() {
 		echo -e "No activity collection\n"
 	fi
 
-	local RSCRIPT="bin/R/${script}/m3.R"
+	local RSCRIPT="../R/${script}/m3.R"
 
 	local CWD=$(pwd)
 	cd ${LOGDIR} &&
 		(
 			echo -n "$(echo ${script} | tr '[:lower:]' '[:upper:]')   $i : "
+			echo -e "\nRscript listing : ${RSCRIPT}"
+			echo -e "####################################################################\n"
+			cat "${CLONEID_MODULE3_PERFORMANCE_TEST_DIR}/${RSCRIPT}"
+			echo -e "\n####################################################################\n\n"
 			echo -e "\nLaunching : Rscript --vanilla ${RSCRIPT}"
 			date
 			echo -e "####################################################################\n\n"

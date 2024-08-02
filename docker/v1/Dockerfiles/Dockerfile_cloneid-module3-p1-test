@@ -1,0 +1,13 @@
+# syntax = edrevo/dockerfile-plus
+
+FROM --platform=${BUILDPLATFORM}  cloneid-module3-p1-utils-amd64:latest
+
+INCLUDE+ docker/v1/Dockerfiles/Dockerfile_cloneid-module3-p1-args
+
+WORKDIR ${CLONEID_HOME}
+
+# ENTRYPOINT ["/bin/bash", "-c", "ls -l /"]
+#ENTRYPOINT ["/bin/bash", "-c", "pwd"]
+ENTRYPOINT ${CLONEID_MODULE3_PERFORMANCE_TEST_TEST} 
+
+HEALTHCHECK NONE

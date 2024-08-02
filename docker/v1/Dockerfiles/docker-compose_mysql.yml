@@ -36,24 +36,6 @@ services:
     expose:
       - 3306
 
-
-
-  module3-reference:
-    image: "cloneid-module3-jdk21_reference-amd64:latest"
-    container_name: "module3-reference"
-    environment:
-      - INSIDE_DOCKER=true
-      - INDOCKER=true
-      - DOCKERNAME=module3-reference
-    networks:
-      - io-backend
-    depends_on:
-      - dbv2
-    volumes:
-      - type: bind
-        source: ${CLONEID_MODULE3_PERFORMANCE_TEST_DIR}
-        target: ${CLONEID_MODULE3_PERFORMANCE_TEST_DIR}
-
 networks:
   io-backend: {}
 

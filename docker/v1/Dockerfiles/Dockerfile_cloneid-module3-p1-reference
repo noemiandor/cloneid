@@ -1,0 +1,33 @@
+# syntax = edrevo/dockerfile-plus
+
+FROM --platform=${BUILDPLATFORM}  cloneid-module3-p1-utils-amd64:latest
+
+INCLUDE+ docker/v1/Dockerfiles/Dockerfile_cloneid-module3-p1-args
+
+WORKDIR ${CLONEID_HOME}
+RUN rm -rf cloneid cloneid-master
+# RUN git clone https://github.com/noemiandor/cloneid.git
+# # OR
+RUN wget ${CLONEID_URL_ZIP} &&  unzip master.zip && mv cloneid-master cloneid && rm master.zip
+# # OR
+## COPY git/cloneid cloneid
+
+WORKDIR ${CLONEID_HOME}/cloneid
+
+RUN cp gradle/wrapper/gradle-wrapper.properties gradle/wrapper/gradle-wrapper.properties.6
+# RUN sed -e 's/6.5.1/8.9/' -e "s/https.*distributions\///" < gradle/wrapper/gradle-wrapper.properties.6 > gradle/wrapper/gradle-wrapper.properties
+RUN sed -e 's/6.5.1/8.9/' < gradle/wrapper/gradle-wrapper.properties.6 > gradle/wrapper/gradle-wrapper.properties
+
+RUN cp build.gradle build.gradle.6
+RUN cat build.gradle.6 |sed -e 's/baseName/\/\/ MOVING TO GRADLE 8.9 \/\/ baseName/'  -e 's/archiveClassifier/duplicatesStrategy = DuplicatesStrategy.EXCLUDE\n    archiveClassifier/' > build.gradle
+
+RUN R CMD javareconf
+RUN ./gradlew uberJar
+RUN cp build/libs/cloneid.jar rpackage/inst/java/cloneid.jar && R CMD build rpackage && R CMD INSTALL ${CLONEID_TAR}
+
+WORKDIR ${CLONEID_MODULE3_PERFORMANCE_TEST_DIR}
+
+# ENTRYPOINT service ssh start && ${CLONEID_MODULE3_PERFORMANCE_TEST_REFERENCE} 
+ENTRYPOINT ${CLONEID_MODULE3_PERFORMANCE_TEST_REFERENCE} 
+
+HEALTHCHECK NONE

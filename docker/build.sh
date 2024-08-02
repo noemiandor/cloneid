@@ -1,9 +1,12 @@
 #!/bin/bash
 
-. config.sh
+DIR0=$(dirname $0)
+
+. ${DIR0}/config.sh
+
 while [ ! -z "$1" ]; do
 
-    IMAGE_BUILD_NAME="cloneid-module3"
+    IMAGE_BUILD_NAME="cloneid-module3-${PHASE}"
 
     OPTION=$(echo $1 | tr '[:upper:]' '[:lower:]')
     IMAGE_BUILD_NAME_WITH_OPTIONS="${IMAGE_BUILD_NAME}-${OPTION}"
@@ -14,8 +17,9 @@ while [ ! -z "$1" ]; do
     echo "Building image: ${IMAGE_BUILD_NAME}-${IMAGE_BUILD_ARCH}..."
     echo "Image build Info: ${IMAGE_BUILD_INFO}..."
 
-    docker system prune -f
-    docker build -f Dockerfile_${IMAGE_BUILD_NAME} -t ${IMAGE_BUILD_NAME}-${IMAGE_BUILD_ARCH}:latest \
+    # docker system prune -f
+    # echo \
+    docker build -f ${DIR0}/v1/Dockerfiles/Dockerfile_${IMAGE_BUILD_NAME} -t ${IMAGE_BUILD_NAME}-${IMAGE_BUILD_ARCH}:latest \
         --platform="${BUILDPLATFORM}" \
         --build-arg="IMAGE_BUILD_ARCH=amd64" \
         --build-arg="IMAGE_BUILD_INFO=${IMAGE_BUILD_INFO}" \
@@ -40,7 +44,7 @@ while [ ! -z "$1" ]; do
         --build-arg="CLONEID_MODULE3_PERFORMANCE_TEST_DIR=${CLONEID_MODULE3_PERFORMANCE_TEST_DIR}" \
         --build-arg="CLONEID_MODULE3_PERFORMANCE_TEST_REFERENCE=${CLONEID_MODULE3_PERFORMANCE_TEST_REFERENCE}" \
         --build-arg="CLONEID_MODULE3_PERFORMANCE_TEST_UNIT0=${CLONEID_MODULE3_PERFORMANCE_TEST_UNIT0}" \
-        --build-arg="CLONEID_MODULE3_PERFORMANCE_TEST_UNIT1=${CLONEID_MODULE3_PERFORMANCE_TEST_UNIT1}" \
+        --build-arg="CLONEID_MODULE3_PERFORMANCE_TEST_TEST=${CLONEID_MODULE3_PERFORMANCE_TEST_TEST}" \
         .
 
     echo -e "Image build complete"

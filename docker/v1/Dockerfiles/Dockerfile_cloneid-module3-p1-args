@@ -1,5 +1,3 @@
-FROM --platform=${BUILDPLATFORM}  cloneid-module3-base_jdk21-amd64:latest
-
 ARG IMAGE_BUILD_ARCH=amd64
 ARG IMAGE_BUILD_INFO="Cloneid Module3"
 ARG IMAGE_BUILD_NAME="cloneid-module3"
@@ -29,7 +27,7 @@ ARG JAVA_HOME=/root/.sdkman/candidates/java/current
 ARG CLONEID_MODULE3_PERFORMANCE_TEST_DIR=${CLONEID_MODULE3_PERFORMANCE_TEST_DIR}
 ARG CLONEID_MODULE3_PERFORMANCE_TEST_REFERENCE=${CLONEID_MODULE3_PERFORMANCE_TEST_REFERENCE}
 ARG CLONEID_MODULE3_PERFORMANCE_TEST_UNIT0=${CLONEID_MODULE3_PERFORMANCE_TEST_UNIT0}
-ARG CLONEID_MODULE3_PERFORMANCE_TEST_UNIT1=${CLONEID_MODULE3_PERFORMANCE_TEST_UNIT1}
+ARG CLONEID_MODULE3_PERFORMANCE_TEST_TEST=${CLONEID_MODULE3_PERFORMANCE_TEST_TEST}
 
 ENV JAVA_HOME=/root/.sdkman/candidates/java/current
 ENV GRADLE_VERSION=8.9
@@ -37,7 +35,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV CLONEID_MODULE3_PERFORMANCE_TEST_DIR=${CLONEID_MODULE3_PERFORMANCE_TEST_DIR}
 ENV CLONEID_MODULE3_PERFORMANCE_TEST_REFERENCE=${CLONEID_MODULE3_PERFORMANCE_TEST_REFERENCE}
 ENV CLONEID_MODULE3_PERFORMANCE_TEST_UNIT0=${CLONEID_MODULE3_PERFORMANCE_TEST_UNIT0}
-ENV CLONEID_MODULE3_PERFORMANCE_TEST_UNIT1=${CLONEID_MODULE3_PERFORMANCE_TEST_UNIT1}
+ENV CLONEID_MODULE3_PERFORMANCE_TEST_TEST=${CLONEID_MODULE3_PERFORMANCE_TEST_TEST}
 
 ENV IMAGE_AUTHOR_FNAME="${IMAGE_AUTHOR_FNAME}" \
     IMAGE_AUTHOR_LNAME="${IMAGE_AUTHOR_LNAME}" \
@@ -63,29 +61,3 @@ LABEL org.cloneid.module3.image.architecture="${IMAGE_BUILD_ARCH}"
 LABEL org.cloneid.module3.image.docker.cmd="docker run --rm -ti --name ${IMAGE_BUILD_NAME} ${IMAGE_BUILD_NAME}-${IMAGE_BUILD_ARCH}:latest"
 
 SHELL ["/bin/bash", "-c"]
-
-WORKDIR ${CLONEID_HOME}
-RUN rm -rf cloneid cloneid-master
-# RUN git clone https://github.com/noemiandor/cloneid.git
-# # OR
-RUN wget ${CLONEID_URL_ZIP} &&  unzip master.zip && mv cloneid-master cloneid && rm master.zip
-# # OR
-## COPY git/cloneid cloneid
-
-WORKDIR ${CLONEID_HOME}/cloneid
-
-RUN cp gradle/wrapper/gradle-wrapper.properties gradle/wrapper/gradle-wrapper.properties.6
-RUN sed -e 's/6.5.1/8.9/' -e "s/https.*distributions\///" < gradle/wrapper/gradle-wrapper.properties.6 > gradle/wrapper/gradle-wrapper.properties
-
-RUN cp build.gradle build.gradle.6
-RUN cat build.gradle.6 |sed -e 's/baseName/\/\/ MOVING TO GRADLE 8.9 \/\/ baseName/'  -e 's/archiveClassifier/duplicatesStrategy = DuplicatesStrategy.EXCLUDE\n    archiveClassifier/' > build.gradle
-
-RUN R CMD javareconf
-RUN ./gradlew uberJar
-RUN cp build/libs/cloneid.jar rpackage/inst/java/cloneid.jar && R CMD build rpackage && R CMD INSTALL ${CLONEID_TAR}
-
-WORKDIR ${CLONEID_MODULE3_PERFORMANCE_TEST_DIR}
-
-ENTRYPOINT service ssh start && ${CLONEID_MODULE3_PERFORMANCE_TEST_REFERENCE} 
-
-HEALTHCHECK NONE

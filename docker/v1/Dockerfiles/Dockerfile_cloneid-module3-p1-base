@@ -1,0 +1,45 @@
+# syntax = edrevo/dockerfile-plus
+
+FROM --platform=${BUILDPLATFORM} rocker/r-ver
+
+INCLUDE+ docker/v1/Dockerfiles/Dockerfile_cloneid-module3-p1-args
+
+RUN apt-get clean all && \
+    apt-get update && \
+    apt-get upgrade -y && \
+    apt-get install -yq \
+        libhdf5-dev \
+        libcurl4-gnutls-dev \
+        libssl-dev \
+        libxml2-dev \
+        libpng-dev \
+        libxt-dev \
+        zlib1g-dev \
+        libbz2-dev \
+        liblzma-dev \
+        libglpk40 \
+        libgit2-dev \
+        libmagick++-6.q16-dev \
+        libmysqlclient-dev \
+        libproj22 \
+        libgdal-dev \
+        vim \
+        git \
+        wget \
+        virt-what \
+    && apt-get clean all && \
+    apt-get purge && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+RUN	Rscript -e "install.packages(c('rmarkdown', 'tidyverse', 'workflowr', 'BiocManager'));" && \
+	Rscript -e "BiocManager::install(version = '3.19', ask = FALSE)" && \
+	Rscript -e "BiocManager::install('biomaRt');" && \
+	Rscript -e "install.packages(c( 'qualV', 'RColorBrewer', 'gtools', 'gplots', 'gdata', 'RMySQL', 'flexclust', 'Matrix', 'matlab', 'yaml' ));" && \
+	Rscript -e "install.packages(c( 'magick',  'raster' ));" && \
+	Rscript -e "install.packages(c( 'ape' ));" && \
+	Rscript -e "install.packages(c( 'liayson' ));" && \
+	Rscript -e "install.packages(c( 'umap' ));" && \
+	Rscript -e "install.packages(c( 'R.utils' ));" && \
+	Rscript -e "install.packages(c( 'tictoc' ));" && \
+	Rscript -e "install.packages('https://cran.r-project.org/src/contrib/Archive/reticulate/reticulate_1.22.tar.gz',repos=NULL, type='source')" && \
+	Rscript -e "install.packages(c( 'rJava' ));"

@@ -36,7 +36,7 @@ public final class CLONEID {
 	static public Statement stmt = null;
 	static public YamlReaderService yconfig = null;
   	private Connection con = null;
-	private Statement stmt = null;
+	// private Statement stmt = null;
 	private YamlReaderService yamlReader;
 
 	Map<Integer, Clone> cmap = new HashMap<Integer, Clone>();
@@ -123,7 +123,7 @@ public final class CLONEID {
 
 		}		
 		SerializeProfile_MySQL serp = new SerializeProfile_MySQL(cloneID,which.name());
-		Profile p=serp.readProfileFromDB(con);
+		Profile p=serp.readProfileFromDB(getConnection());
 		String selstmt="SELECT "+attr+" from "+which.getTableName()+" where cloneID="+cloneID+";";
 		ResultSet rs =stmt.executeQuery(selstmt);
 		rs.next();

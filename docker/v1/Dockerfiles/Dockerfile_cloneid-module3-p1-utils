@@ -1,0 +1,68 @@
+# syntax = edrevo/dockerfile-plus
+
+FROM --platform=${BUILDPLATFORM}  cloneid-module3-p1-base-amd64:latest
+
+INCLUDE+ docker/v1/Dockerfiles/Dockerfile_cloneid-module3-p1-args
+
+RUN apt-get clean all && \
+    apt-get update && \
+    apt-get upgrade -y && \
+    apt-get install -yq \
+        curl \
+        git \
+        iputils-ping \
+        mariadb-client \
+        net-tools \
+        openssh-server \
+        psmisc \
+        sudo \
+        sysstat \
+        tree \
+        vim \
+        virt-what \
+        wget \
+        && \
+    apt-get clean all && \
+    apt-get purge && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# # Allow root login with SSH keys
+# RUN sed -i 's/PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config && \
+#     mkdir -p /root/.ssh && \
+#     echo 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCaMU/b+4BiVK8VRx8UVhXOQ4kofGJfN+TSKRh0cV/ZDD6W1J0ofRvM/t9gFyuU88XRBKgzY1v4raKIcHPckq5AgO9dFrXulhVjr0N7/pgO8nvV+sjEPOCUu8rFo9ecLx7b1Z+nMTTWj3vH0kRn+8+ilJ7KlWccDtHXJfF3i8gDzwHf0z50F4T/GFB6Add/K7Aiztwk6ocObA0IRRthPULYhQZG/+nnwCoMCnakBAR6y5pucpMHFr6dBzrsMZQQ08ztfA/KtL6wgGpIaD3pGy/PZBRaa2F7UJPkQ5bBxWgk6QCY3Y9w1uOa76WF6k1kT0fxYd2P7yG5mC0a8wLbajGUiHXM8t7miIYDijh9kPJCXqTNw/v3pv6UthCwVDU/Qt6co4LGrFa3gI5ytytiBv0aJ34Tsi0WA9LtpV5qkqNAbvJfUBX6o2GypkqcyOrGggIgNVT8pKBe8DEHijQAJgafv5TKfz0Aegch4gQfByJ7lhz82WNb7hYPe/haZZONcJM= root@toto-Latitude-E6420-4G' > /root/.ssh/authorized_keys && \
+#     chmod 600 /root/.ssh/authorized_keys && \
+#     echo "Added Root login with SSH key"
+
+# # Create a new user 'clid' with a home directory and Bash as the default shell.
+# RUN useradd -m -s /bin/bash clid
+
+# # Set the password for the 'clid' user to 'clid'.
+# RUN echo "clid:clid" | chpasswd
+
+# # Set the password for the 'root' user to 'clid'.
+# RUN echo "root:clid" | chpasswd
+
+# # Expose port 22 for SSH access.
+# EXPOSE 22
+
+# # Remove all existing Message of the Day (MOTD) scripts to prevent default login messages.
+# RUN rm /etc/update-motd.d/*
+
+# # Disable MOTD news feature which fetches messages over the internet.
+# RUN echo "ENABLED=0" > /etc/default/motd-news
+
+# # Create an empty MOTD file to clear any existing message.
+# RUN echo > /etc/motd
+
+# # Comment out the pam_motd module in PAM configuration to disable MOTD display on login.
+# RUN sed -i 's/^.*pam_motd.so/#/' /etc/pam.d/login
+
+# Download and install the SDKMAN! tool for managing parallel versions of software development kits.
+RUN curl -s "https://get.sdkman.io" | bash
+
+# Initialize SDKMAN! and use it to install the specified versions of Gradle and Java.
+# 1. Source the SDKMAN! initialization script.
+# 2. Use SDKMAN! to install the required Gradle and Java versions.
+RUN . "/root/.sdkman/bin/sdkman-init.sh" && \
+    sdk install gradle ${GRADLE_VERSION} && \
+    sdk install java ${JAVA_VERSION}

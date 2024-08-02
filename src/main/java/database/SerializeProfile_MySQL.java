@@ -133,8 +133,8 @@ public class SerializeProfile_MySQL {
 			pstmt.setInt(1, lociID);
 			rs = pstmt.executeQuery();
 			rs.next();
-			loci = Helper.byte2String2(rs.getBytes(1));
-			SerializeProfile_MySQL.s_cmap.put(lociID,loci)
+			loci = Helper.byte2String(rs.getBytes(1));
+			SerializeProfile_MySQL.s_cmap.put(lociID,loci);
 			pstmt.close();
 		}	
 

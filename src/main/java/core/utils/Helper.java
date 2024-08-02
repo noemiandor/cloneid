@@ -192,22 +192,6 @@ public final class Helper {
 	}
 
 	public static String[] byte2String(byte[] bytes) throws IOException {
-		List<String> dubs = new ArrayList<>();
-		ByteArrayInputStream bin = new ByteArrayInputStream(bytes);
-		DataInputStream din = new DataInputStream(bin);
-		while(din.available()>0){
-			String l="";
-			char c='\0';
-			while(c!='\n'){
-				l+=c;
-				c=din.readChar();
-			}
-			dubs.add(l.trim());
-		}
-		String[] object = dubs.toArray(new String[dubs.size()]);
-		return(object);
-	}
-public static String[] byte2String2(byte[] bytes) throws IOException {
         List<String> dubs = new ArrayList<>();
 
         try (ByteArrayInputStream bin = new ByteArrayInputStream(bytes);
@@ -218,13 +202,12 @@ public static String[] byte2String2(byte[] bytes) throws IOException {
                 char c = din.readChar();
                 if (c == '\n') {
                     dubs.add(sb.toString().trim());
-                    sb.setLength(0); // Clear the StringBuilder
+                    sb.setLength(0); 
                 } else {
                     sb.append(c);
                 }
             }
 
-            // Add the last collected string if it does not end with a newline
             if (sb.length() > 0) {
                 dubs.add(sb.toString().trim());
             }

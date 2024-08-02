@@ -121,7 +121,6 @@ public abstract class Perspective extends Clone {
 		db.close();
 
 	}
-
 	public String getTableName() {
 		return Perspectives.valueOf(this.getClass().getSimpleName()).getTableName();
 	}

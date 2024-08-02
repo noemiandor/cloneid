@@ -27,13 +27,18 @@ services:
       - "/data/lake/cloneid/db/SQL/08.sql:/docker-entrypoint-initdb.d/08.sql"
       - sql-config:/etc/mysql
       - sql-data:/var/lib/mysql
+      - ${CLONEID_MODULE3_PERFORMANCE_TEST_DIR}/mysql/conf.d:/etc/mysql/conf.d
+      - type: bind
+        source: ${CLONEID_MODULE3_PERFORMANCE_TEST_DIR}
+        target: ${CLONEID_MODULE3_PERFORMANCE_TEST_DIR}
     networks:
       - io-backend
+    expose:
+      - 3306
 
   module3-unit0:
-    image: "cloneid-module3-jdk21_unit0-amd64:latest"
+    image: "cloneid-module3-p1-unit0-amd64:latest"
     container_name: "module3-unit0"
-    restart: "always"
     environment:
       - INSIDE_DOCKER=true
       - INDOCKER=true
@@ -44,10 +49,15 @@ services:
       - dbv2
     volumes:
       - type: bind
-        source: /data/lake/cloneid/module3/docker/v1/git/cloneid
+        source: ${CLONEID_MODULE3_PERFORMANCE_TEST_DIR}
+        target: ${CLONEID_MODULE3_PERFORMANCE_TEST_DIR}      
+      - type: bind
+#        source: /data/lake/cloneid/module3/docker/v1/git/cloneid
+        source: /data/lake/cloneid/module3/docker/git/cloneid
         target: /data/lake/cloneid/module3/cloneid
       - type: bind
-        source: /data/lake/cloneid/module3/test
+#        source: /data/lake/cloneid/module3/test
+        source: /data/lake/cloneid/module3/docker/git/cloneid/docker/v1/test
         target: /data/lake/cloneid/module3/test
 
 networks:

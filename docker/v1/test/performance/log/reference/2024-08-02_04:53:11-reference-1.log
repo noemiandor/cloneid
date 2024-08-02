@@ -1,0 +1,133 @@
+REFERENCE    : 
+Rscript listing : ../R/reference/m3.R
+####################################################################
+
+library(cloneid)
+library(tictoc)
+
+getSubProfilesX <-function(x){
+  print(paste("Processing:", x, extractID(x)))
+  cloneid::getSubProfiles(cloneID_or_sampleName = as.numeric(extractID(x)), whichP = "GenomePerspective")
+}
+
+setupCLONEID(host='sql2', port='3306', user='root', password='xxxxx', database='CLONEID', schemaScript='CLONEID_schema.sql')
+
+# Specify the clone ID for which we want to find descendants.
+cl <- "SNU-668_A9_seed"
+
+# Find all descendands of the specified clone ID, excluding any recursive results.
+out <- findAllDescendandsOf(ids = cl, recursive = FALSE)
+
+## GenomePerspective
+mydb = cloneid::connect2DB()
+
+## Do we have Genome sequencing data for any lineage from this cell line?
+stmt = paste0("select distinct origin from Perspective where whichPerspective='GenomePerspective' and sampleSource = '",unique(out$cellLine),"'")
+rs = suppressWarnings(dbSendQuery(mydb, stmt))
+origin=fetch(rs, n=-1)[,"origin"]
+
+cat(paste0("\n### GenomePerspective : ", origin, ", length : ", length(origin), "\n"))
+tic(paste0("\n### GenomePerspective : ", origin, ", length : ", length(origin)))
+
+## Download genomic profile for one subpopulation:
+# Get the subclones from the origin
+sps <- getSubclones(cloneID_or_sampleName = origin, whichP = "GenomePerspective")
+
+# Extract the genomic profiles for each subclone
+# p <- sapply(names(sps), function(x) getSubProfiles(cloneID_or_sampleName = as.numeric(extractID(x)), whichP = "GenomePerspective"))
+p <- sapply(names(sps), function(x) getSubProfilesX(x))
+
+# Get the clone membership information
+clonemembership <- unlist(sapply(names(p), function(x) rep(x, ncol(p[[x]]))))
+
+# Calculate the clone sizes (number of rows in each profile)
+clonesizes <- sapply(p,ncol)
+
+# Combine the genomic profiles into a single data frame
+p <- do.call(cbind, p)
+
+# Print the dimensions of the combined data frame
+print(dim(p))
+
+# Print the first few rows of the combined data frame
+print(head(p[,1:min(3,ncol(p))]))
+
+toc()
+
+####################################################################
+
+
+
+Launching : Rscript --vanilla ../R/reference/m3.R
+Fri Aug  2 04:53:31 AM UTC 2024
+####################################################################
+
+
+$mysqlConnection
+$mysqlConnection$host
+[1] "sql2"
+
+$mysqlConnection$port
+[1] "3306"
+
+$mysqlConnection$user
+[1] "root"
+
+$mysqlConnection$password
+[1] "xxxxx"
+
+$mysqlConnection$database
+[1] "CLONEID"
+
+$mysqlConnection$schemaScript
+[1] "CLONEID_schema.sql"
+
+
+$cellSegmentation
+$cellSegmentation$input
+[1] "~/CellSegmentations/"
+
+$cellSegmentation$output
+[1] "~/CellSegmentations/output/"
+
+$cellSegmentation$tmp
+[1] "~/Downloads/tmp/"
+
+
+[1] "select *, 'SNU-668_A9_seed' as Ancestor from Passaging where id IN ('SNU-668_A9_seed', 'SNU-668_A9_seedT1', 'SNU-668_A9_seedT10_VT', 'SNU-668_A9_seedT11', 'SNU-668_A9_seedT12', 'SNU-668_A9_seedT13', 'SNU-668_A9_seedT14', 'SNU-668_A9_seedT2', 'SNU-668_A9_seedT3', 'SNU-668_A9_seedT4', 'SNU-668_A9_seedT5', 'SNU-668_A9_seedT6', 'SNU-668_A9_seedT7')"
+
+### GenomePerspective : SNU-668, length : 1
+[1] "Processing: SP_0.0381534_ID69293 69293"
+[1] "Processing: SP_0.177357_ID69291 69291"
+[1] "Processing: SP_0.0139145_ID69288 69288"
+[1] "Processing: SP_0.04823_ID69285 69285"
+[1] "Processing: SP_0.0224244_ID69286 69286"
+[1] "Processing: SP_0.037015_ID69284 69284"
+[1] "Processing: SP_0.341567_ID69289 69289"
+[1] "Processing: SP_0.0963238_ID69296 69296"
+[1] "Processing: SP_0.0549219_ID69283 69283"
+[1] "Processing: SP_0.0346304_ID69290 69290"
+[1]  92 933
+                      SP_0.0225568_ID70161 SP_0.0228502_ID70157
+1:840001-103440000                       2                    2
+1:103940001-125060000                    4                    4
+1:145720001-248900000                    3                    3
+2:1-154680000                            3                    3
+2:154980001-166060000                    2                    2
+2:166380001-241880000                    3                    3
+                      SP_0.0222314_ID70150
+1:840001-103440000                       2
+1:103940001-125060000                    4
+1:145720001-248900000                    3
+2:1-154680000                            3
+2:154980001-166060000                    2
+2:166380001-241880000                    3
+
+### GenomePerspective : SNU-668, length : 1: 212.188 sec elapsed
+
+
+####################################################################
+Fri Aug  2 04:57:07 AM UTC 2024
+Time taken: 3 minutes and 36 seconds
+Exited : Rscript --vanilla ../R/reference/m3.R
+
