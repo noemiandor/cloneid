@@ -7,18 +7,18 @@ options(java.parameters = "-Xmx9g")
 suppressWarnings(suppressMessages(library(cloneid)))
 library(tictoc)
 
-# cat(paste0("\n", "\n"))
-# 
-# sqlserver <- 'remote'
-# 
-# sqlsetup <- switch(sqlserver,
-#         docker = setupCLONEID(host='sql2', port='3306', user='xxxxx', password='xxxxx', database='CLONEID', schemaScript='CLONEID_schema.sql'),
-#         remote = setupCLONEID(host='xxxxxxxxxxxxx.xxxxxxxxxxxx.us-east-1.rds.amazonaws.com', port='3306', user='xxxxx', password='xxxxx', database='CLONEID', schemaScript='CLONEID_schema.sql')
-# )
-# 
-# cat(paste0("### Sql Info : "))
-# cat(paste0("\n", sqlserver, "\n", sqlsetup[1], "\n", sqlsetup[2], "\n"))
-# cat(paste0("###", "\n", "\n"))
+cat(paste0("\n", "\n"))
+
+sqlserver <- 'remote'
+
+sqlsetup <- switch(sqlserver,
+        docker = setupCLONEID(host='sql2', port='3306', user='xxxxx', password='xxxxx', database='CLONEID', schemaScript='CLONEID_schema.sql'),
+        remote = setupCLONEID(host='xxxxxxxxxxxxx.xxxxxxxxxxxx.us-east-1.rds.amazonaws.com', port='3306', user='xxxxx', password='xxxxx', database='CLONEID', schemaScript='CLONEID_schema.sql')
+)
+
+cat(paste0("### Sql Info : "))
+cat(paste0("\n", sqlserver, "\n", sqlsetup[1], "\n", sqlsetup[2], "\n"))
+cat(paste0("###", "\n", "\n"))
 
 # Specify the clone ID for which we want to find descendants.
 cl <- "SNU-668_A9_seed"
