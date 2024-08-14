@@ -3,19 +3,20 @@
 # - less than 0.0001 minutes per single cell respectively for scDNA-seq derived copy number data
 # - less than 0.0001 minutes per single cell respectively for low-dimensional Morphology data. 
 
-options(java.parameters = "-Xmx9g")
 suppressWarnings(suppressMessages(library(cloneid)))
 library(tictoc)
+
+branch <- 'master'
 
 sqlserver <- 'remote'
 
 sqlsetup <- switch(sqlserver,
-                   docker = setupCLONEID(host='sql2', port='3306', user='thomasveith', password='XXXX', database='CLONEID', schemaScript='CLONEID_schema.sql'),
-                   remote = setupCLONEID(host='cloneredesign.cswgogbb5ufg.us-east-1.rds.amazonaws.com', port='3306', user='thomasveith', password='XXXX', database='CLONEID', schemaScript='CLONEID_schema.sql')
+                   docker = setupCLONEID(host='sql2', port='3306', user='thomasveith', password='xxxx', database='CLONEID', schemaScript='CLONEID_schema.sql'),
+                   remote = setupCLONEID(host='cloneredesign.cswgogbb5ufg.us-east-1.rds.amazonaws.com', port='3306', user='thomasveith', password='xxxx', database='CLONEID', schemaScript='CLONEID_schema.sql')
 )
 
 # Specify the clone ID for which we want to find descendants.
-cl <- "SNU-668_A9_seed"
+cl <- "NCI-N87"
 
 # Find all descendands of the specified clone ID, excluding any recursive results.
 out <- suppressWarnings(suppressMessages(findAllDescendandsOf(ids = cl, recursive = FALSE)))
@@ -53,6 +54,9 @@ clonesizes <- sapply(p,ncol)
 
 # Combine the genomic profiles into a single data frame
 p <- do.call(cbind, p)
+
+# Write the combined genomic profiles to a text file
+write.table(p, file = paste0("~/Downloads/", branch, "_", cl, "_genomeprofile.txt"), sep = "\t", quote = FALSE, row.names = TRUE)
 
 # Print the dimensions of the combined data frame
 cat(paste('dimensions', dim(p)[1], dim(p)[2], "\n"))
