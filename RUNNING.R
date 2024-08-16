@@ -6,17 +6,17 @@
 suppressWarnings(suppressMessages(library(cloneid)))
 library(tictoc)
 
-branch <- 'master'
+branch <- 'test_tommy'
 
 sqlserver <- 'remote'
 
 sqlsetup <- switch(sqlserver,
-                   docker = setupCLONEID(host='sql2', port='3306', user='thomasveith', password='xxxx', database='CLONEID', schemaScript='CLONEID_schema.sql'),
-                   remote = setupCLONEID(host='cloneredesign.cswgogbb5ufg.us-east-1.rds.amazonaws.com', port='3306', user='thomasveith', password='xxxx', database='CLONEID', schemaScript='CLONEID_schema.sql')
+                   docker = setupCLONEID(host='sql2', port='3306', user='thomasveith', password='clonesandsuch', database='CLONEID', schemaScript='CLONEID_schema.sql'),
+                   remote = setupCLONEID(host='cloneredesign.cswgogbb5ufg.us-east-1.rds.amazonaws.com', port='3306', user='thomasveith', password='clonesandsuch', database='CLONEID', schemaScript='CLONEID_schema.sql')
 )
 
 # Specify the clone ID for which we want to find descendants.
-cl <- "NCI-N87"
+cl <- "MKN-45"
 
 # Find all descendands of the specified clone ID, excluding any recursive results.
 out <- suppressWarnings(suppressMessages(findAllDescendandsOf(ids = cl, recursive = FALSE)))
