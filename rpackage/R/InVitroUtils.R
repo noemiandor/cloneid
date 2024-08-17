@@ -29,7 +29,7 @@ init <- function(id, cellLine, cellCount, tx = Sys.time(), media=NULL, flask=NUL
   user=fetch(rs, n=-1)[,1];
   
   stmt = paste0("INSERT INTO Passaging (id, cellLine, event, date, cellCount, passage, flask, media, owner, lastModified) ",
-                "VALUES ('",id ,"', '",cellLine,"', 'harvest', '",tx,"', ",dishCount,", ", 1,", ",flask,", ", media, ", '", user, "', '", user, "');")
+                "VALUES ('",id ,"', '",cellLine,"', 'harvest', '",as.character(tx),"', ",dishCount,", ", 1,", ",flask,", ", media, ", '", user, "', '", user, "');")
   rs = dbSendQuery(mydb, stmt)
   
   dbClearResult(dbListResults(mydb)[[1]])
@@ -60,7 +60,7 @@ feed <- function(id, tx=Sys.time()){
   }
   
   ### Insert
-  stmt = paste0("UPDATE Passaging SET ",names(priorfeedings)[nextI]," = '",tx,"' where id = '",id ,"'") 
+  stmt = paste0("UPDATE Passaging SET ",names(priorfeedings)[nextI]," = '",as.character(tx),"' where id = '",id ,"'") 
   rs = dbSendQuery(mydb, stmt)
   print(paste("Feeding for",id,"recorded at",tx), quote = F);
   
@@ -377,7 +377,7 @@ plotLiquidNitrogenBox <- function(rack, row){
   passaging$passage_id <- sapply(passaging$id, .unique_passage_id)
   # x=data.table::transpose(as.data.frame(c(id , event, from, dish$dishCount, passage)))
   # colnames(x) = c("id", "event", "passaged_from_id1", "correctedCount", "passage")
-  x=data.table::transpose(as.data.frame(c(id ,from,event,tx,dish$dishCount,dish$dishCount,dish$cellSize, dish$dishAreaOccupied, passage,flask,kids$media,  user,  user)))
+  x=data.table::transpose(as.data.frame(c(id ,from,event,as.character(tx),dish$dishCount,dish$dishCount,dish$cellSize, dish$dishAreaOccupied, passage,flask,kids$media,  user,  user)))
   colnames(x) = c("id", "passaged_from_id1", "event", "date", "cellCount","correctedCount","cellSize_um2","areaOccupied_um2", "passage", "flask", "media", "owner", "lastModified")
   rownames(x) <- x$id
   x4DB <- x
@@ -411,7 +411,7 @@ plotLiquidNitrogenBox <- function(rack, row){
   if(ancestorCheck){
     ### Insert
     # stmt = paste0("INSERT INTO Passaging (id, passaged_from_id1, event, date, cellCount, passage, flask, media, owner, lastModified) ",
-                  # "VALUES ('",id ,"', '",from,"', '",event,"', '",tx,"', ",dish$dishCount,", ", passage,", ",flask,", ", kids$media, ", '", user, "', '", user, "');")
+                  # "VALUES ('",id ,"', '",from,"', '",event,"', '",as.character(tx),"', ",dish$dishCount,", ", passage,", ",flask,", ", kids$media, ", '", user, "', '", user, "');")
     stmt = paste0("INSERT INTO Passaging (",paste(names(x4DB), collapse = ", "),") ",
                   "VALUES (",paste(x4DB, collapse = ", "),");")
     rs = try(dbSendQuery(mydb, stmt))
