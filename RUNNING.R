@@ -16,7 +16,10 @@ sqlsetup <- switch(sqlserver,
 )
 
 # Specify the clone ID for which we want to find descendants.
-cl <- "MKN-45"
+cls <- c("NUGC-4","NCI-N87","HGC-27","KATOIII","SNU-668" ,"MKN-45","SNU-638","SNU-601", "SNU-16");
+
+
+for(cl in cls){
 
 # Find all descendands of the specified clone ID, excluding any recursive results.
 out <- suppressWarnings(suppressMessages(findAllDescendandsOf(ids = cl, recursive = FALSE)))
@@ -58,6 +61,7 @@ p <- do.call(cbind, p)
 # Write the combined genomic profiles to a text file
 write.table(p, file = paste0("~/Downloads/", branch, "_", cl, "_genomeprofile.txt"), sep = "\t", quote = FALSE, row.names = TRUE)
 
+}
 # Print the dimensions of the combined data frame
 cat(paste('dimensions', dim(p)[1], dim(p)[2], "\n"))
 
