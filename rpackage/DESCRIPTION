@@ -1,7 +1,7 @@
 Package: cloneid
 Type: Package
 Title: Model-Based Systems for tracing and steering clonal dynamics
-Version: 1.2.1
+Version: 1.3.1
 Date: 2017-03-03
 Author: Noemi Andor
 Maintainer: Noemi Andor <cloneid.r@gmail.com>
