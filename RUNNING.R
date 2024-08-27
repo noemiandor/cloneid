@@ -6,22 +6,24 @@
 suppressWarnings(suppressMessages(library(cloneid)))
 library(tictoc)
 
-branch <- 'test_tommy'
+setupCLONEID(host='cloneid.cswgogbb5ufg.us-east-1.rds.amazonaws.com', port='3306', user='thomas', password='densitydependence', database='CLONEID', schemaScript='CLONEID_schema.sql')
+
+version <- packageVersion("cloneid")
 
 sqlserver <- 'remote'
 
 sqlsetup <- switch(sqlserver,
-                   docker = setupCLONEID(host='sql2', port='3306', user='thomasveith', password='clonesandsuch', database='CLONEID', schemaScript='CLONEID_schema.sql'),
-                   remote = setupCLONEID(host='cloneredesign.cswgogbb5ufg.us-east-1.rds.amazonaws.com', port='3306', user='thomasveith', password='clonesandsuch', database='CLONEID', schemaScript='CLONEID_schema.sql')
+                   docker = setupCLONEID(host='sql2', port='3306', user='thomas', password='densitydependence', database='CLONEID', schemaScript='CLONEID_schema.sql'),
+                   remote = setupCLONEID(host='cloneid.cswgogbb5ufg.us-east-1.rds.amazonaws.com', port='3306', user='thomas', password='densitydependence', database='CLONEID', schemaScript='CLONEID_schema.sql')
 )
 
 # Specify the clone ID for which we want to find descendants.
-cls <- c("NUGC-4","NCI-N87","HGC-27","KATOIII","SNU-668" ,"MKN-45","SNU-638","SNU-601", "SNU-16")
+cls <- sort(c("NUGC-4","NCI-N87","HGC-27","KATOIII","SNU-668" ,"MKN-45","SNU-638","SNU-601", "SNU-16"))
 
 for(cl in cls){
   
   # Prepare a file to record timing information for this cell line
-  timing_file <- paste0("~/Downloads/", branch, "_", cl, "_timing_log.txt")
+  timing_file <- paste0("~/Downloads/", version, "_", cl, "_timing_log.txt")
   cat("Subclone ID\tTime (minutes)\n", file = timing_file) # Header
   
   # Find all descendants of the specified clone ID, excluding any recursive results.
@@ -72,7 +74,7 @@ for(cl in cls){
   p <- do.call(cbind, p)
   
   # Write the combined genomic profiles to a text file
-  write.table(p, file = paste0("~/Downloads/", branch, "_", cl, "_genomeprofile.txt"), sep = "\t", quote = FALSE, row.names = TRUE)
+  write.table(p, file = paste0("~/Downloads/", version, "_", cl, "_genomeprofile.txt"), sep = "\t", quote = FALSE, row.names = TRUE)
 }
 
 # Print the dimensions of the combined data frame
