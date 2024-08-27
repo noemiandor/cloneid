@@ -18,7 +18,7 @@ sqlsetup <- switch(sqlserver,
 )
 
 # Specify the clone ID for which we want to find descendants.
-cls <- sort(c("NUGC-4","NCI-N87","HGC-27","KATOIII","SNU-668" ,"MKN-45","SNU-638","SNU-601", "SNU-16"))
+cls <- sort(c("NUGC-4","NCI-N87","HGC-27","KATOIII","SNU-668" ,"MKN-45","SNU-638","SNU-601"))
 
 for(cl in cls){
   
