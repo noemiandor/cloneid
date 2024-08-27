@@ -14,9 +14,12 @@ cat("Processing Time Log\n", file = log_file, append = FALSE) # Create or overwr
 
 start_time <- Sys.time()
 
+total_cells <- 0
+
 for(p in names(CloneProfiles)){
   dataset_start_time <- Sys.time()
   print(paste("Number of cells in",p,"dataset:",sum(sapply(CloneProfiles[[p]],ncol))))
+  total_cells <- total_cells + sum(sapply(CloneProfiles[[p]],ncol))
   OUT=paste0("~/Downloads/testViewPerspective",filesep,p)
   dir.create(OUT,recursive = T)
   for(name in names(CloneProfiles[[p]])){
@@ -34,10 +37,11 @@ for(p in names(CloneProfiles)){
   viewPerspective(spstatsFile =paste0(OUT,filesep,name), whichP = p,suffix = suffix)
 
   dataset_end_time <- Sys.time()
-  # Log the time taken for the entire dataset processing
-  cat(sprintf("Dataset: %s - Time taken: %.2f minutes\n", p, as.numeric(difftime(dataset_end_time, dataset_start_time, units = "mins"))), file = log_file, append = TRUE)
+  # Log the time taken for processing the data in seconds/cell
+  time_per_cell <- as.numeric(difftime(dataset_end_time, dataset_start_time, units = "secs")) / sum(sapply(CloneProfiles[[p]],ncol))
+  cat(sprintf("Cell: %s - Time taken per cell: %.2f seconds (Total cells: %d)\n", name, time_per_cell, sum(sapply(CloneProfiles[[p]],ncol))), file = log_file, append = TRUE)
 }
 
 end_time <- Sys.time()
-total_time <- as.numeric(difftime(end_time, start_time, units = "mins"))
-cat(sprintf("Total Processing Time: %.2f minutes\n", total_time), file = log_file, append = TRUE)
+total_time_per_cell <- as.numeric(difftime(end_time, start_time, units = "secs"))/total_cells
+cat(sprintf("Time taken per cell for entire dataset: %.2f seconds\n", total_time_per_cell), file = log_file, append = TRUE)
