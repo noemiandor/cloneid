@@ -55,7 +55,7 @@ for(cl in cls){
     result <- cloneid::getSubProfiles(cloneID_or_sampleName = y, whichP = "GenomePerspective")
     
     # Stop timing and record time
-    time_taken <- toc(quiet = TRUE)
+    time_taken <- toc()
     time_taken_minutes <- (time_taken$toc - time_taken$tic) / 60
     cat(paste(y, format(time_taken_minutes, digits=6), "\n", sep="\t"), file = timing_file, append = TRUE)
     
