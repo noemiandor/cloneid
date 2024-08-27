@@ -4,7 +4,7 @@
 library(tictoc)
 library(rmarkdown)
 
-cls <- c("NUGC-4","NCI-N87","HGC-27","KATOIII","SNU-668" ,"MKN-45","SNU-638","SNU-601", "SNU-16")
+cls <- sort(c("NUGC-4","NCI-N87","HGC-27","KATOIII","SNU-668" ,"MKN-45","SNU-638","SNU-601"))
 
 # Base file paths
 base_path <- "~/Downloads/"
@@ -12,12 +12,12 @@ base_path <- "~/Downloads/"
 for(cell_line in cls){
   
   # File paths
-  master_branch_file <- paste0(base_path, "master_", cell_line, "_genomeprofile.txt")
-  test_branch_file <- paste0(base_path, "test_tommy_", cell_line, "_genomeprofile.txt")
+  master_branch_file <- paste0(base_path, "1.2.1_", cell_line, "_genomeprofile.txt")
+  test_branch_file <- paste0(base_path, "1.3.1_", cell_line, "_genomeprofile.txt")
   
   # Timing file paths
-  master_timing_file <- paste0(base_path, "master_", cell_line, "_timing_log.txt")
-  test_timing_file <- paste0(base_path, "test_tommy_", cell_line, "_timing_log.txt")
+  master_timing_file <- paste0(base_path, "1.2.1_", cell_line, "_timing_log.txt")
+  test_timing_file <- paste0(base_path, "1.3.1_", cell_line, "_timing_log.txt")
   
   # Load data
   master_branch <- read.table(master_branch_file)
