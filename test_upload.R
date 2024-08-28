@@ -67,10 +67,6 @@ version <- packageVersion("cloneid")
 log_file <- paste0("~/Downloads/process_time_log_", version, ".txt")
 cat("Processing Time Log\n", file = log_file, append = FALSE) # Create or overwrite the log file
 
-# Initialize upload summary file with version in the filename
-summary_file <- paste0("~/Downloads/upload_summary_", version, ".txt")
-cat("Upload Summary\n", file = summary_file, append = FALSE) # Create or overwrite the summary file
-
 start_time <- Sys.time()
 
 total_cells <- 0
@@ -81,6 +77,11 @@ for(p in names(CloneProfiles)[1:2]){
   total_cells <- total_cells + sum(sapply(CloneProfiles[[p]],ncol))
   OUT=paste0("~/Downloads/testViewPerspective", filesep, p)
   dir.create(OUT, recursive = T)
+  
+  # Initialize upload summary file with version and p in the filename
+  summary_file <- paste0("~/Downloads/upload_summary_", p, "_", version, ".txt")
+  cat("Upload Summary\n", file = summary_file, append = FALSE) # Create or overwrite the summary file
+  
   for(name in names(CloneProfiles[[p]])){
     tab=CloneProfiles[[p]][[name]]
     ii=grep("Clone_", colnames(tab))
@@ -106,4 +107,3 @@ for(p in names(CloneProfiles)[1:2]){
 end_time <- Sys.time()
 total_time_per_cell <- as.numeric(difftime(end_time, start_time, units = "secs")) / total_cells
 cat(sprintf("Time taken per cell for entire dataset: %.2f seconds\n", total_time_per_cell), file = log_file, append = TRUE)
-
