@@ -278,33 +278,33 @@ removeFromLiquidNitrogen <- function(rack, row, boxRow, boxColumn){
   dbDisconnect(mydb)
 }
 
-plotLiquidNitrogenBox <- function(rack, row){
+plotLiquidNitrogenBox <- function (rack, row) {
   library(RMySQL)
   mydb = connect2DB()
-  cmd=paste0("select * from LiquidNitrogen where ",
-             "Rack = '",rack,"' AND ",
-             "Row = '",row,"'");
+  cmd = paste0("select * from LiquidNitrogen as x where ", "x.Rack = '", 
+               rack, "' AND ", "x.Row = '", row,"'")
   print(cmd)
-  rs = dbSendQuery(mydb, cmd);
-  kids = fetch(rs, n=-1)
+  rs = dbSendQuery(mydb, cmd)
+  kids = fetch(rs, n = -1)
   kids$id[is.na(kids$id)] = "NA"
-  
-  ## Visualize
   rc = apply(kids, 2, unique)
-  par(mfrow=c(2,2), mai=c(0,0.5,0.5,0))
-  plot(c(1,length(rc$BoxColumn)),c(1,length(rc$BoxRow)), col="white", yaxt="n", xaxt="n", xlab="",ylab="", main=paste("Rack",rack,"; Row",row),ylim = rev(range(c(1,length(rc$BoxRow)))) )
-  axis(1, at=1:length(rc$BoxColumn), labels=rc$BoxColumn, las=1)
-  axis(2, at=1:length(rc$BoxRow), labels=rc$BoxRow, las=2)
-  cols = gray.colors(length(rc$id)*1.2)[1:length(rc$id)]
+  par(mfrow = c(2, 2), mai = c(0, 0.5, 0.5, 0))
+  plot(c(1, length(rc$BoxColumn)), c(1, length(rc$BoxRow)), 
+       col = "white", yaxt = "n", xaxt = "n", xlab = "", ylab = "", 
+       main = paste("Rack", rack, "; Row", row), ylim = rev(range(c(1, 
+                                                                    length(rc$BoxRow)))))
+  axis(1, at = 1:length(rc$BoxColumn), labels = rc$BoxColumn, 
+       las = 1)
+  axis(2, at = 1:length(rc$BoxRow), labels = rc$BoxRow, las = 2)
+  cols = gray.colors(length(rc$id) * 1.2)[1:length(rc$id)]
   names(cols) = unique(rc$id)
   cols["NA"] = "white"
-  for(i in 1:nrow(kids)){
-    points(match(kids$BoxColumn[i], rc$BoxColumn), match(kids$BoxRow[i], rc$BoxRow), col=cols[kids$id[i]], pch=20, cex=4)
+  for (i in 1:nrow(kids)) {
+    points(match(kids$BoxColumn[i], rc$BoxColumn), match(kids$BoxRow[i], 
+                                                         rc$BoxRow), col = cols[kids$id[i]], pch = 20, cex = 4)
   }
-  
-  plot(1,1,axes=F, col="white")
-  legend("topleft", names(cols), fill=cols)
-  
+  plot(1, 1, axes = F, col = "white")
+  legend("topleft", names(cols), fill = cols)
   dbClearResult(dbListResults(mydb)[[1]])
   dbDisconnect(mydb)
 }
