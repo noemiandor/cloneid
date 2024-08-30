@@ -18,9 +18,18 @@ data(CloneProfiles)
 
 version <- packageVersion("cloneid")
 
+# Initialize timing log files
+timing_log_section1 <- "~/Downloads/timing_log_section1.txt"
+timing_log_section2 <- "~/Downloads/timing_log_section2.txt"
+cat("Timing Log for Section 1\n", file = timing_log_section1, append = FALSE)  # Overwrite the file
+cat("Timing Log for Section 2\n", file = timing_log_section2, append = FALSE)  # Overwrite the file
+
 #################
 ### Section 1 ###
 #################
+
+# Start timing Section 1
+section1_start_time <- Sys.time()
 
 # Process each dataset in CloneProfiles
 for(p in names(CloneProfiles)[1:2]){
@@ -67,19 +76,28 @@ p <- do.call(cbind, p)
 # Write the combined genomic profiles to a file
 write.table(p, file=paste0("~/Downloads/", version, "_", PREFIX, "SNU-16", "_genomeprofile.txt"), sep="\t", quote=FALSE, row.names=TRUE)
 
+# End timing Section 1
+section1_end_time <- Sys.time()
+section1_total_time <- as.numeric(difftime(section1_end_time, section1_start_time, units = "secs"))
+cat(sprintf("Total time for Section 1: %.2f seconds\n", section1_total_time), file = timing_log_section1, append = TRUE)
+
 #################
 ### Section 2 ###
 #################
 
-# Define the cell lines to compare
-cls <- c("SNU-16")
+# Define the cell line and profiles to compare
+cell_line <- "SNU-16"
+profiles <- c("genomeprofile", "transcriptomeprofile")
 base_path <- "~/Downloads/"
 
-for(cell_line in cls){
+for(prof in profiles){
+  
+  # Start timing for each profile in Section 2
+  profile_start_time <- Sys.time()
   
   # File paths for the master and test branch files
-  master_branch_file <- paste0(base_path, "1.2.1_TEST9_", cell_line, "_genomeprofile.txt")
-  test_branch_file <- paste0(base_path, "1.3.1_TEST8_", cell_line, "_genomeprofile.txt")
+  master_branch_file <- paste0(base_path, "1.2.1_TEST9_", cell_line, "_", prof, ".txt")
+  test_branch_file <- paste0(base_path, "1.3.1_TEST8_", cell_line, "_", prof, ".txt")
   
   # Load data from the master and test branches
   master_branch <- read.table(master_branch_file)
@@ -88,6 +106,10 @@ for(cell_line in cls){
   # Calculate pairwise distances between columns
   distance_matrix <- abs(outer(1:ncol(master_branch), 1:ncol(test_branch), 
                                Vectorize(function(i, j) sum(master_branch[, i] != test_branch[, j]))))
+  
+  # Add a tiny number to the distance matrix to avoid log(0)
+  tiny_number <- 1e-10
+  distance_matrix <- distance_matrix + tiny_number
   
   # Reorder columns to place identical matches on the diagonal
   ii <- apply(distance_matrix, 1, which.min)
@@ -98,26 +120,27 @@ for(cell_line in cls){
   ######################
   
   # Prepare data for heatmap
-  heatmap_data <- melt(distance_matrix)
-  colnames(heatmap_data) <- c("MasterBranch", "TestBranch", "Distance")
+  heatmap_data <- melt(log10(distance_matrix))
+  colnames(heatmap_data) <- c("MasterBranch", "TestBranch", "LogDistance")
   
-  # Create heatmap for pairwise distances with an engaging color palette
-  heatmap_plot <- ggplot(heatmap_data, aes(x=TestBranch, y=MasterBranch, fill=Distance)) +
+  # Create heatmap for pairwise distances on a log scale with an engaging color palette
+  heatmap_plot <- ggplot(heatmap_data, aes(x=TestBranch, y=MasterBranch, fill=LogDistance)) +
     geom_tile() +
     scale_fill_gradient(low="#56B1F7", high="#132B43") +  # Engaging blue color palette
-    labs(title=paste("Pairwise Distance Heatmap for", cell_line),
+    labs(title=paste("Log-Scaled Pairwise Distance Heatmap for", cell_line, prof),
          x="Test Branch Columns",
          y="Master Branch Columns") +
     theme_minimal()
   
   # Save the heatmap to a file
-  ggsave(paste0(base_path, "distance_heatmap_", cell_line, ".pdf"), plot=heatmap_plot)
+  ggsave(paste0(base_path, "log_distance_heatmap_", cell_line, "_", prof, ".pdf"), plot=heatmap_plot)
   
   # Report the number of matches and non-matches
-  num_matches <- sum(diag(distance_matrix) == 0)
+  num_matches <- sum(diag(distance_matrix) == tiny_number)
   num_non_matches <- ncol(master_branch) - num_matches
   
   cat(paste("Cell line:", cell_line, "\n"))
+  cat(paste("Profile:", prof, "\n"))
   cat(paste("Number of identical columns:", num_matches, "\n"))
   cat(paste("Number of non-identical columns:", num_non_matches, "\n"))
   
@@ -133,20 +156,26 @@ for(cell_line in cls){
 - Number of identical columns: ", num_matches, "
 - Number of non-identical columns: ", num_non_matches, "
 
-## Pairwise Distance Heatmap
-A heatmap of pairwise distances is saved as 'distance_heatmap_", cell_line, ".pdf'.
+## Log-Scaled Pairwise Distance Heatmap
+A heatmap of log-scaled pairwise distances is saved as 'log_distance_heatmap_", cell_line, "_", prof, ".pdf'.
 ")
   
   # Write the report to an R Markdown file
-  report_filename <- paste0("genome_profile_comparison_report_", cell_line, ".Rmd")
+  report_filename <- paste0(prof,"_profile_comparison_report_", cell_line, ".Rmd")
   report_path <- file.path(base_path, report_filename)
   
   writeLines(report_content, con=report_path)
   
   # Render the report to a PDF and save it
-  output_pdf <- paste0("comparison_report_", cell_line, ".pdf")
+  output_pdf <- paste0(prof, "_comparison_report_", cell_line, ".pdf")
   rmarkdown::render(report_path, output_format="pdf_document", output_file=output_pdf)
   
   # Clean up intermediate files
   file.remove(report_path)
+  
+  # End timing for each profile in Section 2
+  profile_end_time <- Sys.time()
+  profile_total_time <- as.numeric(difftime(profile_end_time, profile_start_time, units = "secs"))
+  cat(sprintf("Total time for profile %s in Section 2: %.2f seconds\n", prof, profile_total_time), file = timing_log_section2, append = TRUE)
 }
+
