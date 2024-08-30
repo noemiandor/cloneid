@@ -6,8 +6,6 @@
 suppressWarnings(suppressMessages(library(cloneid)))
 library(tictoc)
 
-setupCLONEID(host='cloneid.cswgogbb5ufg.us-east-1.rds.amazonaws.com', port='3306', user='thomas', password='densitydependence', database='CLONEID', schemaScript='CLONEID_schema.sql')
-
 version <- packageVersion("cloneid")
 
 sqlserver <- 'remote'
