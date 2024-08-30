@@ -246,13 +246,13 @@ plotCellLineHistory<-function(){
 updateLiquidNitrogen <- function(id, cellCount, rack, row, boxRow, boxColumn){
   library(RMySQL)
   mydb = connect2DB()
-  cmd=paste0("UPDATE LiquidNitrogen SET ",
-             "id = '",id,"',",
-             "cellCount = ",cellCount," WHERE ",
-             "Rack = '",rack,"' AND ",
-             "Row = '",row,"' AND ",
-             "BoxRow = '",boxRow,"' AND ",
-             "BoxColumn = '",boxColumn,"'");
+  cmd=paste0("UPDATE LiquidNitrogen as x SET ",
+             "x.id = '",id,"',",
+             "x.cellCount = ",cellCount," WHERE ",
+             "x.Rack = '",rack,"' AND ",
+             "x.Row = '",row,"' AND ",
+             "x.BoxRow = '",boxRow,"' AND ",
+             "x.BoxColumn = '",boxColumn,"'");
   print(cmd)
   rs = dbSendQuery(mydb, cmd);
   
@@ -264,13 +264,13 @@ updateLiquidNitrogen <- function(id, cellCount, rack, row, boxRow, boxColumn){
 removeFromLiquidNitrogen <- function(rack, row, boxRow, boxColumn){
   library(RMySQL)
   mydb = connect2DB()
-  cmd=paste0("UPDATE LiquidNitrogen SET ",
-             "id = NULL,",
-             "cellCount = 0 WHERE ",
-             "Rack = '",rack,"' AND ",
-             "Row = '",row,"' AND ",
-             "BoxRow = '",boxRow,"' AND ",
-             "BoxColumn = '",boxColumn,"'");
+  cmd=paste0("UPDATE LiquidNitrogen as x SET ",
+             "x.id = NULL,",
+             "x.cellCount = 0 WHERE ",
+             "x.Rack = '",rack,"' AND ",
+             "x.Row = '",row,"' AND ",
+             "x.BoxRow = '",boxRow,"' AND ",
+             "x.BoxColumn = '",boxColumn,"'");
   print(cmd)
   rs = dbSendQuery(mydb, cmd);
   
