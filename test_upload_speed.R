@@ -1,7 +1,7 @@
 ## Record "genotypic" information into CLONEID
 options(java.parameters = "-Xmx7g")
 setwd("~/Repositories/cloneid/")
-PREFIX="TEST3_"
+PREFIX="TEST10_"
 ## Note: this includes cell morphology info. Referring to a morphology feature as “genotype” is technically not correct. We will need to come up with a better name
 library(cloneid)
 library(liayson)
