@@ -18,11 +18,11 @@ data(CloneProfiles)
 
 version <- packageVersion("cloneid")
 
-# Initialize timing log files
-timing_log_section1 <- "~/Downloads/timing_log_section1.txt"
-timing_log_section2 <- "~/Downloads/timing_log_section2.txt"
-cat("Timing Log for Section 1\n", file = timing_log_section1, append = FALSE)  # Overwrite the file
-cat("Timing Log for Section 2\n", file = timing_log_section2, append = FALSE)  # Overwrite the file
+# Initialize log files
+log_file_section1 <- paste0("~/Downloads/", version, "_upload_process_time_log_section1.txt")
+log_file_section2 <- paste0("~/Downloads/", version, "_upload_process_time_log_section2.txt")
+cat("Processing Time Log for Section 1\n", file = log_file_section1, append = FALSE)  # Create or overwrite the log file
+cat("Processing Time Log for Section 2\n", file = log_file_section2, append = FALSE)  # Create or overwrite the log file
 
 #################
 ### Section 1 ###
@@ -31,12 +31,14 @@ cat("Timing Log for Section 2\n", file = timing_log_section2, append = FALSE)  #
 # Start timing Section 1
 section1_start_time <- Sys.time()
 
+total_cells_section1 <- 0
+
 # Process each dataset in CloneProfiles
 for(p in names(CloneProfiles)[1:2]){
   dataset_start_time <- Sys.time()
   print(paste("Number of cells in", p, "dataset:", sum(sapply(CloneProfiles[[p]], ncol))))
   
-  total_cells <- sum(sapply(CloneProfiles[[p]], ncol))
+  total_cells_section1 <- total_cells_section1 + sum(sapply(CloneProfiles[[p]], ncol))
   OUT <- paste0("~/Downloads/testViewPerspective", filesep, p)
   dir.create(OUT, recursive = TRUE)
   
@@ -55,31 +57,16 @@ for(p in names(CloneProfiles)[1:2]){
   suffix <- paste0(PREFIX, grep("spstats", names(CloneProfiles[[p]]), invert=TRUE, value=TRUE)[1])
   suffix <- gsub(fileparts(name)$name, "", suffix)
   viewPerspective(spstatsFile=paste0(OUT, filesep, name), whichP=p, suffix=suffix)
+  
+  dataset_end_time <- Sys.time()
+  # Log the time taken for processing the data in seconds/cell
+  time_per_cell <- as.numeric(difftime(dataset_end_time, dataset_start_time, units = "secs")) / sum(sapply(CloneProfiles[[p]], ncol))
+  cat(sprintf("Dataset: %s - Time taken per cell: %.2f seconds (Total cells: %d)\n", p, time_per_cell, sum(sapply(CloneProfiles[[p]], ncol))), file = log_file_section1, append = TRUE)
 }
 
-# Get subclones from the origin and extract genomic profiles
-sps <- getSubclones(cloneID_or_sampleName = "TEST9_SNU-16", whichP = "GenomePerspective")
-p <- sapply(names(sps), function(x) {
-  y <- as.numeric(extractID(x))
-  print(paste0("Processing SP", y))
-  
-  # Extract subprofiles
-  result <- cloneid::getSubProfiles(cloneID_or_sampleName=y, whichP="GenomePerspective")
-  return(result)
-})
-
-# Combine genomic profiles into a single data frame
-clonemembership <- unlist(sapply(names(p), function(x) rep(x, ncol(p[[x]]))))
-clonesizes <- sapply(p, ncol)
-p <- do.call(cbind, p)
-
-# Write the combined genomic profiles to a file
-write.table(p, file=paste0("~/Downloads/", version, "_", PREFIX, "SNU-16", "_genomeprofile.txt"), sep="\t", quote=FALSE, row.names=TRUE)
-
-# End timing Section 1
 section1_end_time <- Sys.time()
-section1_total_time <- as.numeric(difftime(section1_end_time, section1_start_time, units = "secs"))
-cat(sprintf("Total time for Section 1: %.2f seconds\n", section1_total_time), file = timing_log_section1, append = TRUE)
+total_time_per_cell_section1 <- as.numeric(difftime(section1_end_time, section1_start_time, units = "secs")) / total_cells_section1
+cat(sprintf("Time taken per cell for entire Section 1: %.2f seconds\n", total_time_per_cell_section1), file = log_file_section1, append = TRUE)
 
 #################
 ### Section 2 ###
@@ -92,7 +79,6 @@ base_path <- "~/Downloads/"
 
 for(prof in profiles){
   
-  # Start timing for each profile in Section 2
   profile_start_time <- Sys.time()
   
   # File paths for the master and test branch files
@@ -173,9 +159,12 @@ A heatmap of log-scaled pairwise distances is saved as 'log_distance_heatmap_", 
   # Clean up intermediate files
   file.remove(report_path)
   
-  # End timing for each profile in Section 2
   profile_end_time <- Sys.time()
-  profile_total_time <- as.numeric(difftime(profile_end_time, profile_start_time, units = "secs"))
-  cat(sprintf("Total time for profile %s in Section 2: %.2f seconds\n", prof, profile_total_time), file = timing_log_section2, append = TRUE)
+  # Log the time taken for processing the profile in seconds/cell
+  time_per_cell_profile <- as.numeric(difftime(profile_end_time, profile_start_time, units = "secs")) / ncol(master_branch)
+  cat(sprintf("Profile: %s - Time taken per cell: %.2f seconds (Total cells: %d)\n", prof, time_per_cell_profile, ncol(master_branch)), file = log_file_section2, append = TRUE)
 }
 
+# End timing for Section 2
+total_time_section2 <- as.numeric(difftime(profile_end_time, section1_start_time, units = "secs")) / (length(profiles) * ncol(master_branch))
+cat(sprintf("Time taken per cell for entire Section 2: %.2f seconds\n", total_time_section2), file = log_file_section2, append = TRUE)
