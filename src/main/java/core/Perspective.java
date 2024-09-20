@@ -3,7 +3,7 @@ package core;
 
 
 import java.io.File;
-import java.io.IOException;
+// import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Arrays;
@@ -26,7 +26,7 @@ public abstract class Perspective extends Clone {
 	 * The name of the biosample in which this clone was detected.
 	 */
 	protected String origin;
-	
+
 	public Perspective(float f,  String sampleName) throws SQLException {
 		super(f, sampleName);
 	}
@@ -36,7 +36,7 @@ public abstract class Perspective extends Clone {
 	}
 
 
-	
+
 	protected Map<String, String> getDBformattedAttributesAsMap(){
 		Map<String, String> map=super.getDBformattedAttributesAsMap();
 		map.put("whichPerspective","\'"+this.getClass().getSimpleName()+"\'");
@@ -45,8 +45,8 @@ public abstract class Perspective extends Clone {
 	}
 
 	/**
-	 * Adds clone @child contained within this clone to this clone's children. This method also sets the parent of @child to reference this clone.  
-	 * @param c - the clone contained within this clone. 
+	 * Adds clone @child contained within this clone to this clone's children. This method also sets the parent of @child to reference this clone.
+	 * @param c - the clone contained within this clone.
 	 */
 	@Override
 	protected void addChild(Clone c){
@@ -65,7 +65,7 @@ public abstract class Perspective extends Clone {
 		children.add(c);
 	}
 
-	
+
 	@Override
 	public void setParent(Clone clone) {
 		if(!origin.equals(((Perspective)clone).origin)){
@@ -73,7 +73,7 @@ public abstract class Perspective extends Clone {
 		}
 		this.parent=clone;
 	}
-	
+
 	/**
 	 * Check if clone exists yet in DB. If so, return the clone's ID
 	 */
@@ -81,7 +81,7 @@ public abstract class Perspective extends Clone {
 	protected Integer isInDB(String tableName, CLONEID db) throws Exception {
 		int hash = Arrays.deepHashCode(profile.getValues());
 		//@TODO: risk that clone is falsely classified as already existent even though it is not <=> hash is non-unique for long arrays
-		String selstmt="SELECT cloneID from "+tableName+" where abs(size-"+this.size+")<"+Clone.PRECISION+" and profile_hash="+hash+" AND whichPerspective=\'"+this.getClass().getSimpleName()+"\' AND origin=\'"+origin+"\';"; 
+		String selstmt="SELECT cloneID from "+tableName+" where abs(size-"+this.size+")<"+Clone.PRECISION+" and profile_hash="+hash+" AND whichPerspective=\'"+this.getClass().getSimpleName()+"\' AND origin=\'"+origin+"\';";
 		ResultSet rs =db.getStatement().executeQuery(selstmt);
 		if(rs.next()){
 			return rs.getInt(1);
@@ -89,14 +89,14 @@ public abstract class Perspective extends Clone {
 		return null;
 
 	}
-	
+
 	/**
-	 * Reads characteristics of this clone from the database, including: 
+	 * Reads characteristics of this clone from the database, including:
 	 * - the clone's ID
 	 * - its coordinates
 	 * - its profile
 	 * Clone is selected from the dataset based on its size and the sample to which it belongs.
-	 * @TODO: this will not work if two or more clones have same size --> get rid of dependencies on this method, instead use only CLONEID.getClone(..) for loading objects from DB 
+	 * @TODO: this will not work if two or more clones have same size --> get rid of dependencies on this method, instead use only CLONEID.getClone(..) for loading objects from DB
 	 * @throws Exception
 	 */
 	@Override
@@ -121,5 +121,7 @@ public abstract class Perspective extends Clone {
 		db.close();
 
 	}
-
+	public String getTableName() {
+		return Perspectives.valueOf(this.getClass().getSimpleName()).getTableName();
+	}
 }
