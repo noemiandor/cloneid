@@ -11,8 +11,8 @@ version <- packageVersion("cloneid")
 sqlserver <- 'remote'
 
 sqlsetup <- switch(sqlserver,
-                   docker = setupCLONEID(host='sql2', port='3306', user='thomas', password='densitydependence', database='CLONEID', schemaScript='CLONEID_schema.sql'),
-                   remote = setupCLONEID(host='cloneid.cswgogbb5ufg.us-east-1.rds.amazonaws.com', port='3306', user='thomas', password='densitydependence', database='CLONEID', schemaScript='CLONEID_schema.sql')
+                   docker = setupCLONEID(host='sql2', port='3306', user='XXXX', password='XXXX', database='CLONEID', schemaScript='CLONEID_schema.sql'),
+                   remote = setupCLONEID(host='127.0.0.1', port='3306', user='XXXX', password='XXXX', database='CLONEID', schemaScript='CLONEID_schema.sql')
 )
 
 # Specify the clone ID for which we want to find descendants.

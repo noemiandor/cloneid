@@ -8,7 +8,7 @@
 # Set up environment
 options(java.parameters = "-Xmx7g")
 setwd("~/Repositories/cloneid/")
-PREFIX <- "TEST9_"  # Prefix for output files
+PREFIX <- "TEST2_"  # Prefix for output files
 library(cloneid)
 library(liayson)
 library(matlab)
