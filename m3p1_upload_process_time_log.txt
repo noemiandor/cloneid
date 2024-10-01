@@ -1,0 +1,4 @@
+Processing Time Log for Section 1
+Dataset: GenomePerspective - Time taken per cell: 0.04 seconds (Total cells: 626)
+Dataset: TranscriptomePerspective - Time taken per cell: 0.05 seconds (Total cells: 1866)
+Time taken per cell for entire Section 1: 0.04 seconds
