@@ -9,6 +9,14 @@ harvest <- function(id, from, cellCount, tx = Sys.time(), media=NULL, excludeOpt
   return(x)
 }
 
+inject <- function(mouseID, from, cellCount, tx = Sys.time(), strain, injection_type=23){ 
+  x=.seed_or_harvest(event = "seeding", id=mouseID, from = from, cellCount = cellCount, tx = tx, flask = injection_type, media = strain, excludeOption=F, preprocessing=F, param=NULL,inject=injection_type)
+}
+
+resect <- function(id, from, weight_mg, size_cubicmm, tx = Sys.time()){
+  x=.seed_or_harvest(event = "harvest", id=id, from=from, cellCount = size_cubicmm, tx = tx, flask = NULL, media = NULL, excludeOption=F, preprocessing=F, param=NULL, resect=weight_mg)
+  return(x)
+}
 
 init <- function(id, cellLine, cellCount, tx = Sys.time(), media=NULL, flask=NULL, preprocessing=T){
   mydb = connect2DB()
@@ -310,7 +318,7 @@ plotLiquidNitrogenBox <- function (rack, row) {
 }
 
 
-.seed_or_harvest <- function(event, id, from, cellCount, tx, flask, media, excludeOption, preprocessing=T, param=NULL){
+.seed_or_harvest <- function(event, id, from, cellCount, tx, flask, media, excludeOption, preprocessing=T, param=NULL, inject=NULL, resect=NULL){
   library(RMySQL)
   library(matlab)
   
@@ -354,9 +362,14 @@ plotLiquidNitrogenBox <- function (rack, row) {
     flask = kids$flask
   }
   
-  dishSurfaceArea_cm2 = .readDishSurfaceArea_cm2(flask, mydb)
-  
-  dish = .readCellSegmentationsOutput(id= id, from=from, cellLine = kids$cellLine, dishSurfaceArea_cm2 = dishSurfaceArea_cm2, cellCount = cellCount, excludeOption=excludeOption, preprocessing=preprocessing, param=param);
+  if(!is.null(inject)){
+    dish =list(dishCount=cellCount, cellSize=NA, dishAreaOccupied=NA)
+  }else if (!is.null(resect)){
+    dish =list(dishCount=NA, cellSize=cellCount, dishAreaOccupied=resect)
+  }else{
+    dishSurfaceArea_cm2 = .readDishSurfaceArea_cm2(flask, mydb)
+    dish = .readCellSegmentationsOutput(id= id, from=from, cellLine = kids$cellLine, dishSurfaceArea_cm2 = dishSurfaceArea_cm2, cellCount = cellCount, excludeOption=excludeOption, preprocessing=preprocessing, param=param);
+  }
   
   ### Passaging info
   passage = kids$passage
@@ -406,6 +419,7 @@ plotLiquidNitrogenBox <- function (rack, row) {
   ii=which(!names(x) %in% c("cellSize_um2","areaOccupied_um2","correctedCount","cellCount", "passage", "flask", "media"))
   x[ii]=paste0("'",x[ii],"'")
   x4DB <- x[names(x4DB)]
+  x4DB[is.na(x4DB)]="NULL"
   
   ## Attempt to update the DB:
   if(ancestorCheck){
