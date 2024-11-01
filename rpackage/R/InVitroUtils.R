@@ -329,24 +329,24 @@ plotLiquidNitrogenBox <- function (rack, row) {
   
   stmt = paste0("select * from Passaging where id = '",from,"'");
   rs = suppressWarnings(dbSendQuery(mydb, stmt))
-  kids = fetch(rs, n=-1)
+  parent = fetch(rs, n=-1)
   
   ### Checks
   CHECKRESULT="pass"
-  if(nrow(kids)==0){
+  if(nrow(parent)==0){
     CHECKRESULT=paste(from,"does not exist in table Passaging")
-  }else if(kids$event !=otherevent){
+  }else if(parent$event !=otherevent){
     CHECKRESULT=paste(from,"is not a",otherevent,". You must do",event,"from a",otherevent)
-  }else if(event=="seeding" && !is.na(kids$cellCount) && !is.na(cellCount) && cellCount>kids$cellCount){
+  }else if(event=="seeding" && !is.na(parent$cellCount) && !is.na(cellCount) && cellCount>parent$cellCount){
     CHECKRESULT="You cannot seed more than is available from harvest!"
-  }else if(is.na(kids$media) || !is.null(media)){
+  }else if(is.na(parent$media) || !is.null(media)){
     if(is.null(media)){
       CHECKRESULT="Please enter media information"
     }else{
-      kids$media = media
+      parent$media = media
     }
   }else{
-    warning(paste("Copying media information from parent: media set to",kids$media))
+    warning(paste("Copying media information from parent: media set to",parent$media))
   }
   if(CHECKRESULT!="pass"){
     confirmError = "no"
@@ -359,7 +359,7 @@ plotLiquidNitrogenBox <- function (rack, row) {
   
   ## flask cannot have changed if this is a harvest event: 
   if(event=="harvest"){
-    flask = kids$flask
+    flask = parent$flask
   }
   
   if(!is.null(inject)){
@@ -368,11 +368,11 @@ plotLiquidNitrogenBox <- function (rack, row) {
     dish =list(dishCount=NA, cellSize=cellCount, dishAreaOccupied=resect)
   }else{
     dishSurfaceArea_cm2 = .readDishSurfaceArea_cm2(flask, mydb)
-    dish = .readCellSegmentationsOutput(id= id, from=from, cellLine = kids$cellLine, dishSurfaceArea_cm2 = dishSurfaceArea_cm2, cellCount = cellCount, excludeOption=excludeOption, preprocessing=preprocessing, param=param);
+    dish = .readCellSegmentationsOutput(id= id, from=from, cellLine = parent$cellLine, dishSurfaceArea_cm2 = dishSurfaceArea_cm2, cellCount = cellCount, excludeOption=excludeOption, preprocessing=preprocessing, param=param);
   }
   
   ### Passaging info
-  passage = kids$passage
+  passage = parent$passage
   if(event=="seeding"){
     passage = passage+1
   }
@@ -390,8 +390,8 @@ plotLiquidNitrogenBox <- function (rack, row) {
   passaging$passage_id <- sapply(passaging$id, .unique_passage_id)
   # x=data.table::transpose(as.data.frame(c(id , event, from, dish$dishCount, passage)))
   # colnames(x) = c("id", "event", "passaged_from_id1", "correctedCount", "passage")
-  x=data.table::transpose(as.data.frame(c(id ,from,event,as.character(tx),dish$dishCount,dish$dishCount,dish$cellSize, dish$dishAreaOccupied, passage,flask,kids$media,  user,  user)))
-  colnames(x) = c("id", "passaged_from_id1", "event", "date", "cellCount","correctedCount","cellSize_um2","areaOccupied_um2", "passage", "flask", "media", "owner", "lastModified")
+  x=data.table::transpose(as.data.frame(c(id ,parent$cellLine,from,event,as.character(tx),dish$dishCount,dish$dishCount,dish$cellSize, dish$dishAreaOccupied, passage,flask,parent$media,  user,  user)))
+  colnames(x) = c("id", "cellLine","passaged_from_id1", "event", "date", "cellCount","correctedCount","cellSize_um2","areaOccupied_um2", "passage", "flask", "media", "owner", "lastModified")
   rownames(x) <- x$id
   x4DB <- x
   x$passage_id <- .unique_passage_id(x$id)
@@ -425,7 +425,7 @@ plotLiquidNitrogenBox <- function (rack, row) {
   if(ancestorCheck){
     ### Insert
     # stmt = paste0("INSERT INTO Passaging (id, passaged_from_id1, event, date, cellCount, passage, flask, media, owner, lastModified) ",
-                  # "VALUES ('",id ,"', '",from,"', '",event,"', '",as.character(tx),"', ",dish$dishCount,", ", passage,", ",flask,", ", kids$media, ", '", user, "', '", user, "');")
+                  # "VALUES ('",id ,"', '",from,"', '",event,"', '",as.character(tx),"', ",dish$dishCount,", ", passage,", ",flask,", ", parent$media, ", '", user, "', '", user, "');")
     stmt = paste0("INSERT INTO Passaging (",paste(names(x4DB), collapse = ", "),") ",
                   "VALUES (",paste(x4DB, collapse = ", "),");")
     rs = try(dbSendQuery(mydb, stmt))
