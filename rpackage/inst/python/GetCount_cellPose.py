@@ -226,7 +226,7 @@ def run_cellPose(path2Images,path2Pretrained, diameter, flow, cellprob):
   call(['python', '-m' , 'cellpose' ,'--dir', path2Images ,'--pretrained_model', path2Pretrained,'--use_gpu','--save_png', '--verbose', '--diameter', diameter, '--flow_threshold', flow, '--cellprob_threshold', cellprob])
 
 def run(path2Images,path2Pretrained,path2Save,ext, diameter, flow, cellprob):
-  #run_cellPose(path2Images,path2Pretrained, diameter, flow, cellprob)
+  run_cellPose(path2Images,path2Pretrained, diameter, flow, cellprob)
   iterate(path2Images,path2Save,ext)
   vis_overlay(path2Images,path2Save,ext)
 
