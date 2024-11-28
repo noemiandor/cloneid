@@ -425,7 +425,7 @@ plotLiquidNitrogenBox <- function (rack, row) {
   if(ancestorCheck){
     ### Insert
     # stmt = paste0("INSERT INTO Passaging (id, passaged_from_id1, event, date, cellCount, passage, flask, media, owner, lastModified) ",
-                  # "VALUES ('",id ,"', '",from,"', '",event,"', '",as.character(tx),"', ",dish$dishCount,", ", passage,", ",flask,", ", parent$media, ", '", user, "', '", user, "');")
+    # "VALUES ('",id ,"', '",from,"', '",event,"', '",as.character(tx),"', ",dish$dishCount,", ", passage,", ",flask,", ", parent$media, ", '", user, "', '", user, "');")
     stmt = paste0("INSERT INTO Passaging (",paste(names(x4DB), collapse = ", "),") ",
                   "VALUES (",paste(x4DB, collapse = ", "),");")
     rs = try(dbSendQuery(mydb, stmt))
@@ -504,6 +504,7 @@ plotLiquidNitrogenBox <- function (rack, row) {
   LOADEDENV='cellpose' %in% conda_list()$name
   if(LOADEDENV){
     use_condaenv("cellpose")
+    py_config()
     # use_condaenv("cellpose", required = TRUE)
     sapply(PYTHON_SCRIPTS, source_python)
   }
@@ -934,4 +935,17 @@ plotLiquidNitrogenBox <- function (rack, row) {
               "  ]",
               "}", sep="\n" )
   return(prj)
+}
+
+
+GenomePerspectiveView_Bulk<-function(id){
+  out=findAllDescendandsOf(id, recursive = T)
+  mydb = cloneid::connect2DB()
+  stmt = paste0("select distinct origin from Perspective where whichPerspective='GenomePerspective' and origin IN ('",paste(unique(out$id), collapse="','"),"')")
+  rs = suppressWarnings(dbSendQuery(mydb, stmt))
+  origin=fetch(rs, n=-1)[,"origin"]
+  
+  p=sapply(origin, function(x) getSubProfiles(cloneID_or_sampleName = x, whichP = "GenomePerspective"))
+  p=do.call(cbind, p)
+  gplots::heatmap.2(t(p), trace = "n")
 }
