@@ -1,6 +1,6 @@
 # Script by Thomas Veith and Noemi Andor PhD
 # This script serves as the back end to the CLONEID web portal.
-# It provides interactive functionality for generating phylogenetic trees,
+# It provides functionality for generating phylogenetic trees,
 # visualizing genomic perspective data as heatmaps, and supporting seed/harvest functions.
 
 # Load required libraries
@@ -51,6 +51,18 @@ GenomePerspectiveView_Bulk <- function(id) {
   p <- getSubProfiles(cloneID_or_sampleName = x, whichP = "GenomePerspective")
   print("Done generating heatmap data")
   return(p)  # Return the heatmap matrix
+}
+
+# Function to find clone IDs with genomic data
+whichCLONEIDsHaveGenomePerspective <- function(tr){
+  stmt = paste0("SELECT DISTINCT origin, whichPerspective FROM Perspective")
+  mydb_new = cloneid::connect2DB()
+  on.exit(dbDisconnect(mydb_new), add = TRUE)  # Ensure the connection is closed
+  rs = suppressWarnings(dbSendQuery(mydb_new, stmt))
+  ori = dbFetch(rs, n = -1)
+  dbClearResult(rs)
+  IDSwithGENOME = intersect(tr$tip.label, ori$origin[ori$whichPerspective == 'GenomePerspective'])
+  return(IDSwithGENOME)
 }
 
 # Function to construct a phylogenetic tree based on lineage
@@ -109,13 +121,42 @@ getPhylogeneticTree <- function(tr) {
     group = factor(group, levels = c("seeding", "harvest"))
   )
   
-  # Create and return the tree plot
+  # Get IDs with genomic data
+  IDSwithGENOME <- whichCLONEIDsHaveGenomePerspective(tr)
+  
+  # Add a column to indicate if the node has genomic data
+  label_data$has_genomic_data <- ifelse(label_data$label %in% IDSwithGENOME, TRUE, FALSE)
+  
+  # Set an offset for labels
+  label_offset <- 0.1  # Adjust the offset as needed
+  
+  # Create the tree plot with labels offset
   p <- ggtree(tr) %<+% label_data +
-    geom_tiplab(aes(label = label, color = group), hjust = -0.2) +
+    geom_tiplab(aes(label = label, color = group), offset = label_offset) +
     scale_color_manual(values = c("seeding" = "blue", "harvest" = "red")) +
     theme_minimal() +
     theme(legend.position = "right")
-  return(p)
+  
+  # Get the data frame from the plot
+  tree_data <- p$data
+  
+  # Filter for tips (isTip == TRUE) and has genomic data
+  genomic_nodes <- subset(tree_data, isTip & label %in% IDSwithGENOME)
+  
+  # The labels are drawn at x + offset
+  genomic_nodes$label_x <- genomic_nodes$x + label_offset
+  
+  # Add forest green squares on top of the node names
+  p <- p + geom_point(
+    data = genomic_nodes,
+    aes(x = label_x, y = y),
+    color = "#228B22",  # Forest green color
+    shape = 15,
+    size = 3
+  )
+  
+  # Return both the plot and the genomic_nodes data
+  return(list(plot = p, genomic_nodes = genomic_nodes))
 }
 
 # UI definition
@@ -168,45 +209,63 @@ ui <- fluidPage(
 
 # Server logic
 server <- function(input, output, session) {
-  tree_data <- reactiveVal(NULL)  # Store the tree object
+  tree_data <- reactiveVal(NULL)           # Store the tree object
+  genomic_nodes_data <- reactiveVal(NULL)  # Store genomic nodes data
   
   observeEvent(input$generate_tree, {
     req(input$tree_id)  # Ensure a tree ID is provided
     tryCatch({
       tr <- getPedigreeTree(id = input$tree_id)  # Generate tree
-      tree_data(tr)  # Save the tree object
-      tree_plot <- getPhylogeneticTree(tr)  # Create tree plot
-      output$phylo_tree <- renderPlot(tree_plot)  # Render the plot
+      result <- getPhylogeneticTree(tr)          # Get tree plot and genomic nodes
+      tree_plot <- result$plot
+      genomic_nodes <- result$genomic_nodes
+      tree_data(tr)                              # Save the tree object
+      genomic_nodes_data(genomic_nodes)          # Save the genomic nodes data
+      output$phylo_tree <- renderPlot(tree_plot) # Render the plot
     }, error = function(e) {
       showNotification(paste("Error:", e$message), type = "error")  # Display errors
     })
   })
   
   observeEvent(input$tree_click, {
-    req(input$tree_click, tree_data())  # Ensure tree data and click input are available
-    tr <- tree_data()  # Retrieve the stored tree object
+    req(input$tree_click, tree_data(), genomic_nodes_data())  # Ensure data is available
+    tr <- tree_data()               # Retrieve the stored tree object
+    genomic_nodes <- genomic_nodes_data()
     
-    # Map the clicked Y-coordinate to the node label
-    tree_plot_data <- ggtree(tr)$data
-    clicked_y <- round(input$tree_click$y)
-    node_label <- tree_plot_data$label[tree_plot_data$y == clicked_y]
+    # Get click coordinates
+    click_x <- input$tree_click$x
+    click_y <- input$tree_click$y
     
-    # Debugging logs
-    print(paste("Clicked node index:", clicked_y))
-    print(paste("Clicked node label:", node_label))
+    # Define a tolerance for click detection
+    tol <- 0.05  # Adjust as needed based on your plot scale
     
-    tryCatch({
-      heatmap_data <- GenomePerspectiveView_Bulk(node_label)  # Generate heatmap
-      output$heatmap_plot <- renderPlot({
-        if ("ComplexHeatmap" %in% installed.packages()) {
-          ComplexHeatmap::Heatmap(heatmap_data, name = node_label)
-        } else {
-          pheatmap::pheatmap(heatmap_data, main = node_label)
-        }
+    # Check if the click is on any of the green squares
+    distances <- sqrt((genomic_nodes$label_x - click_x)^2 + (genomic_nodes$y - click_y)^2)
+    min_distance <- min(distances)
+    if (min_distance < tol) {
+      # Click is on a green square
+      idx <- which.min(distances)
+      node_label <- genomic_nodes$label[idx]
+      
+      # Debugging logs
+      print(paste("Clicked node label:", node_label))
+      
+      tryCatch({
+        heatmap_data <- GenomePerspectiveView_Bulk(node_label)  # Generate heatmap
+        output$heatmap_plot <- renderPlot({
+          if ("ComplexHeatmap" %in% installed.packages()) {
+            ComplexHeatmap::Heatmap(heatmap_data, name = node_label)
+          } else {
+            pheatmap::pheatmap(heatmap_data, main = node_label)
+          }
+        })
+      }, error = function(e) {
+        showNotification(paste("Error:", e$message), type = "error")  # Display errors
       })
-    }, error = function(e) {
-      showNotification(paste("Error:", e$message), type = "error")  # Display errors
-    })
+    } else {
+      # Click is not on a green square; do nothing or show a message
+      showNotification("Please click on a green square to generate the heatmap.", type = "message")
+    }
   })
   
   observeEvent(input$run, {
