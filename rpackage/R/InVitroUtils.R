@@ -504,7 +504,7 @@ plotLiquidNitrogenBox <- function (rack, row) {
   LOADEDENV='cellpose' %in% conda_list()$name
   if(LOADEDENV){
     use_condaenv("cellpose")
-    py_config()
+    # py_config()
     print('Cellpose environment loaded')
     # use_condaenv("cellpose", required = TRUE)
     sapply(PYTHON_SCRIPTS, source_python)
