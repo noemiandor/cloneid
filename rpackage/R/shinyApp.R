@@ -15,6 +15,7 @@ library(tiff)
 library(grid)
 library(png)
 library(pheatmap)
+library(shinyjqui)  # Added for resizable plots
 
 # Helper function for executing database queries using CLONEID's connection
 executeQuery <- function(query) {
@@ -174,19 +175,20 @@ ui <- fluidPage(
       sidebarLayout(
         sidebarPanel(
           textInput("tree_id", "Enter Tree ID"),
-          actionButton("generate_tree", "Generate Phylogenetic Tree")
+          actionButton("generate_tree", "Generate Phylogenetic Tree"),
+          # Sliders for plot sizes (optional)
+          # sliderInput("phylo_tree_height", "Phylogenetic Tree Height (pixels):", min = 300, max = 1000, value = 600),
+          # sliderInput("phylo_tree_width", "Phylogenetic Tree Width (pixels):", min = 300, max = 1000, value = 800),
+          # sliderInput("heatmap_height", "Heatmap Height (pixels):", min = 300, max = 1000, value = 600),
+          # sliderInput("heatmap_width", "Heatmap Width (pixels):", min = 300, max = 1000, value = 800)
         ),
         mainPanel(
-          # Make the plotOutput resizable
-          jqui_resizable(
-            plotOutput("phylo_tree", click = "tree_click"),
-            options = list(maxWidth = 800, minWidth = 300, maxHeight = 600, minHeight = 300)
-          ),
-          plotOutput("heatmap_plot")
+          jqui_resizable(plotOutput("phylo_tree", click = "tree_click")),  # Made resizable
+          jqui_resizable(plotOutput("heatmap_plot"))  # Made resizable
         )
       )
     ),
- 
+    
     # Tab 2: Run Function (Seed/Harvest)
     tabPanel(
       "Upload Phenotypic Data",
