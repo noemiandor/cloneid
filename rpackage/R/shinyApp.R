@@ -175,12 +175,7 @@ ui <- fluidPage(
       sidebarLayout(
         sidebarPanel(
           textInput("tree_id", "Enter Tree ID"),
-          actionButton("generate_tree", "Generate Phylogenetic Tree"),
-          # Sliders for plot sizes (optional)
-          # sliderInput("phylo_tree_height", "Phylogenetic Tree Height (pixels):", min = 300, max = 1000, value = 600),
-          # sliderInput("phylo_tree_width", "Phylogenetic Tree Width (pixels):", min = 300, max = 1000, value = 800),
-          # sliderInput("heatmap_height", "Heatmap Height (pixels):", min = 300, max = 1000, value = 600),
-          # sliderInput("heatmap_width", "Heatmap Width (pixels):", min = 300, max = 1000, value = 800)
+          actionButton("generate_tree", "Generate Phylogenetic Tree")
         ),
         mainPanel(
           jqui_resizable(plotOutput("phylo_tree", click = "tree_click")),  # Made resizable
@@ -226,7 +221,7 @@ ui <- fluidPage(
         ),
         mainPanel(
           verbatimTextOutput("result"),
-          plotOutput("tiff_images")
+          jqui_resizable(plotOutput("tiff_images"))  # Made resizable
         )
       )
     ),
