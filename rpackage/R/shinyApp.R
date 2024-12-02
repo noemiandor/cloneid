@@ -1,16 +1,20 @@
 # Script by Thomas Veith and Noemi Andor PhD
-# This script serves as the back end to the CLONEID web portal.
-# It provides functionality for generating phylogenetic trees,
-# visualizing genomic perspective data as heatmaps, and supporting seed/harvest functions.
+# Integrated back end for the CLONEID web portal
+# Features: Phylogenetic Trees, Genomic Heatmaps, Seed/Harvest, and File Upload
 
 # Load required libraries
-library(shiny)          # Web application framework
-library(DBI)            # Database interface
-library(cloneid)        # CLONEID package for handling database and analysis
-library(ggtree)         # Phylogenetic tree visualization
-library(ggplot2)        # General plotting library
-library(ComplexHeatmap) # For creating heatmaps
-library(ape)            # For phylogenetic tree structures
+library(shiny)
+library(DBI)
+library(cloneid)
+library(ggtree)
+library(ggplot2)
+library(matlab)
+library(ape)
+library(tools)
+library(tiff)
+library(grid)
+library(png)
+library(pheatmap)
 
 # Helper function for executing database queries using CLONEID's connection
 executeQuery <- function(query) {
@@ -159,118 +163,157 @@ getPhylogeneticTree <- function(tr) {
   return(list(plot = p, genomic_nodes = genomic_nodes))
 }
 
-# UI definition
+# UI setup
 ui <- fluidPage(
-  titlePanel("Seed, Harvest, and Phylogenetic Tree Functions"),
-  sidebarLayout(
-    sidebarPanel(
-      # Seed/Harvest function input forms
-      selectInput(
-        "function_choice",
-        "Choose Function:",
-        choices = c("Seed" = "seed", "Harvest" = "harvest")
-      ),
-      conditionalPanel(
-        condition = "input.function_choice === 'seed'",
-        textInput("id", "ID", value = ""),
-        textInput("from", "From", value = ""),
-        numericInput("cellCount", "Cell Count", value = 0, min = 0),
-        textInput("flask", "Flask", value = ""),
-        textInput("tx", "Transaction Time (tx)", value = Sys.time()),
-        textInput("media", "Media (required)", value = ""),
-        checkboxInput("excludeOption", "Exclude Option", value = FALSE),
-        checkboxInput("preprocessing", "Preprocessing", value = TRUE),
-        textInput("param", "Additional Parameters (optional)", value = "")
-      ),
-      conditionalPanel(
-        condition = "input.function_choice === 'harvest'",
-        textInput("id_h", "ID", value = ""),
-        textInput("from_h", "From", value = ""),
-        numericInput("cellCount_h", "Cell Count", value = 0, min = 0),
-        textInput("tx_h", "Transaction Time (tx)", value = Sys.time()),
-        textInput("media_h", "Media (optional)", value = ""),
-        checkboxInput("excludeOption_h", "Exclude Option", value = FALSE),
-        checkboxInput("preprocessing_h", "Preprocessing", value = TRUE),
-        textInput("param_h", "Additional Parameters (optional)", value = "")
-      ),
-      # Tree generation input
-      textInput("tree_id", "Enter Tree ID", value = ""),
-      actionButton("run", "Run Function"),
-      actionButton("generate_tree", "Generate Phylogenetic Tree")
+  navbarPage(
+    "CLONEID Portal",
+    
+    # Tab 1: Generate Phylogenetic Tree
+    tabPanel(
+      "View Data",
+      sidebarLayout(
+        sidebarPanel(
+          textInput("tree_id", "Enter Tree ID"),
+          actionButton("generate_tree", "Generate Phylogenetic Tree")
+        ),
+        mainPanel(
+          plotOutput("phylo_tree", click = "tree_click"),
+          plotOutput("heatmap_plot")
+        )
+      )
     ),
-    mainPanel(
-      # Outputs for tree and heatmap visualizations
-      verbatimTextOutput("result"),
-      plotOutput("phylo_tree", click = "tree_click"),
-      plotOutput("heatmap_plot")
+    
+    # Tab 2: Run Function (Seed/Harvest)
+    tabPanel(
+      "Upload Phenotypic Data",
+      sidebarLayout(
+        sidebarPanel(
+          selectInput(
+            "function_choice",
+            "Choose Function:",
+            choices = c("Seed" = "seed", "Harvest" = "harvest")
+          ),
+          conditionalPanel(
+            condition = "input.function_choice === 'seed'",
+            textInput("id", "ID"),
+            textInput("from", "From"),
+            numericInput("cellCount", "Cell Count", value = 0, min = 0),
+            textInput("flask", "Flask"),
+            textInput("tx", "Transaction Time (tx)", value = Sys.time()),
+            textInput("media", "Media (required)"),
+            checkboxInput("excludeOption", "Exclude Option", FALSE),
+            checkboxInput("preprocessing", "Preprocessing", TRUE),
+            textInput("param", "Additional Parameters (optional)")
+          ),
+          conditionalPanel(
+            condition = "input.function_choice === 'harvest'",
+            textInput("id_h", "ID"),
+            textInput("from_h", "From"),
+            numericInput("cellCount_h", "Cell Count", value = 0, min = 0),
+            textInput("tx_h", "Transaction Time (tx)", value = Sys.time()),
+            textInput("media_h", "Media (optional)"),
+            checkboxInput("excludeOption_h", "Exclude Option", FALSE),
+            checkboxInput("preprocessing_h", "Preprocessing", TRUE),
+            textInput("param_h", "Additional Parameters (optional)")
+          ),
+          actionButton("run", "Run Function")
+        ),
+        mainPanel(
+          verbatimTextOutput("result"),
+          plotOutput("tiff_images")
+        )
+      )
+    ),
+    
+    # Tab 3: File Upload
+    tabPanel(
+      "Upload Genotypic Data",
+      sidebarLayout(
+        sidebarPanel(
+          fileInput(
+            "folder_upload",
+            "Select ZIP folder or a file",
+            multiple = TRUE,
+            accept = c(".zip", ".spstats")
+          ),
+          actionButton("upload_btn", "Upload data to CLONEID")
+        ),
+        mainPanel(
+          verbatimTextOutput("upload_status"),
+          plotOutput("pie_chart")
+        )
+      )
     )
   )
 )
 
-# Server logic
+# Server setup
 server <- function(input, output, session) {
-  tree_data <- reactiveVal(NULL)           # Store the tree object
-  genomic_nodes_data <- reactiveVal(NULL)  # Store genomic nodes data
+  tree_data <- reactiveVal(NULL)
   
+  # Generate Tree
   observeEvent(input$generate_tree, {
-    req(input$tree_id)  # Ensure a tree ID is provided
+    req(input$tree_id)
+    
+    # Clear existing outputs when generating a new tree
+    output$phylo_tree <- renderPlot({
+      plot(NA, xlim = c(0, 1), ylim = c(0, 1), type = "n", axes = FALSE, xlab = "", ylab = "")
+      text(0.5, 0.5, "Generating new tree...", cex = 1.5, col = "blue")
+    })
+    
+    output$heatmap_plot <- renderPlot({
+      plot(NA, xlim = c(0, 1), ylim = c(0, 1), type = "n", axes = FALSE, xlab = "", ylab = "")
+      text(0.5, 0.5, "No heatmap to display.", cex = 1.5, col = "blue")
+    })
+    
     tryCatch({
-      tr <- getPedigreeTree(id = input$tree_id)  # Generate tree
-      result <- getPhylogeneticTree(tr)          # Get tree plot and genomic nodes
-      tree_plot <- result$plot
-      genomic_nodes <- result$genomic_nodes
-      tree_data(tr)                              # Save the tree object
-      genomic_nodes_data(genomic_nodes)          # Save the genomic nodes data
-      output$phylo_tree <- renderPlot(tree_plot) # Render the plot
+      tr <- getPedigreeTree(id = input$tree_id)
+      tree_data(tr)
+      tree_plot <- getPhylogeneticTree(tr)
+      output$phylo_tree <- renderPlot({
+        print(tree_plot$plot)
+      })
     }, error = function(e) {
-      showNotification(paste("Error:", e$message), type = "error")  # Display errors
+      showNotification(paste("Error:", e$message), type = "error")
     })
   })
   
+  # Updated observeEvent for tree clicks
   observeEvent(input$tree_click, {
-    req(input$tree_click, tree_data(), genomic_nodes_data())  # Ensure data is available
-    tr <- tree_data()               # Retrieve the stored tree object
-    genomic_nodes <- genomic_nodes_data()
+    req(input$tree_click, tree_data())
+    tr <- tree_data()
+    tree_plot_data <- ggtree(tr)$data
     
     # Get click coordinates
-    click_x <- input$tree_click$x
-    click_y <- input$tree_click$y
+    clicked_x <- input$tree_click$x
+    clicked_y <- input$tree_click$y
     
-    # Define a tolerance for click detection
-    tol <- 0.05  # Adjust as needed based on your plot scale
+    # Filter for tip nodes
+    tip_data <- subset(tree_plot_data, isTip)
     
-    # Check if the click is on any of the green squares
-    distances <- sqrt((genomic_nodes$label_x - click_x)^2 + (genomic_nodes$y - click_y)^2)
-    min_distance <- min(distances)
-    if (min_distance < tol) {
-      # Click is on a green square
-      idx <- which.min(distances)
-      node_label <- genomic_nodes$label[idx]
-      
-      # Debugging logs
-      print(paste("Clicked node label:", node_label))
-      
-      tryCatch({
-        heatmap_data <- GenomePerspectiveView_Bulk(node_label)  # Generate heatmap
-        output$heatmap_plot <- renderPlot({
-          if ("ComplexHeatmap" %in% installed.packages()) {
-            ComplexHeatmap::Heatmap(heatmap_data, name = node_label)
-          } else {
-            pheatmap::pheatmap(heatmap_data, main = node_label)
-          }
-        })
-      }, error = function(e) {
-        showNotification(paste("Error:", e$message), type = "error")  # Display errors
+    # Compute distances to all tip nodes
+    distances <- sqrt((tip_data$x - clicked_x)^2 + (tip_data$y - clicked_y)^2)
+    
+    # Find the closest node
+    min_index <- which.min(distances)
+    node_label <- tip_data$label[min_index]
+    
+    # Optional: Print node_label for debugging
+    print(paste("Clicked node label:", node_label))
+    
+    tryCatch({
+      heatmap_data <- GenomePerspectiveView_Bulk(node_label)
+      output$heatmap_plot <- renderPlot({
+        pheatmap::pheatmap(heatmap_data, main = node_label)
       })
-    } else {
-      # Click is not on a green square; do nothing or show a message
-      showNotification("Please click on a green square to generate the heatmap.", type = "message")
-    }
+    }, error = function(e) {
+      showNotification(paste("Error:", e$message), type = "error")
+    })
   })
   
+  # Run Function
   observeEvent(input$run, {
-    # Run the selected function (Seed or Harvest) based on user input
-    result <- tryCatch({
+    tryCatch({
       if (input$function_choice == "seed") {
         if (input$media == "") stop("Media is required for seed function.")
         seed(
@@ -297,11 +340,83 @@ server <- function(input, output, session) {
         )
       }
     }, error = function(e) {
-      paste("Error:", e$message)  # Capture and display errors
+      output$result <- renderText(paste("Error:", e$message))
     })
-    output$result <- renderPrint(result)  # Display the result of the function
+    
+    # After seed or harvest, read and display PNG images
+    vis_folder <- "~/Downloads/tmp/vis"
+    png_files <- list.files(vis_folder, pattern = "\\.png$", full.names = TRUE, ignore.case = TRUE)
+    if (length(png_files) > 0) {
+      # Render subplots for the PNG images
+      output$tiff_images <- renderPlot({
+        # Read PNG files into a list
+        png_list <- lapply(png_files, function(file) png::readPNG(file))
+        
+        # Determine grid layout
+        n_rows <- 2
+        n_cols <- ceiling(length(png_list) / n_rows)
+        # Set up a plotting area with a grid
+        par(mfrow = c(n_rows, n_cols), mar = c(1, 1, 2, 1))  # Reduce margins for better fit
+        # Plot each image
+        for (i in seq_along(png_list)) {
+          img <- png_list[[i]]
+          plot(NA, xlim = c(0, 1), ylim = c(0, 1), type = "n", axes = FALSE, xlab = "", ylab = "")
+          rasterImage(img, 0, 0, 1, 1)  # Render the PNG image
+          title(main = paste("Image", i), line = -1)  # Add a title for each image
+        }
+      })
+    } else {
+      output$tiff_images <- renderPlot({
+        plot(NA, xlim = c(0, 1), ylim = c(0, 1), type = "n", axes = FALSE, xlab = "", ylab = "")
+        text(0.5, 0.5, "No PNG images found in the directory.", cex = 1.5, col = "red")
+      })
+    }
+    
+  })
+  
+  # File Upload
+  observeEvent(input$upload_btn, {
+    req(input$folder_upload)
+    uploaded_files <- input$folder_upload$datapath
+    if (any(grepl("\\.zip$", uploaded_files))) {
+      temp_dir <- tempdir()
+      unzip(uploaded_files[1], exdir = temp_dir)
+      spstats_files <- list.files(temp_dir, pattern = "\\.spstats$", full.names = TRUE)
+      if (length(spstats_files) == 1) {
+        tryCatch({
+          viewPerspective(spstats_files[1], whichP = "GenomePerspective")
+          output$upload_status <- renderText("File processed successfully.")
+        }, error = function(e) {
+          output$upload_status <- renderText(paste("Error:", e$message))
+        })
+        
+        output$pie_chart <- renderPlot({
+          tryCatch({
+            # Extract the file name (without extension) using fileparts
+            file_parts <- matlab::fileparts(spstats_files)
+            sample_name <- file_parts$name  # Extract the base name without extension
+            
+            # Get subclones and their sizes
+            sps <- getSubclones(cloneID_or_sampleName = sample_name, whichP = "GenomePerspective")
+            clonesizes <- cloneid::getSPsize(names(sps))
+            
+            # Plot the pie chart
+            pie(
+              clonesizes,
+              main = paste("Clonal composition in", sample_name),
+              col = rainbow(length(clonesizes))  # Optional: Add colors
+            )
+          }, error = function(e) {
+            showNotification(paste("Error in pie chart:", e$message), type = "error")
+          })
+        })
+        
+      } else {
+        output$upload_status <- renderText("No valid .spstats file found.")
+      }
+    }
   })
 }
 
-# Launch the Shiny app
+# Run the application
 shinyApp(ui = ui, server = server)
