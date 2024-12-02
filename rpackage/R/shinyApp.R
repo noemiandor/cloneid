@@ -177,12 +177,16 @@ ui <- fluidPage(
           actionButton("generate_tree", "Generate Phylogenetic Tree")
         ),
         mainPanel(
-          plotOutput("phylo_tree", click = "tree_click"),
+          # Make the plotOutput resizable
+          jqui_resizable(
+            plotOutput("phylo_tree", click = "tree_click"),
+            options = list(maxWidth = 800, minWidth = 300, maxHeight = 600, minHeight = 300)
+          ),
           plotOutput("heatmap_plot")
         )
       )
     ),
-    
+ 
     # Tab 2: Run Function (Seed/Harvest)
     tabPanel(
       "Upload Phenotypic Data",
