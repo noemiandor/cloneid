@@ -2,6 +2,8 @@
 # Integrated back end for the CLONEID web portal
 # Features: Phylogenetic Trees, Genomic Heatmaps, Seed/Harvest, and File Upload
 
+# seed("TESTtommy_SNU-668_G2_A12_seed",from = "SNU-668_G2_A10_harvesT4",flask = 2,cellCount = NA,media = 8, preprocessing=F)
+
 # Load required libraries
 library(shiny)
 library(DBI)
@@ -13,31 +15,27 @@ library(ape)
 library(tools)
 library(tiff)
 library(grid)
-library(png)
-library(pheatmap)
-library(shinyjqui)  # Added for resizable plots
+library(shinyjqui)
 
-# Helper function for executing database queries using CLONEID's connection
+# Helper function to execute database queries
 executeQuery <- function(query) {
-  mydb <- cloneid::connect2DB()  # Establish a new database connection
-  on.exit(dbDisconnect(mydb), add = TRUE)  # Ensure the connection is closed after query execution
+  mydb <- cloneid::connect2DB()
+  on.exit(dbDisconnect(mydb), add = TRUE)
   tryCatch({
-    message("Executing query: ", query)  # Log the query being executed
-    rs <- dbSendQuery(mydb, query)      # Send the query
-    result <- dbFetch(rs)              # Fetch the results
-    dbClearResult(rs)                  # Clear the query result set
+    message("Executing query: ", query)
+    rs <- dbSendQuery(mydb, query)
+    result <- dbFetch(rs)
+    dbClearResult(rs)
     return(result)
   }, error = function(e) {
-    message("Error executing query: ", e$message)  # Log the error message
-    stop(e)  # Stop execution with the error message
+    message("Error executing query: ", e$message)
+    stop(e)
   })
 }
 
 # Function to retrieve genomic perspective data
 GenomePerspectiveView_Bulk <- function(id) {
-  print(paste("Fetching genomic perspective data for ID:", id))
-  
-  # Construct and execute the query
+  print(id)
   query <- paste0(
     "SELECT DISTINCT cloneID, parent 
      FROM Perspective 
@@ -45,17 +43,10 @@ GenomePerspectiveView_Bulk <- function(id) {
      AND origin IN ('", id, "')"
   )
   origin <- executeQuery(query)
-  
-  # Check if the query returned any results
-  if (nrow(origin) == 0) {
-    stop("No genomic data available for the provided ID.")
-  }
-  
-  # Identify the root cloneID and retrieve its profiles
+  if (nrow(origin) == 0) stop("No genomic data available for the provided ID.")
   x <- origin$cloneID[is.na(origin$parent)]
   p <- getSubProfiles(cloneID_or_sampleName = x, whichP = "GenomePerspective")
-  print("Done generating heatmap data")
-  return(p)  # Return the heatmap matrix
+  return(p)
 }
 
 # Function to find clone IDs with genomic data
@@ -70,62 +61,47 @@ whichCLONEIDsHaveGenomePerspective <- function(tr){
   return(IDSwithGENOME)
 }
 
-# Function to construct a phylogenetic tree based on lineage
+# Function to construct a phylogenetic tree
 getPedigreeTree <- function(cellLine = NULL, id = NULL) {
-  # Retrieve descendant data for a specific ID or cell line
   if (!is.null(id)) {
-    kids <- findAllDescendandsOf(id)  # Get descendants for a specific ID
+    kids <- findAllDescendandsOf(id)
   } else if (!is.null(cellLine)) {
     query <- paste0("SELECT * FROM Passaging WHERE cellLine = '", cellLine, "'")
-    kids <- executeQuery(query)  # Execute query for cell line
+    kids <- executeQuery(query)
   } else {
-    stop("Either 'cellLine' or 'id' must be provided.")  # Ensure at least one input is provided
+    stop("Either 'cellLine' or 'id' must be provided.")
   }
-  
-  # Check if any data was retrieved
-  if (nrow(kids) == 0) {
-    stop("No tree data available for the provided input.")
-  }
-  
-  # Sort the data by date and passage for proper tree structure
+  if (nrow(kids) == 0) stop("No tree data available for the provided input.")
   kids <- kids[order(kids$date, kids$passage), ]
-  rownames(kids) <- kids$id  # Assign IDs as row names
+  rownames(kids) <- kids$id
   
-  # Recursive function to gather descendants for tree construction
   .gatherDescendands <- function(kids, x) {
     ii <- grep(paste0("^", x, "$"), kids$passaged_from_id1, ignore.case = TRUE)
-    if (length(ii) == 0) {
-      return("")  # Return empty if no descendants
-    }
+    if (length(ii) == 0) return("")
     TREE_ <- "("
     for (i in ii) {
-      y <- .gatherDescendands(kids, kids$id[i])  # Recurse for each descendant
-      if (nchar(y) > 0) {
-        y <- paste0(y, ":1,")
-      }
+      y <- .gatherDescendands(kids, kids$id[i])
+      if (nchar(y) > 0) y <- paste0(y, ":1,")
       TREE_ <- paste0(TREE_, y, kids$id[i], ":1,")
     }
-    TREE_ <- gsub(",$", ")", TREE_)  # Format tree string
+    TREE_ <- gsub(",$", ")", TREE_)
     return(TREE_)
   }
   
-  # Generate tree structure from the root
   x <- kids$id[1]
   TREE_ <- .gatherDescendands(kids, x)
   TREE <- paste0("(", TREE_, ":1,", x, ":1);")
-  tr <- read.tree(text = TREE)  # Convert to tree object
+  tr <- read.tree(text = TREE)
   return(tr)
 }
 
-# Function to visualize the phylogenetic tree with group-based color coding
+# Function to visualize the phylogenetic tree
 getPhylogeneticTree <- function(tr) {
-  # Assign group labels based on tip labels
   group <- ifelse(grepl("seed", tr$tip.label, ignore.case = TRUE), "seeding", "harvest")
   label_data <- data.frame(
     label = tr$tip.label,
     group = factor(group, levels = c("seeding", "harvest"))
   )
-  
   # Get IDs with genomic data
   IDSwithGENOME <- whichCLONEIDsHaveGenomePerspective(tr)
   
@@ -164,6 +140,7 @@ getPhylogeneticTree <- function(tr) {
   return(list(plot = p, genomic_nodes = genomic_nodes))
 }
 
+
 # UI setup
 ui <- fluidPage(
   navbarPage(
@@ -178,8 +155,11 @@ ui <- fluidPage(
           actionButton("generate_tree", "Generate Phylogenetic Tree")
         ),
         mainPanel(
-          jqui_resizable(plotOutput("phylo_tree", click = "tree_click")),  # Made resizable
-          jqui_resizable(plotOutput("heatmap_plot"))  # Made resizable
+          jqui_resizable(
+            plotOutput("phylo_tree", click = "tree_click"),
+            options = list(maxWidth = 800, minWidth = 300, maxHeight = 600, minHeight = 300)
+          ),
+          uiOutput("heatmaps_ui") # Dynamically generate heatmaps
         )
       )
     ),
@@ -221,7 +201,7 @@ ui <- fluidPage(
         ),
         mainPanel(
           verbatimTextOutput("result"),
-          jqui_resizable(plotOutput("tiff_images"))  # Made resizable
+          plotOutput("tiff_images")
         )
       )
     ),
@@ -248,9 +228,11 @@ ui <- fluidPage(
   )
 )
 
-# Server setup
+# Server setup (unchanged, logic remains the same)
 server <- function(input, output, session) {
-  tree_data <- reactiveVal(NULL)
+  tree_data <- reactiveVal(NULL)           # Store the tree object
+  genomic_nodes_data <- reactiveVal(NULL)  # Store genomic nodes data
+  heatmaps_data <- reactiveValues(data = list())  # Store multiple heatmaps
   
   # Generate Tree
   observeEvent(input$generate_tree, {
@@ -262,50 +244,51 @@ server <- function(input, output, session) {
       text(0.5, 0.5, "Generating new tree...", cex = 1.5, col = "blue")
     })
     
-    output$heatmap_plot <- renderPlot({
-      plot(NA, xlim = c(0, 1), ylim = c(0, 1), type = "n", axes = FALSE, xlab = "", ylab = "")
-      text(0.5, 0.5, "No heatmap to display.", cex = 1.5, col = "blue")
-    })
-    
     tryCatch({
       tr <- getPedigreeTree(id = input$tree_id)
-      tree_data(tr)
-      tree_plot <- getPhylogeneticTree(tr)
-      output$phylo_tree <- renderPlot({
-        print(tree_plot$plot)
+      result <- getPhylogeneticTree(tr)          # Get tree plot and genomic nodes
+      tree_plot <- result$plot
+      tree_data(tr)                              # Save the tree object
+      genomic_nodes_data(result$genomic_nodes)   # Save genomic nodes data
+      output$phylo_tree <- renderPlot(tree_plot) # Render the plot
+      
+      # Reset heatmaps when a new tree is generated
+      heatmaps_data$data <- list()
+      output$heatmaps_ui <- renderUI({
+        plotOutput("heatmap_placeholder")
       })
     }, error = function(e) {
       showNotification(paste("Error:", e$message), type = "error")
     })
   })
   
-  # Updated observeEvent for tree clicks
+  # Handle Node Click to Add Heatmap
   observeEvent(input$tree_click, {
     req(input$tree_click, tree_data())
     tr <- tree_data()
     tree_plot_data <- ggtree(tr)$data
-    
-    # Get click coordinates
-    clicked_x <- input$tree_click$x
-    clicked_y <- input$tree_click$y
-    
-    # Filter for tip nodes
-    tip_data <- subset(tree_plot_data, isTip)
-    
-    # Compute distances to all tip nodes
-    distances <- sqrt((tip_data$x - clicked_x)^2 + (tip_data$y - clicked_y)^2)
-    
-    # Find the closest node
-    min_index <- which.min(distances)
-    node_label <- tip_data$label[min_index]
-    
-    # Optional: Print node_label for debugging
-    print(paste("Clicked node label:", node_label))
+    clicked_y <- round(input$tree_click$y)
+    node_label <- tree_plot_data$label[tree_plot_data$y == clicked_y]
+    node_label <- node_label[1]
     
     tryCatch({
       heatmap_data <- GenomePerspectiveView_Bulk(node_label)
-      output$heatmap_plot <- renderPlot({
-        pheatmap::pheatmap(heatmap_data, main = node_label)
+      
+      # Append the new heatmap data
+      heatmaps_data$data[[node_label]] <- heatmap_data
+      
+      # Dynamically render all heatmaps
+      output$heatmaps_ui <- renderUI({
+        lapply(names(heatmaps_data$data), function(label) {
+          plotOutput(outputId = paste0("heatmap_", label))
+        })
+      })
+      
+      # Generate plots for each heatmap
+      lapply(names(heatmaps_data$data), function(label) {
+        output[[paste0("heatmap_", label)]] <- renderPlot({
+          pheatmap::pheatmap(heatmaps_data$data[[label]], main = label)
+        })
       })
     }, error = function(e) {
       showNotification(paste("Error:", e$message), type = "error")
@@ -341,7 +324,7 @@ server <- function(input, output, session) {
         )
       }
     }, error = function(e) {
-      output$result <- renderText(paste("Error:", e$message))
+      paste("Error:", e$message)
     })
     
     # After seed or harvest, read and display PNG images
@@ -421,3 +404,5 @@ server <- function(input, output, session) {
 
 # Run the application
 shinyApp(ui = ui, server = server)
+
+
