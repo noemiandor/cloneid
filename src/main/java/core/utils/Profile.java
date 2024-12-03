@@ -28,7 +28,9 @@ public class Profile implements Serializable {
 		values[rowI]=val;
 //		values.setEntry(rowI, 0, val);
 	}
-
+	public void setValues(Double[] val) {
+		this.values=val;
+	}
 	public Double[] getValues() {
 		return values;
 	}
