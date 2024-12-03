@@ -23,4 +23,6 @@ dependencies:
     - tifffile
     - torch>1.1
     - tqdm
+    - pip-system-certs
+    - keras-ocr
     - typing-extensions
