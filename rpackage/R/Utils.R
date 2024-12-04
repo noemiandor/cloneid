@@ -1,3 +1,7 @@
+getNumRes<-function() {
+    return(7)
+}
+
 .addColumn<-function(M,newCol,initVal){
   if (!any(colnames(M)==newCol)){
     if(!is.null(dim(M))){
