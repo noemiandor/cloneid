@@ -615,13 +615,13 @@ plotLiquidNitrogenBox <- function (rack, row) {
   # pdf(OUTSEGF)
   for(i in 1:length(f)){
     dm = read.table(f[i],sep="\t", check.names = F, stringsAsFactors = F, header = T)
-    colnames(dm)[colnames(dm)=="Area µm^2"]="Cell: Area"; ## Replace cellPose column name -- @TODO: saeed fix directly in cellposeScript
+    colnames(dm)[grep("^Area",colnames(dm))]="Cell: Area"; ## Replace cellPose column name -- @TODO: saeed fix directly in cellposeScript
     anno = read.table(f_a[i],sep="\t", check.names = T, stringsAsFactors = F, header = T)
     conf = read.csv(f_c[i])
     colnames(anno) = tolower(colnames(anno))
     areaCount = nrow(dm)
     # areaCount = sum(conf$`Area.in.um`)/median(dm$`Cell: Area`)
-    area_cm2 = anno$`area.µm.2`[1]*UM2CM^2
+    area_cm2 = anno[1,grep("^area.",colnames(anno))]*UM2CM^2
     cellCounts[fileparts(f[i])$name,] = c(areaCount, area_cm2, sum(conf$`Area.in.um`), quantile(dm$`Cell: Area`, 0.9, na.rm=T))
     # ## Visualize
     # ## @TODO: Delete
