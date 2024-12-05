@@ -18,7 +18,7 @@ def get_image_metadata(image_path):
         metadata = tiff.pages[0].tags
         print(metadata)
 
-def get_pixel_size(image_path):
+def get_pixel_size_new(image_path):
 
     # Load the image
     image = cv2.imread(image_path, cv2.IMREAD_COLOR)

@@ -11,8 +11,6 @@ from tqdm import tqdm
 from cellpose.plot import mask_overlay
 from PIL import Image
 from PIL.TiffTags import TAGS
-import tifffile as tifffile
-from get_pixel_size import get_pixel_size
 
 import sys
 from subprocess import call 
@@ -33,7 +31,7 @@ def vis_overlay(path2Masks,path2Save,ext):
     else:
       base_name = item.rsplit('_cp_masks',1)[0]
       msk = cv2.imread(os.path.join(path2Masks,item),-1)
-      img = cv2.imread(os.path.join(path2Masks,base_name+ext),cv2.IMREAD_COLOR)
+      img = cv2.imread(os.path.join(path2Masks,base_name+ext),-1)
       overlay = mask_overlay(img,msk)
       mask = overlay * 0 
       overlay_copy = overlay.copy()
@@ -41,6 +39,43 @@ def vis_overlay(path2Masks,path2Save,ext):
       overlay[100:1200,100:1900] = overlay_copy[100:1200,100:1900]
       overlay = cv2.rectangle(overlay, (100,100), (1900,1200), (0,0,255), 4)
       cv2.imwrite(os.path.join(path2Save,'vis',base_name+'_overlay.png'),overlay)
+
+def get_metadata(path2Image):
+    img = Image.open(path2Image)
+    meta_dict = {TAGS[key] : img.tag[key] for key in img.tag_v2}    
+    #print(meta_dict)
+    try:
+        objective_lens = meta_dict['ImageDescription'][0].split(' ')[1]
+        objective_lens = objective_lens.split('"')[1]
+        #print('objectivelens from meta data {}'.format(objective_lens))
+    except:
+        if len(path2Image.split('/')) > 1:
+            imageName = path2Image.split('/')[-1]
+            if '10x' in imageName:
+                objective_lens = '10x'
+            elif '20x' in imageName:
+                objective_lens = '20x'
+            elif '40x' in imageName:
+                objective_lens = '40x'
+        else:
+            imageName = path2Image
+            if '10x' in imageName:
+                objective_lens = '10x'
+            elif '20x' in imageName:
+                objective_lens = '20x'
+            elif '40x' in imageName:
+                objective_lens = '40x'
+        #print('objectivelens from filename {}'.format(objective_lens))
+    return objective_lens
+
+def get_pixel_size(objectiveLens):
+    if objectiveLens == '10x':
+        pixel_size = 0.922 
+    elif objectiveLens == '20x':
+        pixel_size = 0.922 / float(2)
+    elif objectiveLens == '40x':
+        pixel_size = 0.922 / float(4) 
+    return pixel_size
 
 def get_blob_prop(msk,pixel_size,path2Image):
   imgray = cv2.imread(path2Image,cv2.IMREAD_GRAYSCALE)
@@ -169,8 +204,8 @@ def iterate(path2Pred,path2Save,ext):
           mask = cv2.imread(os.path.join(path2Pred,maskName),-1)
           image_name = maskName.split('_cp_masks.png')[0]+ext
           path2Image = os.path.join(path2Pred,image_name)
-          #objective_len = get_metadata(path2Image)
-          scale_pixels,scale_um,pixel_size = get_pixel_size(path2Image)
+          objective_len = get_metadata(path2Image)
+          pixel_size = get_pixel_size(objective_len)
           list_of_cells_props = []
           for i in range(mask.max()):
               msk =(mask == i+1)*255
@@ -195,7 +230,7 @@ def run(path2Images,path2Pretrained,path2Save,ext, diameter, flow, cellprob):
   iterate(path2Images,path2Save,ext)
   vis_overlay(path2Images,path2Save,ext)
 
- 
+
 if __name__ == "__main__":
     # execute only if run as a script
     args = len(sys.argv)
@@ -204,5 +239,4 @@ if __name__ == "__main__":
       run(sys.argv[1],sys.argv[2],sys.argv[3],sys.argv[4],sys.argv[5])
     else:
       print('Error in number of arguments')
-
-#run('../images','../NCI-N87-Iter2_models_best/cellpose_residual_on_style_on_concatenation_off_train_iteration2_2022_10_03_02_31_01.132104','../results','.tif',30, 0.2, 0.8)
+    #run('/Volumes/WD Element/Collaboration/Moffitt_Noemi/CellPose/Clonid Integrated Code/testing/images','../','/Volumes/WD Element/Collaboration/Moffitt_Noemi/CellPose/Clonid Integrated Code/testing/results2','NCI-N87','.tif')
