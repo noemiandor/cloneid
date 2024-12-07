@@ -479,7 +479,7 @@ plotLiquidNitrogenBox <- function (rack, row) {
   ## CellSegmentations Settings; @TODO: should be set under settings, not here
   UM2CM = 1e-4
   yml = yaml::read_yaml(paste0(system.file(package='cloneid'), '/config/config.yaml'))
-  TMP_DIR = normalizePath(yml$cellSegmentation$tmp);
+  TMP_DIR = normalizePath(paste0(yml$cellSegmentation$tmp,filesep,id));
   CELLSEGMENTATIONS_OUTDIR=paste0(normalizePath(yml$cellSegmentation$output),"/");
   CELLSEGMENTATIONS_INDIR=paste0(normalizePath(yml$cellSegmentation$input),"/");
   # QUPATH_PRJ = "~/Downloads/qproject/project.qpproj"
@@ -512,7 +512,7 @@ plotLiquidNitrogenBox <- function (rack, row) {
   
   ## Copy raw images to temporary directory:
   unlink(TMP_DIR,recursive=T)
-  dir.create(TMP_DIR)
+  dir.create(TMP_DIR, recursive = T)
   f_i = list.files(CELLSEGMENTATIONS_INDIR, pattern = paste0("^",id,"_"), full.names = T)
   f_i = grep("x_ph_",f_i,value=T)
   f_i = grep(".tif$",f_i,value=T)
