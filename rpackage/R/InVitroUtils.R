@@ -321,6 +321,23 @@ plotLiquidNitrogenBox <- function (rack, row) {
 .seed_or_harvest <- function(event, id, from, cellCount, tx, flask, media, excludeOption, preprocessing=T, param=NULL, inject=NULL, resect=NULL){
   library(RMySQL)
   library(matlab)
+  .wait_for_confirmation <- function(CHECKRESULT, timeout = 10, prompt_template = "Error encountered while updating database: %s. No changes were made to the database. Type yes to confirm: ") {
+    # Check if the result needs confirmation
+    confirmError <- "no"
+    start_time <- Sys.time()
+    
+    # Construct the prompt message
+    prompt_message <- sprintf(prompt_template, CHECKRESULT)
+    
+    while (confirmError != "yes" && as.numeric(difftime(Sys.time(), start_time, units = "secs")) < timeout) {
+      Sys.sleep(0.5)  # Check every 0.5 seconds
+      # Simulate `readline` with non-blocking logic or use it as is
+      confirmError <- readline(prompt = prompt_message)
+    }
+    if (confirmError != "yes") {
+      stop("Operation timed out. No confirmation received.")
+    }
+  }
   
   EVENTTYPES = c("seeding","harvest")
   otherevent = EVENTTYPES[EVENTTYPES!=event]
@@ -348,11 +365,9 @@ plotLiquidNitrogenBox <- function (rack, row) {
   }else{
     warning(paste("Copying media information from parent: media set to",parent$media))
   }
-  if(CHECKRESULT!="pass"){
-    confirmError = "no"
-    while(confirmError!="yes"){
-      confirmError <- readline(prompt=paste0("Error encountered while updating database: ",CHECKRESULT,". No changes were made to the database. Type yes to confirm: "))
-    }
+  
+  if (CHECKRESULT != "pass") {
+    .wait_for_confirmation(CHECKRESULT, timeout = 10)
     return()
   }
   ## TODO: What if from is too far in the past
@@ -406,11 +421,7 @@ plotLiquidNitrogenBox <- function (rack, row) {
       }
       if(confirmAncestorCorrect=="no"){
         ancestorCheck=F;
-        ## @TODO: this is redundant code. Write short function for this and use it everywhere.
-        confirmError = "no"
-        while(confirmError!="yes"){
-          confirmError <- readline(prompt="No changes are made to the database. Please modify passaged_from_id1, then rerun. Type yes to confirm: ")
-        }
+        .wait_for_confirmation("", prompt_template = "No changes are made to the database. Please modify passaged_from_id1, then rerun. Type yes to confirm: ", timeout = 10)
       }
     }
   }
@@ -438,10 +449,8 @@ plotLiquidNitrogenBox <- function (rack, row) {
       stmt = paste0("update Passaging set cellSize_um2 = ",x4DB$cellSize_um2," where id='",id,"';")
       rs = dbSendQuery(mydb, stmt)
     }else{
-      confirmError = "no"
-      while(confirmError!="yes"){
-        confirmError <- readline(prompt="Error encountered while updating database: no changes were made to the database. Please check id is not redundant with existing IDs, then rerun. Type yes to confirm: ")
-      }
+      
+      .wait_for_confirmation("", prompt_template = "Error encountered while updating database: no changes were made to the database. Please check id is not redundant with existing IDs, then rerun. Type yes to confirm: ", timeout = 30)
     }
   }
   
