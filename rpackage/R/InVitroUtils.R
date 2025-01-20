@@ -3,7 +3,6 @@ seed <- function(id, from, cellCount, flask, tx = Sys.time(), media=NULL, exclud
   return(x)
 }
 
-
 harvest <- function(id, from, cellCount, tx = Sys.time(), media=NULL, excludeOption=F, preprocessing=T, param=NULL){
   x=.seed_or_harvest(event = "harvest", id=id, from=from, cellCount = cellCount, tx = tx, flask = NULL, media = media, excludeOption=excludeOption, preprocessing=preprocessing, param=param)
   return(x)
@@ -13,18 +12,30 @@ inject <- function(mouseID, from, cellCount, tx = Sys.time(), strain, injection_
   x=.seed_or_harvest(event = "seeding", id=mouseID, from = from, cellCount = cellCount, tx = tx, flask = injection_type, media = strain, excludeOption=F, preprocessing=F, param=NULL,inject=injection_type)
 }
 
-resect <- function(id, from, weight_mg, size_cubicmm, tx = Sys.time()){
-  x=.seed_or_harvest(event = "harvest", id=id, from=from, cellCount = size_cubicmm, tx = tx, flask = NULL, media = NULL, excludeOption=F, preprocessing=F, param=NULL, resect=weight_mg)
+resect <- function(id, from, weight_mg, size_cubicmm, tx = Sys.time(), as='harvest'){
+  x=.seed_or_harvest(event = as, id=id, from=from, cellCount = size_cubicmm, tx = tx, flask = 'NULL', media = NULL, excludeOption=F, preprocessing=F, param=NULL, resect=weight_mg)
   return(x)
 }
 
-init <- function(id, cellLine, cellCount, tx = Sys.time(), media=NULL, flask=NULL, preprocessing=T){
+diagnose <- function(event_id, patientID, path2segmentationresults, treatment=135, tx = Sys.time()){ 
+  init(event_id, patientID, flask=23, media = treatment,preprocessing = F, as='seeding', path2segmentationresults=path2segmentationresults, cellCount=NULL, tx=tx)
+}
+
+follow_up <- function(event_id, diagnosis_id, treatment, path2segmentationresults, tx = Sys.time()){ 
+  x=.seed_or_harvest(event = "harvest", id=event_id, from=diagnosis_id, cellCount = NULL, tx = tx, flask = NULL, media = treatment, preprocessing=F, param=NULL, path2segmentationresults=path2segmentationresults)
+  return(x)
+}
+
+init <- function(id, cellLine, cellCount, tx = Sys.time(), media=NULL, flask=NULL, preprocessing=T, as='harvest', path2segmentationresults=NULL){
   mydb = connect2DB()
   
-  dishCount = cellCount;
-  if(!is.null(flask)){
+  dish = list(dishCount=cellCount, cellSize="NULL", dishAreaOccupied="NULL");
+  if (!is.null(path2segmentationresults)){
+    ## Currently here we deal with MRI images exclusively:
+    dish = .readMRISegmentationsOutput(id, path2segmentationresults)
+  }else if(!is.null(flask)){
     dishSurfaceArea_cm2 = .readDishSurfaceArea_cm2(flask, mydb)
-    dishCount = .readCellSegmentationsOutput(id= id, from=cellLine, cellLine = cellLine, dishSurfaceArea_cm2 = dishSurfaceArea_cm2, cellCount = cellCount, preprocessing=preprocessing)$dishCount;
+    dish = .readCellSegmentationsOutput(id= id, from=cellLine, cellLine = cellLine, dishSurfaceArea_cm2 = dishSurfaceArea_cm2, cellCount = cellCount, preprocessing=preprocessing);
   }
   if(is.null(media)){
     media = "NULL"
@@ -36,8 +47,10 @@ init <- function(id, cellLine, cellCount, tx = Sys.time(), media=NULL, flask=NUL
   rs = suppressWarnings(dbSendQuery(mydb, "SELECT user()"));
   user=fetch(rs, n=-1)[,1];
   
-  stmt = paste0("INSERT INTO Passaging (id, cellLine, event, date, cellCount, passage, flask, media, owner, lastModified) ",
-                "VALUES ('",id ,"', '",cellLine,"', 'harvest', '",as.character(tx),"', ",dishCount,", ", 1,", ",flask,", ", media, ", '", user, "', '", user, "');")
+  stmt = paste0("INSERT INTO Passaging (id, cellLine, event, date, cellCount, cellSize_um2, areaOccupied_um2, passage, flask, media, owner, lastModified) ",
+                "VALUES ('",id ,"', '",cellLine,"', '",as,"', '",as.character(tx),"', ",dish$dishCount,", ", dish$cellSize,", ", dish$dishAreaOccupied,", ", 1,", ",flask,", ", media, ", '", user, "', '", user, "');")
+  
+  print(stmt)
   rs = dbSendQuery(mydb, stmt)
   
   dbClearResult(dbListResults(mydb)[[1]])
@@ -318,7 +331,7 @@ plotLiquidNitrogenBox <- function (rack, row) {
 }
 
 
-.seed_or_harvest <- function(event, id, from, cellCount, tx, flask, media, excludeOption, preprocessing=T, param=NULL, inject=NULL, resect=NULL){
+.seed_or_harvest <- function(event, id, from, cellCount, tx, flask, media, excludeOption, preprocessing=T, param=NULL, inject=NULL, resect=NULL, path2segmentationresults=NULL){
   library(RMySQL)
   library(matlab)
   .wait_for_confirmation <- function(CHECKRESULT, timeout = 10, prompt_template = "Error encountered while updating database: %s. No changes were made to the database. Type yes to confirm: ") {
@@ -378,10 +391,14 @@ plotLiquidNitrogenBox <- function (rack, row) {
   }
   
   if(!is.null(inject)){
-    dish =list(dishCount=cellCount, cellSize=NA, dishAreaOccupied=NA)
+    dish =list(dishCount=cellCount, cellSize='NULL', dishAreaOccupied='NULL')
   }else if (!is.null(resect)){
-    dish =list(dishCount=NA, cellSize=cellCount, dishAreaOccupied=resect)
-  }else{
+    dish =list(dishCount='NULL', cellSize=cellCount, dishAreaOccupied=resect)
+  }else if (!is.null(path2segmentationresults)){
+    ## Currently here we deal with MRI images exclusively:
+    print("Assuming MRI input")
+    dish = .readMRISegmentationsOutput(id, path2segmentationresults)
+  } else {
     dishSurfaceArea_cm2 = .readDishSurfaceArea_cm2(flask, mydb)
     dish = .readCellSegmentationsOutput(id= id, from=from, cellLine = parent$cellLine, dishSurfaceArea_cm2 = dishSurfaceArea_cm2, cellCount = cellCount, excludeOption=excludeOption, preprocessing=preprocessing, param=param);
   }
@@ -488,7 +505,9 @@ plotLiquidNitrogenBox <- function (rack, row) {
   ## CellSegmentations Settings; @TODO: should be set under settings, not here
   UM2CM = 1e-4
   yml = yaml::read_yaml(paste0(system.file(package='cloneid'), '/config/config.yaml'))
-  TMP_DIR = normalizePath(paste0(yml$cellSegmentation$tmp,filesep,id));
+  TMP_DIR = normalizePath(yml$cellSegmentation$tmp);
+  unlink(TMP_DIR,recursive=T)
+  TMP_DIR = paste0(TMP_DIR,filesep,id);
   CELLSEGMENTATIONS_OUTDIR=paste0(normalizePath(yml$cellSegmentation$output),"/");
   CELLSEGMENTATIONS_INDIR=paste0(normalizePath(yml$cellSegmentation$input),"/");
   # QUPATH_PRJ = "~/Downloads/qproject/project.qpproj"
@@ -520,7 +539,6 @@ plotLiquidNitrogenBox <- function (rack, row) {
   }
   
   ## Copy raw images to temporary directory:
-  unlink(TMP_DIR,recursive=T)
   dir.create(TMP_DIR, recursive = T)
   f_i = list.files(CELLSEGMENTATIONS_INDIR, pattern = paste0("^",id,"_"), full.names = T)
   f_i = grep("x_ph_",f_i,value=T)
@@ -586,55 +604,36 @@ plotLiquidNitrogenBox <- function (rack, row) {
     get_mask(imgPath,paste0(TMP_DIR,filesep,"Confluency"),toupper(cellLine),"False")
   }
   
-  
   ## Add QC statistics
   if(LOADEDENV){
     source_python(QCSTATS_SCRIPT)
     QC_Statistics(TMP_DIR,paste0(TMP_DIR,filesep,"cellpose_count"),'.tif')
   }
+  
   ## Move files from tempDir to destination:
-  cellPoseOut_csv = list.files(TMP_DIR, recursive = T, pattern = ".csv",full.names = T)
-  sapply(grep("pred",cellPoseOut_csv,value = T), function(x) file.copy(x, paste0(CELLSEGMENTATIONS_OUTDIR,"DetectionResults") ))
-  sapply(grep("cellpose_count",cellPoseOut_csv,value = T), function(x) file.copy(x, paste0(CELLSEGMENTATIONS_OUTDIR,"Annotations") ))
-  sapply(grep("Confluency",cellPoseOut_csv,value = T), function(x) file.copy(x, paste0(CELLSEGMENTATIONS_OUTDIR,"Confluency") ))
-  cellPoseOut_img = list.files(TMP_DIR, recursive = T, pattern = "overlay.",full.names = T)
-  tissuesegOut_img = list.files(TMP_DIR, recursive = T, pattern = "mask.",full.names = T)
-  sapply(cellPoseOut_img, function(x) file.copy(x, paste0(CELLSEGMENTATIONS_OUTDIR,"Images") ))
-  sapply(tissuesegOut_img, function(x) file.copy(x, paste0(CELLSEGMENTATIONS_OUTDIR,"Confluency") ))
+  .move_temp_files(TMP_DIR)
   
   ## Wait and look for imaging analysis output
-  print(paste0("Waiting for ",id," to appear under ",CELLSEGMENTATIONS_OUTDIR," ..."), quote = F)
-  f = c()
-  while(length(f)<length(f_i)){
-    Sys.sleep(3)
-    f = list.files(paste0(CELLSEGMENTATIONS_OUTDIR,"DetectionResults"), pattern = paste0(id,"_"), full.names = T)
-    f = grep("x_ph_",f,value=T)
-  }
-  f_a = list.files(paste0(CELLSEGMENTATIONS_OUTDIR,"Annotations"), pattern = paste0(id,"_"), full.names = T)
-  f_o = list.files(paste0(CELLSEGMENTATIONS_OUTDIR,"Images"), pattern = paste0(id,"_"), full.names = T)
-  f_c = list.files(paste0(CELLSEGMENTATIONS_OUTDIR,"Confluency"), pattern = ".csv", full.names = T)
-  f_c = grep(paste0(id,"_"), f_c, value=T)
-  print(paste0("Output found for ",fileparts(f[1])$name," and ",(length(f)-1)," other image files."), quote = F)
-  
+  ia=.wait_for_analysis_output(id, length(f_i))
   
   ## Read automated image analysis output
-  cellCounts = matrix(NA,length(f),4);
+  cellCounts = matrix(NA,length(ia$f),4);
   colnames(cellCounts) = c("areaCount","area_cm2","dishAreaOccupied", "cellSize_um2")
-  rownames(cellCounts) = sapply(f, function(x) fileparts(x)$name)
+  rownames(cellCounts) = sapply(ia$f, function(x) fileparts(x)$name)
   # pdf(OUTSEGF)
-  for(i in 1:length(f)){
-    dm = read.table(f[i],sep="\t", check.names = F, stringsAsFactors = F, header = T)
+  for(i in 1:length(ia$f)){
+    dm = read.table(ia$f[i],sep="\t", check.names = F, stringsAsFactors = F, header = T)
     colnames(dm)[grep("^Area",colnames(dm))]="Cell: Area"; ## Replace cellPose column name -- @TODO: saeed fix directly in cellposeScript
-    anno = read.table(f_a[i],sep="\t", check.names = T, stringsAsFactors = F, header = T)
-    conf = read.csv(f_c[i])
+    anno = read.table(ia$f_a[i],sep="\t", check.names = T, stringsAsFactors = F, header = T)
+    conf = read.csv(ia$f_c[i])
     colnames(anno) = tolower(colnames(anno))
     areaCount = nrow(dm)
     # areaCount = sum(conf$`Area.in.um`)/median(dm$`Cell: Area`)
     area_cm2 = anno[1,grep("^area.",colnames(anno))]*UM2CM^2
-    cellCounts[fileparts(f[i])$name,] = c(areaCount, area_cm2, sum(conf$`Area.in.um`), quantile(dm$`Cell: Area`, 0.9, na.rm=T))
+    cellCounts[fileparts(ia$f[i])$name,] = c(areaCount, area_cm2, sum(conf$`Area.in.um`), quantile(dm$`Cell: Area`, 0.9, na.rm=T))
     # ## Visualize
     # ## @TODO: Delete
-    # if(!file.exists(f_o[i])){
+    # if(!file.exists(ia$f_o[i])){
     #   la=raster::raster(f_i[i])
     #   ROI <- as(raster::extent(100, 1900, la@extent@ymax - 1200, la@extent@ymax - 100), 'SpatialPolygons')
     #   la_ <- raster::crop(la, ROI)
@@ -642,9 +641,9 @@ plotLiquidNitrogenBox <- function (rack, row) {
     #   mtext(fileparts(f_i[i])$name, cex=1)
     #   points(dm$`Centroid X µm`,la@extent@ymax - dm$`Centroid Y µm`, col="black", pch=20, cex=0.3)
     # }else{
-    #   img <- magick::image_read(f_o[i])
+    #   img <- magick::image_read(ia$f_o[i])
     #   plot(img)
-    #   mtext(fileparts(f_o[i])$name, cex=1)
+    #   mtext(fileparts(ia$f_o[i])$name, cex=1)
     # }
   }
   # dev.off()
@@ -652,8 +651,8 @@ plotLiquidNitrogenBox <- function (rack, row) {
   
   ## Predict cell count error
   print("Predicting cell count error...",quote=F)
-  for(i in 1:length(f_a)){
-    anno = read.table(f_a[i],sep="\t", check.names = T, stringsAsFactors = F, header = T)
+  for(i in 1:length(ia$f_a)){
+    anno = read.table(ia$f_a[i],sep="\t", check.names = T, stringsAsFactors = F, header = T)
     ## No cells detected
     if(is.null(anno$Num.Detections)){
       anno$Num.Detections=0;
@@ -673,7 +672,7 @@ plotLiquidNitrogenBox <- function (rack, row) {
       excludeOption=T
       break;
     }else{
-      print(paste("Cell count error predicted as negligible for",f_a[i]),quote=F)
+      print(paste("Cell count error predicted as negligible for",ia$f_a[i]),quote=F)
     }
   }
   
@@ -689,7 +688,7 @@ plotLiquidNitrogenBox <- function (rack, row) {
         print(paste("Excluding",rownames(cellCounts)[ii],"from analysis."), quote = F)
         cellCounts= cellCounts[-ii,, drop=F]
       }
-      if(length(ii)==length(f)){
+      if(length(ii)==length(ia$f)){
         stop("At least one valid image needs to be left. Aborting")
       }
     }
@@ -710,6 +709,93 @@ plotLiquidNitrogenBox <- function (rack, row) {
 }
 
 
+.readMRISegmentationsOutput <- function(id, path2segmentationresults) {
+  ## Currently here we deal with MRI images exclusively:
+  f_i = list.files(path2segmentationresults, pattern = paste0("^",id,"_"), full.names = T)
+  if(length(f_i)!=length(list.files(path2segmentationresults))){
+    errorCondition(paste0("All files in input folder (",path2segmentationresults,") must begin with ",id))
+    stop()
+  }
+  .move_temp_files(path2segmentationresults, segmentationRegex="_msk.", moveSegmentationInputToo=T) 
+  ia=.wait_for_analysis_output(id, 2)
+  nii=RNifti::readNifti(ia$f_o[1])
+  ## Compute volume from masks
+  volume = sum(as.numeric(nii))
+  dish =list(dishCount="NULL", cellSize=volume, dishAreaOccupied="NULL")
+  return(dish)
+}
+
+
+.move_temp_files <- function(TMP_DIR, segmentationRegex="overlay.", moveSegmentationInputToo=F) {
+  yml = yaml::read_yaml(paste0(system.file(package='cloneid'), '/config/config.yaml'))
+  CELLSEGMENTATIONS_OUTDIR=paste0(normalizePath(yml$cellSegmentation$output),"/");
+  CELLSEGMENTATIONS_INDIR=paste0(normalizePath(yml$cellSegmentation$input),"/");
+  
+  ## Move files from TMP_DIR to destination directories
+  cellPoseOut_csv <- list.files(TMP_DIR, recursive = TRUE, pattern = ".csv", full.names = TRUE)
+  # Move specific CSV files to respective directories
+  sapply(grep("pred", cellPoseOut_csv, value = TRUE), function(x) 
+    file.copy(x, paste0(CELLSEGMENTATIONS_OUTDIR, "DetectionResults"))
+  )
+  sapply(grep("cellpose_count", cellPoseOut_csv, value = TRUE), function(x) 
+    file.copy(x, paste0(CELLSEGMENTATIONS_OUTDIR, "Annotations"))
+  )
+  sapply(grep("Confluency", cellPoseOut_csv, value = TRUE), function(x) 
+    file.copy(x, paste0(CELLSEGMENTATIONS_OUTDIR, "Confluency"))
+  )
+  
+  # Move image files to respective directories
+  cellPoseOut_img <- list.files(TMP_DIR, recursive = TRUE, pattern = segmentationRegex, full.names = TRUE)
+  tissuesegOut_img <- list.files(TMP_DIR, recursive = TRUE, pattern = "mask.", full.names = TRUE)
+  sapply(cellPoseOut_img, function(x) 
+    file.copy(x, paste0(CELLSEGMENTATIONS_OUTDIR, "Images"))
+  )
+  sapply(tissuesegOut_img, function(x) 
+    file.copy(x, paste0(CELLSEGMENTATIONS_OUTDIR, "Confluency"))
+  )
+  
+  # Also move input
+  if(moveSegmentationInputToo){
+    cellPoseIn_img = gsub(segmentationRegex,'.',cellPoseOut_img,fixed = T)
+    sapply(cellPoseIn_img, function(x) file.copy(x, CELLSEGMENTATIONS_INDIR))
+  }
+}
+
+getMRIdata<-function(id, signal="t2"){
+  yml = yaml::read_yaml(paste0(system.file(package='cloneid'), '/config/config.yaml'))
+  CELLSEGMENTATIONS_OUTDIR=paste0(normalizePath(yml$cellSegmentation$output),"/");
+  CELLSEGMENTATIONS_INDIR=paste0(normalizePath(yml$cellSegmentation$input),"/");
+  x=list.files(paste0(CELLSEGMENTATIONS_OUTDIR,"/Images"), pattern=paste0("^",id,"_",signal,"_mni"), full.names = T)[1]
+  nii_mask=RNifti::readNifti(x)
+  x=list.files(CELLSEGMENTATIONS_INDIR, pattern=paste0("^",id,"_",signal,"_mni"), full.names = T)[1]
+  nii=RNifti::readNifti(x)
+  return(list(nii=nii,mask=nii_mask))
+}
+
+
+.wait_for_analysis_output <- function(id, howMany) {
+  yml = yaml::read_yaml(paste0(system.file(package='cloneid'), '/config/config.yaml'))
+  CELLSEGMENTATIONS_OUTDIR=paste0(normalizePath(yml$cellSegmentation$output),"/");
+  
+  ## Wait and look for imaging analysis output
+  message <- paste0("Waiting for ", id, " to appear under ", CELLSEGMENTATIONS_OUTDIR, " ...")
+  print(message, quote = FALSE)
+  f_o <- c()
+  while (length(f_o) < howMany) {
+    Sys.sleep(3)
+    f_o <- list.files(paste0(CELLSEGMENTATIONS_OUTDIR, "Images"), pattern = paste0("^",id, "_"), full.names = TRUE)
+    # f <- grep("x_ph_", f, value = TRUE)
+  }
+  f <- list.files(paste0(CELLSEGMENTATIONS_OUTDIR, "DetectionResults"), pattern = paste0("^",id, "_"), full.names = TRUE)
+  f_a <- list.files(paste0(CELLSEGMENTATIONS_OUTDIR, "Annotations"), pattern = paste0("^",id, "_"), full.names = TRUE)
+  # f_o <- list.files(paste0(CELLSEGMENTATIONS_OUTDIR, "Images"), pattern = paste0("^",id, "_"), full.names = TRUE)
+  f_c <- list.files(paste0(CELLSEGMENTATIONS_OUTDIR, "Confluency"), pattern = paste0("^",id, "_"), full.names = TRUE)
+  f_c <- grep(".csv", f_c, value = TRUE)
+  output_message <- paste0("Output found for ", fileparts(f_o[1])$name, " and ", (length(f_o) - 1), " other image files.")
+  print(output_message, quote = FALSE)
+  # Return the file paths as a list for further processing if needed
+  return(list(f = f, f_a = f_a, f_o = f_o, f_c = f_c))
+}
 
 
 .QuPathScript <- function(qpdir, cellLine){
