@@ -717,6 +717,7 @@ plotLiquidNitrogenBox <- function (rack, row) {
     stop()
   }
   .move_temp_files(path2segmentationresults, segmentationRegex="_msk.", moveSegmentationInputToo=T) 
+  .move_temp_files(path2segmentationresults, segmentationRegex="_cavity", moveSegmentationInputToo=F)  
   ia=.wait_for_analysis_output(id, 2)
   nii=RNifti::readNifti(ia$f_o[1])
   ## Compute volume from masks
@@ -767,6 +768,7 @@ getMRIdata<-function(id, signal="t2"){
   CELLSEGMENTATIONS_INDIR=paste0(normalizePath(yml$cellSegmentation$input),"/");
   x=list.files(paste0(CELLSEGMENTATIONS_OUTDIR,"/Images"), pattern=paste0("^",id,"_",signal,"_mni"), full.names = T)[1]
   nii_mask=RNifti::readNifti(x)
+  signal=gsub("_cavity","",signal)
   x=list.files(CELLSEGMENTATIONS_INDIR, pattern=paste0("^",id,"_",signal,"_mni"), full.names = T)[1]
   nii=RNifti::readNifti(x)
   return(list(nii=nii,mask=nii_mask))
