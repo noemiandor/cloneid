@@ -98,7 +98,10 @@ def get_ROI_cellCount(df,msk,name,pixel_size):
   image_name = name.split('_cp_masks')[0]+'.tif'
   [d1,d2] = msk.shape
   area = d1 * d2
-  
+  if pixel_size == None:
+    df_total_det['Error'] = 'Error in getting the pixel size from the image, skipping ...'
+    print('Error in getting the pixel size from the image, skipping ...')
+    return df_total_det
   area = area * pixel_size * pixel_size 
 
   perimeter = d1 + d1 + d2 + d2
@@ -164,9 +167,9 @@ def iterate(path2Pred,path2Save,ext):
                          #if pixel size of None is detected the last element in the buffer is used. 
   for maskName in tqdm(os.listdir(path2Pred)):
       if maskName.startswith('.'):
-        continue
+          continue
       if not maskName.endswith('_cp_masks.png'):
-        continue 
+          continue 
       else:
           if not ext.startswith('.'):
             ext = '.'+ext
@@ -198,7 +201,7 @@ def iterate(path2Pred,path2Save,ext):
           df_total = get_ROI_cellCount(df,msk,maskName,pixel_size)
           df.to_csv(os.path.join(path2Save,'pred',maskName.split('_cp_masks')[0]+'.csv'),index=False,sep='\t')
           df_total.to_csv(os.path.join(path2Save,'cellpose_count',maskName.split('_cp_masks')[0]+'.csv'),index=False,sep='\t')
-  return line_point
+          return line_point
 
 def run_cellPose(path2Images,path2Pretrained, diameter, flow, cellprob):
   call(['python', '-m' , 'cellpose' ,'--dir', path2Images ,'--pretrained_model', path2Pretrained,'--use_gpu','--save_png', '--verbose', '--diameter', diameter, '--flow_threshold', flow, '--cellprob_threshold', cellprob])
@@ -210,11 +213,11 @@ def run(path2Images,path2Pretrained,path2Save,ext, diameter, flow, cellprob):
 
 
 if __name__ == "__main__":
-    # execute only if run as a script
+    #execute only if run as a script
     args = len(sys.argv)
     print(args)
     if args == 6:
       run(sys.argv[1],sys.argv[2],sys.argv[3],sys.argv[4],sys.argv[5])
     else:
       print('Error in number of arguments')
-#run('/Users/saeedalahmari/Downloads/images_stanford','../NCI-N87-Iter2_models_best/cellpose_residual_on_style_on_concatenation_off_train_iteration2_2022_10_03_02_31_01.132104','/Users/saeedalahmari/Downloads/CRISPRmetabolism/image_with_scalebar/results','.tif','30', '0.2', '0.8')
+    #run('/Users/saeedalahmari/Downloads/stanford_images','../NCI-N87-Iter2_models_best/cellpose_residual_on_style_on_concatenation_off_train_iteration2_2022_10_03_02_31_01.132104','/Users/saeedalahmari/Downloads/stanford_images/results','.tif','30', '0.2', '0.8')

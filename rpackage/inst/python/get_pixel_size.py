@@ -67,10 +67,10 @@ def get_pixel_size(image_path,path2Save):
                 if len_line > length_of_the_line:
                     length_of_the_line = len_line
                     #lx,ly,rx,ry = x1,y1,x2,y2
-                    x1_bb = max(x1 - 50,0)
-                    y1_bb = max(y1 - 50,0)
-                    x2_bb = min(x2 + 50,image.shape[1])
-                    y2_bb = min(y2 + 50,image.shape[0])
+                    x1_bb = max(x1 - 100,0)
+                    y1_bb = max(y1 - 100,0)
+                    x2_bb = min(x2 + 100,image.shape[1])
+                    y2_bb = min(y2 + 100,image.shape[0])
                     scale_bar_length_in_pixels = x2 - x1 
     else:
         print("No horizontal lines detected!")
