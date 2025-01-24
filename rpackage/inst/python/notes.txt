@@ -10,3 +10,11 @@ Saeed Alahmari
 Added 10 more features extracted from countours of each cell
 The features are aspect_ratio, extent, solidity, equivalent diameter, Orientation, max intensity value, min intensity value, mean intensity value, length of major axis, length of minor axis.
 
+
+Changes made to the code on Dec 5th, 2024
+Saeed Alahmari, 
+
+Added get_pixel_size.py to get the pixel size and use the pixel size for features extraction. 
+Added option to write the scalebar images with line and cropped image around the scale bar into the results folder named scalebar. 
+Fixed the box drawing for different resolution images, the results will be saved into vis folder. 
+

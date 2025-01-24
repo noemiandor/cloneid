@@ -11,11 +11,13 @@ from tqdm import tqdm
 from cellpose.plot import mask_overlay
 from PIL import Image
 from PIL.TiffTags import TAGS
+import tifffile as tifffile
+from get_pixel_size import get_pixel_size
 
 import sys
 from subprocess import call 
 
-def vis_overlay(path2Masks,path2Save,ext):
+def vis_overlay(path2Masks,path2Save,ext,line_point):
   #parentPath = os.path.dirname(path2Masks)
   if not os.path.exists(os.path.join(path2Save,'vis')):
     os.makedirs(os.path.join(path2Save,'vis'))
@@ -31,51 +33,16 @@ def vis_overlay(path2Masks,path2Save,ext):
     else:
       base_name = item.rsplit('_cp_masks',1)[0]
       msk = cv2.imread(os.path.join(path2Masks,item),-1)
-      img = cv2.imread(os.path.join(path2Masks,base_name+ext),-1)
+      img = cv2.imread(os.path.join(path2Masks,base_name+ext),cv2.IMREAD_COLOR)
       overlay = mask_overlay(img,msk)
       mask = overlay * 0 
       overlay_copy = overlay.copy()
       overlay = img 
-      overlay[100:1200,100:1900] = overlay_copy[100:1200,100:1900]
-      overlay = cv2.rectangle(overlay, (100,100), (1900,1200), (0,0,255), 4)
+      #msk = msk[100:mask.shape[1]-100,100:line_point[0]-10]
+      #overlay[100:1200,100:1900] = overlay_copy[100:1200,100:1900]
+      overlay[100:line_point[1]-10,100:mask.shape[1]-100] = overlay_copy[100:line_point[1]-10,100:mask.shape[1]-100]
+      overlay = cv2.rectangle(overlay, (100,100), (mask.shape[1]-100,line_point[1]-10), (0,0,255), 4)
       cv2.imwrite(os.path.join(path2Save,'vis',base_name+'_overlay.png'),overlay)
-
-def get_metadata(path2Image):
-    img = Image.open(path2Image)
-    meta_dict = {TAGS[key] : img.tag[key] for key in img.tag_v2}    
-    #print(meta_dict)
-    try:
-        objective_lens = meta_dict['ImageDescription'][0].split(' ')[1]
-        objective_lens = objective_lens.split('"')[1]
-        #print('objectivelens from meta data {}'.format(objective_lens))
-    except:
-        if len(path2Image.split('/')) > 1:
-            imageName = path2Image.split('/')[-1]
-            if '10x' in imageName:
-                objective_lens = '10x'
-            elif '20x' in imageName:
-                objective_lens = '20x'
-            elif '40x' in imageName:
-                objective_lens = '40x'
-        else:
-            imageName = path2Image
-            if '10x' in imageName:
-                objective_lens = '10x'
-            elif '20x' in imageName:
-                objective_lens = '20x'
-            elif '40x' in imageName:
-                objective_lens = '40x'
-        #print('objectivelens from filename {}'.format(objective_lens))
-    return objective_lens
-
-def get_pixel_size(objectiveLens):
-    if objectiveLens == '10x':
-        pixel_size = 0.922 
-    elif objectiveLens == '20x':
-        pixel_size = 0.922 / float(2)
-    elif objectiveLens == '40x':
-        pixel_size = 0.922 / float(4) 
-    return pixel_size
 
 def get_blob_prop(msk,pixel_size,path2Image):
   imgray = cv2.imread(path2Image,cv2.IMREAD_GRAYSCALE)
@@ -193,6 +160,8 @@ def iterate(path2Pred,path2Save,ext):
   if not os.path.exists(os.path.join(path2Save,'cellpose_count')):
     os.makedirs(os.path.join(path2Save,'cellpose_count'))
   print('Getting the cell count ... ')
+  pixel_size_buffer = [] # this buffer is used to track the pixel sizes, 
+                         #if pixel size of None is detected the last element in the buffer is used. 
   for maskName in tqdm(os.listdir(path2Pred)):
       if maskName.startswith('.'):
         continue
@@ -204,12 +173,21 @@ def iterate(path2Pred,path2Save,ext):
           mask = cv2.imread(os.path.join(path2Pred,maskName),-1)
           image_name = maskName.split('_cp_masks.png')[0]+ext
           path2Image = os.path.join(path2Pred,image_name)
-          objective_len = get_metadata(path2Image)
-          pixel_size = get_pixel_size(objective_len)
+          #objective_len = get_metadata(path2Image)
+          scale_pixels,scale_um,line_point,pixel_size = get_pixel_size(path2Image,path2Save)
+          pixel_size_buffer.append(pixel_size)
+          # Get pixel size from buffer. 
+          if pixel_size is None:
+            try:
+              pixel_size = pixel_size_buffer[-1]
+            except Exception as e:
+              print('Error: Could Not Get Pixel Size From Buffer {}'.format(e))
+          #print('Pixel size is {}'.format(pixel_size))
           list_of_cells_props = []
           for i in range(mask.max()):
               msk =(mask == i+1)*255
-              msk = msk[100:1200,100:1900]
+              #msk = msk[100:1200,100:1900]
+              msk = msk[100:line_point[1]-10,100:mask.shape[1]-100] #
               nzCount = cv2.countNonZero(msk)
               if(nzCount > 0):
                   prop_dict = get_blob_prop(msk.astype(np.uint8),pixel_size,path2Image)
@@ -220,15 +198,15 @@ def iterate(path2Pred,path2Save,ext):
           df_total = get_ROI_cellCount(df,msk,maskName,pixel_size)
           df.to_csv(os.path.join(path2Save,'pred',maskName.split('_cp_masks')[0]+'.csv'),index=False,sep='\t')
           df_total.to_csv(os.path.join(path2Save,'cellpose_count',maskName.split('_cp_masks')[0]+'.csv'),index=False,sep='\t')
-          
+  return line_point
 
 def run_cellPose(path2Images,path2Pretrained, diameter, flow, cellprob):
   call(['python', '-m' , 'cellpose' ,'--dir', path2Images ,'--pretrained_model', path2Pretrained,'--use_gpu','--save_png', '--verbose', '--diameter', diameter, '--flow_threshold', flow, '--cellprob_threshold', cellprob])
 
 def run(path2Images,path2Pretrained,path2Save,ext, diameter, flow, cellprob):
   run_cellPose(path2Images,path2Pretrained, diameter, flow, cellprob)
-  iterate(path2Images,path2Save,ext)
-  vis_overlay(path2Images,path2Save,ext)
+  line_point = iterate(path2Images,path2Save,ext)
+  vis_overlay(path2Images,path2Save,ext,line_point)
 
 
 if __name__ == "__main__":
@@ -239,4 +217,4 @@ if __name__ == "__main__":
       run(sys.argv[1],sys.argv[2],sys.argv[3],sys.argv[4],sys.argv[5])
     else:
       print('Error in number of arguments')
-    #run('/Volumes/WD Element/Collaboration/Moffitt_Noemi/CellPose/Clonid Integrated Code/testing/images','../','/Volumes/WD Element/Collaboration/Moffitt_Noemi/CellPose/Clonid Integrated Code/testing/results2','NCI-N87','.tif')
+#run('/Users/saeedalahmari/Downloads/images_stanford','../NCI-N87-Iter2_models_best/cellpose_residual_on_style_on_concatenation_off_train_iteration2_2022_10_03_02_31_01.132104','/Users/saeedalahmari/Downloads/CRISPRmetabolism/image_with_scalebar/results','.tif','30', '0.2', '0.8')
