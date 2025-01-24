@@ -1,5 +1,6 @@
 # thresholding an image to get the tissue segmented
 # Created By Saeed Alahmari, May 26th, 2022  aalahmari.saeed@gmail.com 
+# Code updated by Saeed Alahmari, Jan, 24th, 2025 for getting the pixel size automatically from the image scale bar 
 # This code aims to segment tissues in micrscopy images, and provide the area of the segmented tissue in microns.
 #How to run this code: 
 #Type on terminal: python3 tissue_seg.py -imgPath <path2Image> -ResultsPath <path2SaveResults> -cellType NUGC
@@ -14,6 +15,7 @@ import numpy as np
 import pandas as pd 
 import argparse
 from tqdm import tqdm
+from get_pixel_size import get_pixel_size
 
 #path2Images = '.'
 #path2Images = 'NCI-N87_A59_seedT9_20x_ph_tr.tif'
@@ -35,9 +37,10 @@ def fill_holes(image_result):
     im_out = image_result | im_floodfill_inv
     return im_out
 
-def get_connected_components(image,mask,pixel_size,ImageName,path2SaveResults,saveVis):
+def get_connected_components(image,mask,pixel_size,ImageName,path2SaveResults,saveVis,line_point):
     ImageName = ImageName.split('.')[0]
-    image = cv2.rectangle(image, (100,100), (1900,1200), (0,0,255), 4)
+    #image = cv2.rectangle(image, (100,100), (1900,1200), (0,0,255), 4)
+    image = cv2.rectangle(image, (100,100), (mask.shape[1]-100,line_point[1]-100), (0,0,255), 4)
     output = cv2.connectedComponentsWithStats(mask,8,cv2.CV_32S)
     (numlabels,labels,stats,centroids) = output 
     df = pd.DataFrame()
@@ -69,51 +72,21 @@ def get_connected_components(image,mask,pixel_size,ImageName,path2SaveResults,sa
     df['Area in um'] = area_list
     df.to_csv(os.path.join(path2SaveResults,ImageName+'.csv'),index=False)
 
-def get_metadata(path2Image):
-    img = Image.open(path2Image)
-    meta_dict = {TAGS[key] : img.tag[key] for key in img.tag_v2}    
-    #print(meta_dict)
-    try:
-        objective_lens = meta_dict['ImageDescription'][0].split(' ')[1]
-        objective_lens = objective_lens.split('"')[1]
-        #print('objectivelens from meta data {}'.format(objective_lens))
-    except:
-        if len(path2Image.split('/')) > 1:
-            imageName = path2Image.split('/')[-1]
-            if '10x' in imageName:
-                objective_lens = '10x'
-            elif '20x' in imageName:
-                objective_lens = '20x'
-            elif '40x' in imageName:
-                objective_lens = '40x'
-        else:
-            imageName = path2Image
-            if '10x' in imageName:
-                objective_lens = '10x'
-            elif '20x' in imageName:
-                objective_lens = '20x'
-            elif '40x' in imageName:
-                objective_lens = '40x'
-        #print('objectivelens from filename {}'.format(objective_lens))
-    return objective_lens
 
 def get_mask(path2Images,path2Results,cellType,saveVis):
     image = cv2.imread(path2Images,-1)
     image = cv2.cvtColor(image,cv2.COLOR_BGR2RGB)
     ImageName = path2Images.split('/')[-1]
+    if not os.path.exists(os.path.join(path2Results,'scale_bar')):
+        os.makedirs(os.path.join(path2Results,'scale_bar'))
+    path2Save = os.path.join(path2Results,'scale_bar')
     #print(ImageName)
     if ImageName == '':
         ImageName = path2Images
-    objectiveLens = get_metadata(path2Images)
-    #sys.exit()
-    #objectiveLens = objectiveLens.split('"')[1]
-    
-    if objectiveLens == '10x':
-        pixel_size = 0.922 
-    elif objectiveLens == '20x':
-        pixel_size = 0.922 / float(2)
-    elif objectiveLens == '40x':
-        pixel_size = 0.922 / float(4) 
+    scale_pixels,scale_um,line_point,pixel_size = get_pixel_size(path2Images,path2Save)
+    if pixel_size == None:
+        print('Error: could not calculate the pixel size. skipping')
+        return
     name_no_ext = ImageName.split('.tif')[0]
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     blur = cv2.GaussianBlur(gray,(3,3),0.5)
@@ -122,8 +95,8 @@ def get_mask(path2Images,path2Results,cellType,saveVis):
     #cv2.imwrite(os.path.join(path2Results,ImageName.split('.tif')[0],name_no_ext+'_seg_OTSU.png'),image_result)
     
     mask = np.zeros(blur.shape,np.uint8)
-    mask[100:1200,100:1900] = image_result[100:1200,100:1900]
-    
+    #mask[100:1200,100:1900] = image_result[100:1200,100:1900]
+    mask = image_result[100:line_point[1]-10,100:mask.shape[1]-100] #
     if cellType.startswith('NUGC'):
         #kernel = np.ones((2,2),np.uint8)
         kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(2,2))
@@ -138,7 +111,8 @@ def get_mask(path2Images,path2Results,cellType,saveVis):
         light_green = (0,50,0)
         dark_green = (175,255,150)  
         mask_res = cv2.inRange(hsv_image, light_green, dark_green)
-        mask[100:1200,100:1900] = mask_res[100:1200,100:1900]
+        #mask[100:1200,100:1900] = mask_res[100:1200,100:1900]
+        mask = mask_res[100:line_point[1]-10,100:mask.shape[1]-100] #
         mask = fill_holes(mask)
         #mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel,iterations=5)
         mask = cv2.dilate(mask, kernel, iterations=5)
@@ -157,7 +131,7 @@ def get_mask(path2Images,path2Results,cellType,saveVis):
         os.makedirs(os.path.join(path2Results,ImageName.split('.')[0]))
     path2SaveResults = os.path.join(path2Results,ImageName.split('.')[0])
     cv2.imwrite(os.path.join(path2SaveResults,ImageName.split('.')[0]+'_mask.png'),mask)
-    get_connected_components(image,mask,pixel_size, ImageName,path2SaveResults,saveVis)
+    get_connected_components(image,mask,pixel_size, ImageName,path2SaveResults,saveVis,line_point)
 #get_mask(path2Images)
 
 
@@ -179,15 +153,22 @@ def main(parser):
         get_mask(args.imgPath,args.resultsPath,args.cellType.upper(),args.saveVis)
     elif os.path.isdir(args.imgPath):
         loopTroughImages(args.imgPath,args.resultsPath,args.cellType.upper(),args.saveVis)
-    
-
-'''
+    """ 
+    except:
+        path2Images = '/Users/saeedalahmari/Downloads/stanford_images/images'
+        path2Results = '/Users/saeedalahmari/Downloads/stanford_images/results_tissue-seg'
+        cell_line = 'NCI'
+        saveVis = True
+        if os.path.isfile(path2Images) and path2Images.endswith('.tif'):
+            get_mask(path2Images,path2Results,cell_line.upper(),saveVis)
+        elif os.path.isdir(path2Images):
+            loopTroughImages(path2Images,path2Results,cell_line.upper(),saveVis)
+    """
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    # todo add argument for cell-line
     parser.add_argument('-imgPath',required=True,help='Path to an image including image name')
     parser.add_argument('-resultsPath',required=False,default='.',help='Path to save the results')
     parser.add_argument('-cellType',required=True,help='name of cell type for the images example NUGC, NCI-N87, SNU, etc')
     parser.add_argument('--saveVis',action='store_true',help='Flag for saving all the visualization for detected tissues, default is False')
     main(parser)
-'''
+
