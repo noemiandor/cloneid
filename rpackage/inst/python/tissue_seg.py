@@ -147,28 +147,3 @@ def loopTroughImages(path2Images,path2Results,cellType,saveVis):
             get_mask(os.path.join(path2Images,item),path2Results,cellType,saveVis)
 
 
-def main(parser):
-    args = parser.parse_args()
-    if os.path.isfile(args.imgPath) and args.imgPath.endswith('.tif'):
-        get_mask(args.imgPath,args.resultsPath,args.cellType.upper(),args.saveVis)
-    elif os.path.isdir(args.imgPath):
-        loopTroughImages(args.imgPath,args.resultsPath,args.cellType.upper(),args.saveVis)
-    """ 
-    except:
-        path2Images = '/Users/saeedalahmari/Downloads/stanford_images/images'
-        path2Results = '/Users/saeedalahmari/Downloads/stanford_images/results_tissue-seg'
-        cell_line = 'NCI'
-        saveVis = True
-        if os.path.isfile(path2Images) and path2Images.endswith('.tif'):
-            get_mask(path2Images,path2Results,cell_line.upper(),saveVis)
-        elif os.path.isdir(path2Images):
-            loopTroughImages(path2Images,path2Results,cell_line.upper(),saveVis)
-    """
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-imgPath',required=True,help='Path to an image including image name')
-    parser.add_argument('-resultsPath',required=False,default='.',help='Path to save the results')
-    parser.add_argument('-cellType',required=True,help='name of cell type for the images example NUGC, NCI-N87, SNU, etc')
-    parser.add_argument('--saveVis',action='store_true',help='Flag for saving all the visualization for detected tissues, default is False')
-    main(parser)
-
