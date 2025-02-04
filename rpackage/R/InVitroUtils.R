@@ -1047,3 +1047,71 @@ GenomePerspectiveView_Bulk<-function(id){
   p=do.call(cbind, p)
   gplots::heatmap.2(t(p), trace = "n")
 }
+
+
+# Helper function to retrieve ancestors
+.get_ancestors <- function(conn, start_id, cellLine) {
+  ancestors <- c()
+  current_id <- start_id
+  while (!is.na(current_id) && !is.null(current_id)) {
+    ancestors <- c(ancestors, current_id)
+    query <- paste0("SELECT passaged_from_id1 FROM Passaging WHERE cellLine='",cellLine,"' and id = '", current_id,"'")
+    current_id <- dbGetQuery(conn, query)$passaged_from_id1
+  }
+  
+  return(ancestors)
+}
+
+find_mrca <- function(conn, id1, id2, cellLine) {
+  # Get ancestors for both ids
+  ancestors1 <- .get_ancestors(conn, id1,cellLine)
+  ancestors2 <- .get_ancestors(conn, id2,cellLine)
+  
+  # Find the most recent common ancestor
+  common_ancestors <- intersect(ancestors1, ancestors2)
+  
+  if (length(common_ancestors) > 0) {
+    return(common_ancestors[1])  # The most recent common ancestor
+  } else {
+    return(NA)  # No common ancestor found
+  }
+}
+
+
+# Function to group IDs based on pedigree closeness
+pedigree_dist <- function(conn, ids, cellLine) {
+  n <- length(ids)
+  
+  if (n < 3) {
+    stop("Need at least 3 IDs to form groups.")
+  }
+  
+  # Compute MRCA distances
+  distance_matrix <- matrix(Inf, n, n, dimnames = list(ids, ids))
+  
+  for (i in 1:(n-1)) {
+    for (j in (i+1):n) {
+      mrca <- find_mrca(conn, ids[i], ids[j], cellLine)
+      if (!is.na(mrca)) {
+        # Define distance as number of generations from MRCA to current ID
+        depth_i <- which(.get_ancestors(conn, ids[i], cellLine) == mrca)
+        depth_j <- which(.get_ancestors(conn, ids[j], cellLine) == mrca)
+        distance_matrix[i, j] <- depth_i + depth_j
+        distance_matrix[j, i] <- distance_matrix[i, j]
+      }
+    }
+  }
+  
+  # # Convert to hierarchical clustering
+  # dist_obj <- as.dist(distance_matrix)
+  # hc <- hclust(dist_obj, method = "complete")
+  # 
+  # # Determine number of clusters
+  # num_groups <- ceiling(n / 3.5)  # Approximate groups of 3-4
+  # clusters <- cutree(hc, k = num_groups)
+  # 
+  # # Format output as tuples
+  # grouped_ids <- split(ids, clusters)
+  
+  return(distance_matrix)
+}
