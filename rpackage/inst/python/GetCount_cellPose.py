@@ -201,7 +201,7 @@ def iterate(path2Pred,path2Save,ext):
           df_total = get_ROI_cellCount(df,msk,maskName,pixel_size)
           df.to_csv(os.path.join(path2Save,'pred',maskName.split('_cp_masks')[0]+'.csv'),index=False,sep='\t')
           df_total.to_csv(os.path.join(path2Save,'cellpose_count',maskName.split('_cp_masks')[0]+'.csv'),index=False,sep='\t')
-          return line_point
+  return line_point
 
 def run_cellPose(path2Images,path2Pretrained, diameter, flow, cellprob):
   call(['python', '-m' , 'cellpose' ,'--dir', path2Images ,'--pretrained_model', path2Pretrained,'--use_gpu','--save_png', '--verbose', '--diameter', diameter, '--flow_threshold', flow, '--cellprob_threshold', cellprob])
