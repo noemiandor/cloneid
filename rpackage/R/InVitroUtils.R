@@ -529,13 +529,13 @@ plotLiquidNitrogenBox <- function (rack, row) {
   # qpversion = qpversion[length(qpversion)]
   
   ## Load environment and source python scripts
-  LOADEDENV='cellpose' %in% conda_list()$name
+  LOADEDENV='cellpose' %in% reticulate::conda_list()$name
   if(LOADEDENV){
-    use_condaenv("cellpose")
+    reticulate::use_condaenv("cellpose")
     # py_config()
     print('Cellpose environment loaded')
     # use_condaenv("cellpose", required = TRUE)
-    sapply(PYTHON_SCRIPTS, source_python)
+    sapply(PYTHON_SCRIPTS, reticulate::source_python)
   }
   
   ## Copy raw images to temporary directory:
@@ -557,7 +557,7 @@ plotLiquidNitrogenBox <- function (rack, row) {
       # cmd = paste("python3",PREPROCESS_SCRIPT, x, cellLine)
       # system(cmd)
       print(paste("Using", PREPROCESS_SCRIPT))
-      source_python(PREPROCESS_SCRIPT)
+      reticulate::source_python(PREPROCESS_SCRIPT)
       ApplyGammaCorrection(x, cellLine)
     }
   }
@@ -600,13 +600,13 @@ plotLiquidNitrogenBox <- function (rack, row) {
   ## Tissue segmentation
   for(x in f_i){
     imgPath=paste0(TMP_DIR,filesep,fileparts(x)$name,".tif")
-    source_python(TISSUESEG_SCRIPT)
+    reticulate::source_python(TISSUESEG_SCRIPT)
     get_mask(imgPath,paste0(TMP_DIR,filesep,"Confluency"),toupper(cellLine),"False")
   }
   
   ## Add QC statistics
   if(LOADEDENV){
-    source_python(QCSTATS_SCRIPT)
+    reticulate::source_python(QCSTATS_SCRIPT)
     QC_Statistics(TMP_DIR,paste0(TMP_DIR,filesep,"cellpose_count"),'.tif')
   }
   

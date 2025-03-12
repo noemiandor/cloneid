@@ -27,10 +27,12 @@ clusterKaryotypes<- function(origins,whichP = "GenomePerspective", depth=1, path
   ##merge across origins: heatmap
   cnts=sapply(X, function(x) getKaryo(t(x),ploidy)$cn, simplify = F)
   sampleID=unlist(sapply(names(cnts), function(x) rep(x, nrow(cnts[[x]]))))
-  col=RColorBrewer::brewer.pal(length(unique(sampleID)),"Paired")
-  names(col)=unique(sampleID)
+  col=rep('NA', length(unique(sampleID)))
+  names(col)=unique(sampleID)  
   ii=grep("C_",names(col)); ##Control is gray
   col[ii]= gray.colors(length(ii))
+  ii=setdiff(1:length(col),ii)
+  col[ii]=RColorBrewer::brewer.pal(length(ii),"Paired")
   cnts=do.call(rbind, cnts)
   clusters = findBestClustering(cnts, numClusters=numClusters)+1
   tmp=substr(paste(origins,collapse = "__"),1,90)
@@ -75,7 +77,8 @@ clusterKaryotypes<- function(origins,whichP = "GenomePerspective", depth=1, path
   # }
   
   names(clusters)=sampleID
-  return(clusters)
+  cnts=grpstats(cnts, sampleID, statscols = c("mean","median"))
+  return(list(clusters=clusters, cnts=cnts))
 }
 
 
