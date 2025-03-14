@@ -5,24 +5,26 @@ channels:
 dependencies:
   - python=3.10
   - numpy<2             # Explicitly include numpy from conda for compatibility
-  - opencv=4.5.5
+  - glib                # Ensure the proper GLib version for OpenCV is installed
+  - opencv=4.5.5        # OpenCV built against conda-managed libraries
   - pip
   - imagecodecs
   - numba>=0.55         # Updated numba version for Python 3.10 and matching numpy API
   - scipy               # Install via conda for compatibility with numpy
+  - pandas
+  - pillow
+  - python-dateutil
+  - pytz
+  - setuptools
+  - six
+  - tifffile
+  - tqdm
+  - typing-extensions
   - pip:
-    - cellpose==2.1.0
-    - fastremap
-    - easyocr
-    - llvmlite
-    - natsort
-    - pandas
-    - pillow
-    - python-dateutil
-    - pytz
-    - setuptools
-    - six
-    - tifffile
-    - torch>=1.10   # Upgraded torch version for better compatibility
-    - tqdm
-    - typing-extensions
+      - cellpose==2.1.0
+      - fastremap
+      - easyocr
+      - llvmlite
+      - natsort
+      - torch>=1.10   # Upgraded torch version for better compatibility
+
