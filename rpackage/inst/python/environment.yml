@@ -1,16 +1,16 @@
 name: cellpose
 channels:
   - conda-forge
+  - pytorch     # Add this channel for PyTorch
   - defaults
 dependencies:
   - python=3.10
-  - numpy<2             # Explicitly include numpy from conda for compatibility
-  - glib                # Ensure the proper GLib version for OpenCV is installed
-  - opencv=4.5.5        # OpenCV built against conda-managed libraries
+  - numpy<2
+  - scipy
+  - opencv=4.7
   - pip
   - imagecodecs
-  - numba>=0.55         # Updated numba version for Python 3.10 and matching numpy API
-  - scipy               # Install via conda for compatibility with numpy
+  - numba>=0.55
   - pandas
   - pillow
   - python-dateutil
@@ -20,11 +20,10 @@ dependencies:
   - tifffile
   - tqdm
   - typing-extensions
+  - pytorch>=1.10   # Use conda installation from the pytorch channel
   - pip:
-      - cellpose==2.1.0
-      - fastremap
-      - easyocr
-      - llvmlite
-      - natsort
-      - torch>=1.10   # Upgraded torch version for better compatibility
-
+    - cellpose==2.1.0
+    - fastremap
+    - easyocr
+    - llvmlite
+    - natsort
