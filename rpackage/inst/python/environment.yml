@@ -4,24 +4,25 @@ channels:
   - defaults
 dependencies:
   - python=3.10
+  - numpy<2             # Explicitly include numpy from conda for compatibility
   - opencv=4.5.5
   - pip
   - imagecodecs
+  - numba>=0.55         # Updated numba version for Python 3.10 and matching numpy API
+  - scipy               # Install via conda for compatibility with numpy
   - pip:
     - cellpose==2.1.0
     - fastremap
     - easyocr
     - llvmlite
     - natsort
-    - numba>0.5
     - pandas
     - pillow
     - python-dateutil
     - pytz
-    - scipy
     - setuptools
     - six
     - tifffile
-    - torch>1.1
+    - torch>=1.10   # Upgraded torch version for better compatibility
     - tqdm
     - typing-extensions
