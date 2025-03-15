@@ -557,6 +557,8 @@ plotLiquidNitrogenBox <- function (rack, row) {
     f = grep("x_ph_",f,value=T)
     file.remove(f)
   }
+  ## Input files should never be deleted. What goes into `CELLSEGMENTATIONS_OUTDIR` stays in CELLSEGMENTATIONS_OUTDIR. This will ensure that raw data is never deleted in case any analysis needs to be redone
+  ## @TODO: To prevent accumulation of incompletely processed images in CELLSEGMENTATIONS_OUTDIR, we would want to copy them over only after we ensure correct processing.
   
   ## Preprocessing
   if(preprocessing){
