@@ -397,10 +397,16 @@ plotLiquidNitrogenBox <- function (rack, row) {
   }else if (!is.null(path2segmentationresults)){
     ## Currently here we deal with MRI images exclusively:
     print("Assuming MRI input")
-    dish = .readMRISegmentationsOutput(id, path2segmentationresults)
+    dish = try(.readMRISegmentationsOutput(id, path2segmentationresults))
   } else {
     dishSurfaceArea_cm2 = .readDishSurfaceArea_cm2(flask, mydb)
-    dish = .readCellSegmentationsOutput(id= id, from=from, cellLine = parent$cellLine, dishSurfaceArea_cm2 = dishSurfaceArea_cm2, cellCount = cellCount, excludeOption=excludeOption, preprocessing=preprocessing, param=param);
+    ## @TODO: try-catch here
+    dish = try(.readCellSegmentationsOutput(id= id, from=from, cellLine = parent$cellLine, dishSurfaceArea_cm2 = dishSurfaceArea_cm2, cellCount = cellCount, excludeOption=excludeOption, preprocessing=preprocessing, param=param));
+  }
+  
+  if(class(dish)=="try-error"){
+    .wait_for_confirmation("", prompt_template = "Error encountered during segmentation. No changes are made to the database. Type yes to confirm: ", timeout = 10)
+    return()
   }
   
   ### Passaging info
@@ -784,11 +790,19 @@ plotLiquidNitrogenBox <- function (rack, row) {
   message <- paste0("Waiting for ", id, " to appear under ", CELLSEGMENTATIONS_OUTDIR, " ...")
   print(message, quote = FALSE)
   f_o <- c()
-  while (length(f_o) < howMany) {
+  start_time <- Sys.time()
+  timeout <- 120  # 2 minutes in seconds
+  while (length(f_o) < howMany && as.numeric(difftime(Sys.time(), start_time, units = "secs")) < timeout) {
     Sys.sleep(3)
     f_o <- list.files(paste0(CELLSEGMENTATIONS_OUTDIR, "Images"), pattern = paste0("^",id, "_"), full.names = TRUE)
     # f <- grep("x_ph_", f, value = TRUE)
   }
+  
+  if (length(f_o) < howMany) {
+    warning("Timed out waiting for analysis output.")
+    return()
+  }
+  
   f <- list.files(paste0(CELLSEGMENTATIONS_OUTDIR, "DetectionResults"), pattern = paste0("^",id, "_"), full.names = TRUE)
   f_a <- list.files(paste0(CELLSEGMENTATIONS_OUTDIR, "Annotations"), pattern = paste0("^",id, "_"), full.names = TRUE)
   # f_o <- list.files(paste0(CELLSEGMENTATIONS_OUTDIR, "Images"), pattern = paste0("^",id, "_"), full.names = TRUE)
