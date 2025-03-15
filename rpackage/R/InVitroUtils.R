@@ -506,8 +506,9 @@ plotLiquidNitrogenBox <- function (rack, row) {
   UM2CM = 1e-4
   yml = yaml::read_yaml(paste0(system.file(package='cloneid'), '/config/config.yaml'))
   TMP_DIR = normalizePath(yml$cellSegmentation$tmp);
-  unlink(TMP_DIR,recursive=T)
+  unlink(TMP_DIR,recursive=T, force = T)
   TMP_DIR = paste0(TMP_DIR,filesep,id);
+  unlink(TMP_DIR,recursive=T, force = T)
   CELLSEGMENTATIONS_OUTDIR=paste0(normalizePath(yml$cellSegmentation$output),"/");
   CELLSEGMENTATIONS_INDIR=paste0(normalizePath(yml$cellSegmentation$input),"/");
   # QUPATH_PRJ = "~/Downloads/qproject/project.qpproj"
