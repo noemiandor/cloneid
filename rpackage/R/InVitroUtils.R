@@ -733,21 +733,34 @@ plotLiquidNitrogenBox <- function (rack, row) {
   CELLSEGMENTATIONS_OUTDIR=paste0(normalizePath(yml$cellSegmentation$output),"/");
   CELLSEGMENTATIONS_INDIR=paste0(normalizePath(yml$cellSegmentation$input),"/");
   
+  cellPoseOut_img <- list.files(TMP_DIR, recursive = TRUE, pattern = segmentationRegex, full.names = TRUE)
+  cellPoseIn_img = gsub(segmentationRegex,'.',cellPoseOut_img,fixed = T)
+  N = length(cellPoseIn_img)
+  
   ## Move files from TMP_DIR to destination directories
   cellPoseOut_csv <- list.files(TMP_DIR, recursive = TRUE, pattern = ".csv", full.names = TRUE)
   # Move specific CSV files to respective directories
-  sapply(grep("pred", cellPoseOut_csv, value = TRUE), function(x) 
+  f=grep("pred", cellPoseOut_csv, value = TRUE)
+  f_a=grep("cellpose_count", cellPoseOut_csv, value = TRUE)
+  f_c=grep("Confluency", cellPoseOut_csv, value = TRUE)
+  if(length(f)!=N || length(f_a)!=N || length(f_c)!=N){
+    warning("No results were kept because unexpected number of output files were detected. Likely an error was encountered while processing at least one image.")
+    return()
+  }
+  
+  sapply(f, function(x) 
     file.copy(x, paste0(CELLSEGMENTATIONS_OUTDIR, "DetectionResults"))
   )
-  sapply(grep("cellpose_count", cellPoseOut_csv, value = TRUE), function(x) 
+  
+  sapply(f_a, function(x) 
     file.copy(x, paste0(CELLSEGMENTATIONS_OUTDIR, "Annotations"))
   )
-  sapply(grep("Confluency", cellPoseOut_csv, value = TRUE), function(x) 
+  
+  sapply(f_c, function(x) 
     file.copy(x, paste0(CELLSEGMENTATIONS_OUTDIR, "Confluency"))
   )
   
   # Move image files to respective directories
-  cellPoseOut_img <- list.files(TMP_DIR, recursive = TRUE, pattern = segmentationRegex, full.names = TRUE)
   tissuesegOut_img <- list.files(TMP_DIR, recursive = TRUE, pattern = "mask.", full.names = TRUE)
   sapply(cellPoseOut_img, function(x) 
     file.copy(x, paste0(CELLSEGMENTATIONS_OUTDIR, "Images"))
@@ -758,21 +771,8 @@ plotLiquidNitrogenBox <- function (rack, row) {
   
   # Also move input
   if(moveSegmentationInputToo){
-    cellPoseIn_img = gsub(segmentationRegex,'.',cellPoseOut_img,fixed = T)
     sapply(cellPoseIn_img, function(x) file.copy(x, CELLSEGMENTATIONS_INDIR))
   }
-}
-
-getMRIdata<-function(id, signal="t2"){
-  yml = yaml::read_yaml(paste0(system.file(package='cloneid'), '/config/config.yaml'))
-  CELLSEGMENTATIONS_OUTDIR=paste0(normalizePath(yml$cellSegmentation$output),"/");
-  CELLSEGMENTATIONS_INDIR=paste0(normalizePath(yml$cellSegmentation$input),"/");
-  x=list.files(paste0(CELLSEGMENTATIONS_OUTDIR,"/Images"), pattern=paste0("^",id,"_",signal,"_mni"), full.names = T)[1]
-  nii_mask=RNifti::readNifti(x)
-  signal=gsub("_cavity","",signal)
-  x=list.files(CELLSEGMENTATIONS_INDIR, pattern=paste0("^",id,"_",signal,"_mni"), full.names = T)[1]
-  nii=RNifti::readNifti(x)
-  return(list(nii=nii,mask=nii_mask))
 }
 
 
@@ -798,6 +798,18 @@ getMRIdata<-function(id, signal="t2"){
   print(output_message, quote = FALSE)
   # Return the file paths as a list for further processing if needed
   return(list(f = f, f_a = f_a, f_o = f_o, f_c = f_c))
+}
+
+getMRIdata<-function(id, signal="t2"){
+  yml = yaml::read_yaml(paste0(system.file(package='cloneid'), '/config/config.yaml'))
+  CELLSEGMENTATIONS_OUTDIR=paste0(normalizePath(yml$cellSegmentation$output),"/");
+  CELLSEGMENTATIONS_INDIR=paste0(normalizePath(yml$cellSegmentation$input),"/");
+  x=list.files(paste0(CELLSEGMENTATIONS_OUTDIR,"/Images"), pattern=paste0("^",id,"_",signal,"_mni"), full.names = T)[1]
+  nii_mask=RNifti::readNifti(x)
+  signal=gsub("_cavity","",signal)
+  x=list.files(CELLSEGMENTATIONS_INDIR, pattern=paste0("^",id,"_",signal,"_mni"), full.names = T)[1]
+  nii=RNifti::readNifti(x)
+  return(list(nii=nii,mask=nii_mask))
 }
 
 
