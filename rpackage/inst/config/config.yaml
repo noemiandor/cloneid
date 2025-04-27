@@ -1,10 +1,11 @@
 mysqlConnection:
-  host: localhost
+  host: 192.168.1.27
   port: 3306
-  user: ""
-  password: 
+  user: "root"
+  password: "xxxxx"
   database: CLONEID
   schemaScript: CLONEID_schema.sql
+
 
 cellSegmentation:
   input: ~/CellSegmentations/

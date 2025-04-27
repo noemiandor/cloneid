@@ -4,25 +4,23 @@ channels:
   - defaults
 dependencies:
   - python=3.10
-  - opencv=4.5.5
+  - opencv
   - pip
   - imagecodecs
   - pip:
-      - cellpose==2.1.0
-      - fastremap
-      - llvmlite
-      - natsort
-      - numba>0.5
-      - pandas
-      - pillow
-      - python-dateutil
-      - pytz
-      - scipy
-      - setuptools
-      - six
-      - tifffile
-      - torch>1.1
-      - tqdm
-      - pip-system-certs
-      - easyocr
-      - typing-extensions
+    - cellpose==2.1.0
+    - fastremap
+    - llvmlite
+    - natsort
+    - numba>0.5
+    - pandas
+    - pillow
+    - python-dateutil
+    - pytz
+    - scipy
+    - setuptools
+    - six
+    - tifffile
+    - torch>1.1
+    - tqdm
+    - typing-extensions

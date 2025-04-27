@@ -240,3 +240,4 @@ if __name__ == "__main__":
     else:
       print('Error in number of arguments')
     #run('/Volumes/WD Element/Collaboration/Moffitt_Noemi/CellPose/Clonid Integrated Code/testing/images','../','/Volumes/WD Element/Collaboration/Moffitt_Noemi/CellPose/Clonid Integrated Code/testing/results2','NCI-N87','.tif')
+

@@ -61,12 +61,12 @@ jar {
         attributes 'Main-Class': 'cloneid.Manager'
     }
     from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
-    archiveBaseName.set('cloneid')
+    // baseName 'cloneid'
 }
 
 task uberJar(type: Jar) {
 
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE // Ignore duplicate entries
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     archiveClassifier = ''
     from sourceSets.main.output
 

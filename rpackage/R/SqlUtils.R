@@ -33,7 +33,7 @@ getRootID<-function(sampleName, whichP){
   
   mydb = connect2DB()
   
-  whichP_ = gsub("Morphology", "", gsub("Exome", "", gsub("Genome", "", gsub("Transcriptome", "", whichP))))
+  whichP_ = gsub("Exome", "", gsub("Genome", "", gsub("Transcriptome", "", whichP)))
   stmt = paste0("select cloneID from ", whichP_, " where whichPerspective='",
                 whichP, "' AND sampleSource='", sampleName, "' AND parent IS NULL")
   rs = dbSendQuery(mydb, stmt)

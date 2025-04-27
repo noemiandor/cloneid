@@ -9,14 +9,6 @@ harvest <- function(id, from, cellCount, tx = Sys.time(), media=NULL, excludeOpt
   return(x)
 }
 
-inject <- function(mouseID, from, cellCount, tx = Sys.time(), strain, injection_type=23){ 
-  x=.seed_or_harvest(event = "seeding", id=mouseID, from = from, cellCount = cellCount, tx = tx, flask = injection_type, media = strain, excludeOption=F, preprocessing=F, param=NULL,inject=injection_type)
-}
-
-resect <- function(id, from, weight_mg, size_cubicmm, tx = Sys.time()){
-  x=.seed_or_harvest(event = "harvest", id=id, from=from, cellCount = size_cubicmm, tx = tx, flask = NULL, media = NULL, excludeOption=F, preprocessing=F, param=NULL, resect=weight_mg)
-  return(x)
-}
 
 init <- function(id, cellLine, cellCount, tx = Sys.time(), media=NULL, flask=NULL, preprocessing=T){
   mydb = connect2DB()
@@ -37,7 +29,7 @@ init <- function(id, cellLine, cellCount, tx = Sys.time(), media=NULL, flask=NUL
   user=fetch(rs, n=-1)[,1];
   
   stmt = paste0("INSERT INTO Passaging (id, cellLine, event, date, cellCount, passage, flask, media, owner, lastModified) ",
-                "VALUES ('",id ,"', '",cellLine,"', 'harvest', '",as.character(tx),"', ",dishCount,", ", 1,", ",flask,", ", media, ", '", user, "', '", user, "');")
+                "VALUES ('",id ,"', '",cellLine,"', 'harvest', '",tx,"', ",dishCount,", ", 1,", ",flask,", ", media, ", '", user, "', '", user, "');")
   rs = dbSendQuery(mydb, stmt)
   
   dbClearResult(dbListResults(mydb)[[1]])
@@ -68,7 +60,7 @@ feed <- function(id, tx=Sys.time()){
   }
   
   ### Insert
-  stmt = paste0("UPDATE Passaging SET ",names(priorfeedings)[nextI]," = '",as.character(tx),"' where id = '",id ,"'") 
+  stmt = paste0("UPDATE Passaging SET ",names(priorfeedings)[nextI]," = '",tx,"' where id = '",id ,"'") 
   rs = dbSendQuery(mydb, stmt)
   print(paste("Feeding for",id,"recorded at",tx), quote = F);
   
@@ -254,13 +246,13 @@ plotCellLineHistory<-function(){
 updateLiquidNitrogen <- function(id, cellCount, rack, row, boxRow, boxColumn){
   library(RMySQL)
   mydb = connect2DB()
-  cmd=paste0("UPDATE LiquidNitrogen as x SET ",
-             "x.id = '",id,"',",
-             "x.cellCount = ",cellCount," WHERE ",
-             "x.Rack = '",rack,"' AND ",
-             "x.Row = '",row,"' AND ",
-             "x.BoxRow = '",boxRow,"' AND ",
-             "x.BoxColumn = '",boxColumn,"'");
+  cmd=paste0("UPDATE LiquidNitrogen SET ",
+             "id = '",id,"',",
+             "cellCount = ",cellCount," WHERE ",
+             "Rack = '",rack,"' AND ",
+             "Row = '",row,"' AND ",
+             "BoxRow = '",boxRow,"' AND ",
+             "BoxColumn = '",boxColumn,"'");
   print(cmd)
   rs = dbSendQuery(mydb, cmd);
   
@@ -272,13 +264,13 @@ updateLiquidNitrogen <- function(id, cellCount, rack, row, boxRow, boxColumn){
 removeFromLiquidNitrogen <- function(rack, row, boxRow, boxColumn){
   library(RMySQL)
   mydb = connect2DB()
-  cmd=paste0("UPDATE LiquidNitrogen as x SET ",
-             "x.id = NULL,",
-             "x.cellCount = 0 WHERE ",
-             "x.Rack = '",rack,"' AND ",
-             "x.Row = '",row,"' AND ",
-             "x.BoxRow = '",boxRow,"' AND ",
-             "x.BoxColumn = '",boxColumn,"'");
+  cmd=paste0("UPDATE LiquidNitrogen SET ",
+             "id = NULL,",
+             "cellCount = 0 WHERE ",
+             "Rack = '",rack,"' AND ",
+             "Row = '",row,"' AND ",
+             "BoxRow = '",boxRow,"' AND ",
+             "BoxColumn = '",boxColumn,"'");
   print(cmd)
   rs = dbSendQuery(mydb, cmd);
   
@@ -286,39 +278,39 @@ removeFromLiquidNitrogen <- function(rack, row, boxRow, boxColumn){
   dbDisconnect(mydb)
 }
 
-plotLiquidNitrogenBox <- function (rack, row) {
+plotLiquidNitrogenBox <- function(rack, row){
   library(RMySQL)
   mydb = connect2DB()
-  cmd = paste0("select * from LiquidNitrogen as x where ", "x.Rack = '", 
-               rack, "' AND ", "x.Row = '", row,"'")
+  cmd=paste0("select * from LiquidNitrogen where ",
+             "Rack = '",rack,"' AND ",
+             "Row = '",row,"'");
   print(cmd)
-  rs = dbSendQuery(mydb, cmd)
-  kids = fetch(rs, n = -1)
+  rs = dbSendQuery(mydb, cmd);
+  kids = fetch(rs, n=-1)
   kids$id[is.na(kids$id)] = "NA"
+  
+  ## Visualize
   rc = apply(kids, 2, unique)
-  par(mfrow = c(2, 2), mai = c(0, 0.5, 0.5, 0))
-  plot(c(1, length(rc$BoxColumn)), c(1, length(rc$BoxRow)), 
-       col = "white", yaxt = "n", xaxt = "n", xlab = "", ylab = "", 
-       main = paste("Rack", rack, "; Row", row), ylim = rev(range(c(1, 
-                                                                    length(rc$BoxRow)))))
-  axis(1, at = 1:length(rc$BoxColumn), labels = rc$BoxColumn, 
-       las = 1)
-  axis(2, at = 1:length(rc$BoxRow), labels = rc$BoxRow, las = 2)
-  cols = gray.colors(length(rc$id) * 1.2)[1:length(rc$id)]
+  par(mfrow=c(2,2), mai=c(0,0.5,0.5,0))
+  plot(c(1,length(rc$BoxColumn)),c(1,length(rc$BoxRow)), col="white", yaxt="n", xaxt="n", xlab="",ylab="", main=paste("Rack",rack,"; Row",row),ylim = rev(range(c(1,length(rc$BoxRow)))) )
+  axis(1, at=1:length(rc$BoxColumn), labels=rc$BoxColumn, las=1)
+  axis(2, at=1:length(rc$BoxRow), labels=rc$BoxRow, las=2)
+  cols = gray.colors(length(rc$id)*1.2)[1:length(rc$id)]
   names(cols) = unique(rc$id)
   cols["NA"] = "white"
-  for (i in 1:nrow(kids)) {
-    points(match(kids$BoxColumn[i], rc$BoxColumn), match(kids$BoxRow[i], 
-                                                         rc$BoxRow), col = cols[kids$id[i]], pch = 20, cex = 4)
+  for(i in 1:nrow(kids)){
+    points(match(kids$BoxColumn[i], rc$BoxColumn), match(kids$BoxRow[i], rc$BoxRow), col=cols[kids$id[i]], pch=20, cex=4)
   }
-  plot(1, 1, axes = F, col = "white")
-  legend("topleft", names(cols), fill = cols)
+  
+  plot(1,1,axes=F, col="white")
+  legend("topleft", names(cols), fill=cols)
+  
   dbClearResult(dbListResults(mydb)[[1]])
   dbDisconnect(mydb)
 }
 
 
-.seed_or_harvest <- function(event, id, from, cellCount, tx, flask, media, excludeOption, preprocessing=T, param=NULL, inject=NULL, resect=NULL){
+.seed_or_harvest <- function(event, id, from, cellCount, tx, flask, media, excludeOption, preprocessing=T, param=NULL){
   library(RMySQL)
   library(matlab)
   
@@ -329,24 +321,24 @@ plotLiquidNitrogenBox <- function (rack, row) {
   
   stmt = paste0("select * from Passaging where id = '",from,"'");
   rs = suppressWarnings(dbSendQuery(mydb, stmt))
-  parent = fetch(rs, n=-1)
+  kids = fetch(rs, n=-1)
   
   ### Checks
   CHECKRESULT="pass"
-  if(nrow(parent)==0){
+  if(nrow(kids)==0){
     CHECKRESULT=paste(from,"does not exist in table Passaging")
-  }else if(parent$event !=otherevent){
+  }else if(kids$event !=otherevent){
     CHECKRESULT=paste(from,"is not a",otherevent,". You must do",event,"from a",otherevent)
-  }else if(event=="seeding" && !is.na(parent$cellCount) && !is.na(cellCount) && cellCount>parent$cellCount){
+  }else if(event=="seeding" && !is.na(kids$cellCount) && !is.na(cellCount) && cellCount>kids$cellCount){
     CHECKRESULT="You cannot seed more than is available from harvest!"
-  }else if(is.na(parent$media) || !is.null(media)){
+  }else if(is.na(kids$media) || !is.null(media)){
     if(is.null(media)){
       CHECKRESULT="Please enter media information"
     }else{
-      parent$media = media
+      kids$media = media
     }
   }else{
-    warning(paste("Copying media information from parent: media set to",parent$media))
+    warning(paste("Copying media information from parent: media set to",kids$media))
   }
   if(CHECKRESULT!="pass"){
     confirmError = "no"
@@ -359,20 +351,15 @@ plotLiquidNitrogenBox <- function (rack, row) {
   
   ## flask cannot have changed if this is a harvest event: 
   if(event=="harvest"){
-    flask = parent$flask
+    flask = kids$flask
   }
   
-  if(!is.null(inject)){
-    dish =list(dishCount=cellCount, cellSize=NA, dishAreaOccupied=NA)
-  }else if (!is.null(resect)){
-    dish =list(dishCount=NA, cellSize=cellCount, dishAreaOccupied=resect)
-  }else{
-    dishSurfaceArea_cm2 = .readDishSurfaceArea_cm2(flask, mydb)
-    dish = .readCellSegmentationsOutput(id= id, from=from, cellLine = parent$cellLine, dishSurfaceArea_cm2 = dishSurfaceArea_cm2, cellCount = cellCount, excludeOption=excludeOption, preprocessing=preprocessing, param=param);
-  }
+  dishSurfaceArea_cm2 = .readDishSurfaceArea_cm2(flask, mydb)
+  
+  dish = .readCellSegmentationsOutput(id= id, from=from, cellLine = kids$cellLine, dishSurfaceArea_cm2 = dishSurfaceArea_cm2, cellCount = cellCount, excludeOption=excludeOption, preprocessing=preprocessing, param=param);
   
   ### Passaging info
-  passage = parent$passage
+  passage = kids$passage
   if(event=="seeding"){
     passage = passage+1
   }
@@ -390,8 +377,8 @@ plotLiquidNitrogenBox <- function (rack, row) {
   passaging$passage_id <- sapply(passaging$id, .unique_passage_id)
   # x=data.table::transpose(as.data.frame(c(id , event, from, dish$dishCount, passage)))
   # colnames(x) = c("id", "event", "passaged_from_id1", "correctedCount", "passage")
-  x=data.table::transpose(as.data.frame(c(id ,parent$cellLine,from,event,as.character(tx),dish$dishCount,dish$dishCount,dish$cellSize, dish$dishAreaOccupied, passage,flask,parent$media,  user,  user)))
-  colnames(x) = c("id", "cellLine","passaged_from_id1", "event", "date", "cellCount","correctedCount","cellSize_um2","areaOccupied_um2", "passage", "flask", "media", "owner", "lastModified")
+  x=data.table::transpose(as.data.frame(c(id ,from,event,tx,dish$dishCount,dish$dishCount,dish$cellSize, dish$dishAreaOccupied, passage,flask,kids$media,  user,  user)))
+  colnames(x) = c("id", "passaged_from_id1", "event", "date", "cellCount","correctedCount","cellSize_um2","areaOccupied_um2", "passage", "flask", "media", "owner", "lastModified")
   rownames(x) <- x$id
   x4DB <- x
   x$passage_id <- .unique_passage_id(x$id)
@@ -419,13 +406,12 @@ plotLiquidNitrogenBox <- function (rack, row) {
   ii=which(!names(x) %in% c("cellSize_um2","areaOccupied_um2","correctedCount","cellCount", "passage", "flask", "media"))
   x[ii]=paste0("'",x[ii],"'")
   x4DB <- x[names(x4DB)]
-  x4DB[is.na(x4DB)]="NULL"
   
   ## Attempt to update the DB:
   if(ancestorCheck){
     ### Insert
     # stmt = paste0("INSERT INTO Passaging (id, passaged_from_id1, event, date, cellCount, passage, flask, media, owner, lastModified) ",
-    # "VALUES ('",id ,"', '",from,"', '",event,"', '",as.character(tx),"', ",dish$dishCount,", ", passage,", ",flask,", ", parent$media, ", '", user, "', '", user, "');")
+                  # "VALUES ('",id ,"', '",from,"', '",event,"', '",tx,"', ",dish$dishCount,", ", passage,", ",flask,", ", kids$media, ", '", user, "', '", user, "');")
     stmt = paste0("INSERT INTO Passaging (",paste(names(x4DB), collapse = ", "),") ",
                   "VALUES (",paste(x4DB, collapse = ", "),");")
     rs = try(dbSendQuery(mydb, stmt))
@@ -504,8 +490,6 @@ plotLiquidNitrogenBox <- function (rack, row) {
   LOADEDENV='cellpose' %in% conda_list()$name
   if(LOADEDENV){
     use_condaenv("cellpose")
-    # py_config()
-    print('Cellpose environment loaded')
     # use_condaenv("cellpose", required = TRUE)
     sapply(PYTHON_SCRIPTS, source_python)
   }
@@ -615,13 +599,13 @@ plotLiquidNitrogenBox <- function (rack, row) {
   # pdf(OUTSEGF)
   for(i in 1:length(f)){
     dm = read.table(f[i],sep="\t", check.names = F, stringsAsFactors = F, header = T)
-    colnames(dm)[grep("^Area",colnames(dm))]="Cell: Area"; ## Replace cellPose column name -- @TODO: saeed fix directly in cellposeScript
+    colnames(dm)[colnames(dm)=="Area µm^2"]="Cell: Area"; ## Replace cellPose column name -- @TODO: saeed fix directly in cellposeScript
     anno = read.table(f_a[i],sep="\t", check.names = T, stringsAsFactors = F, header = T)
     conf = read.csv(f_c[i])
     colnames(anno) = tolower(colnames(anno))
     areaCount = nrow(dm)
     # areaCount = sum(conf$`Area.in.um`)/median(dm$`Cell: Area`)
-    area_cm2 = anno[1,grep("^area.",colnames(anno))]*UM2CM^2
+    area_cm2 = anno$`area.µm.2`[1]*UM2CM^2
     cellCounts[fileparts(f[i])$name,] = c(areaCount, area_cm2, sum(conf$`Area.in.um`), quantile(dm$`Cell: Area`, 0.9, na.rm=T))
     # ## Visualize
     # ## @TODO: Delete
@@ -936,17 +920,4 @@ plotLiquidNitrogenBox <- function (rack, row) {
               "  ]",
               "}", sep="\n" )
   return(prj)
-}
-
-
-GenomePerspectiveView_Bulk<-function(id){
-  out=findAllDescendandsOf(id, recursive = T)
-  mydb = cloneid::connect2DB()
-  stmt = paste0("select distinct origin from Perspective where whichPerspective='GenomePerspective' and origin IN ('",paste(unique(out$id), collapse="','"),"')")
-  rs = suppressWarnings(dbSendQuery(mydb, stmt))
-  origin=fetch(rs, n=-1)[,"origin"]
-  
-  p=sapply(origin, function(x) getSubProfiles(cloneID_or_sampleName = x, whichP = "GenomePerspective"))
-  p=do.call(cbind, p)
-  gplots::heatmap.2(t(p), trace = "n")
 }

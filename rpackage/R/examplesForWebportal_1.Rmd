@@ -1,0 +1,255 @@
+---
+title: "CloneID Use Case 3"
+author: "Thomas Veith, Noemi Andor"
+date: "4/11/2023"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=TRUE, message=FALSE, warning=FALSE)
+knitr::opts_knit$set(root.dir = "/Users/4470246/Projects/SoftwarePackages_InHouse/CLONEID/code")
+```
+
+## USE CASE 3 (In-vitro genotype-phenotype association studies)
+
+Here we are gathering various morphological and genotypic features from various lineages culture in-vitro in our lab.
+
+The input to this section are the cell line lineages.
+
+The output are two table: one containing the copy number per genomic region for each clone in the lineage, and another containing various morphological features inferred from imaging and cell segmentation.
+
+```{r}
+## USE CASE 3 (In-vitro genotype-phenotype association studies)
+library(cloneid)
+
+#setupCLONEID(host='cloneredesign.cswgogbb5ufg.us-east-1.rds.amazonaws.com', port='3306', user='daniel', password='fromQuantum2Cancer', database='CLONEID', schemaScript='CLONEID_schema.sql')
+
+setupCLONEID(host='192.168.1.15', port='3307', user='root', password='xxxxx', database='CLONEID_MODULE1', schemaScript='CLONEID_schema.sql')
+
+lineageCLs <-c("NUGC-4_A4_seed","NCI-N87_A59_seed","HGC-27_A22_seed","KATOIII_A6_seed","SNU-668_A9_seed","MKN-45_A4_seed","SNU-638_A4_seed","SNU-601_A4_seed", "P06270_19495_mp");
+cl = lineageCLs[9]
+out=findAllDescendandsOf(ids=cl, recursive = F)
+ii=3
+```
+
+```{r include=FALSE}
+library(cloneid)
+setupCLONEID(host='192.168.1.15', port='3307', user='root', password='xxxxx', database='CLONEID')
+```
+
+```{r include=FALSE}
+library(cloneid)
+setupCLONEID(host='cloneid.cswgogbb5ufg.us-east-1.rds.amazonaws.com', port='3306', user='daniel', password='fromQuantum2Cancer', database='CLONEID', schemaScript='CLONEID_schema.sql')
+```
+
+```{r}
+
+out=findAllDescendandsOf("P06270_19495_mp", recursive = T)
+mydb = cloneid::connect2DB()
+stmt = paste0("select distinct origin from Perspective where whichPerspective='GenomePerspective' and origin IN ('",paste(unique(out$id), collapse="','"),"')")
+rs = suppressWarnings(dbSendQuery(mydb, stmt))
+origin=fetch(rs, n=-1)[,"origin"]
+
+```
+
+```{r}
+spP06270_19495_mp = getSubProfiles(cloneID_or_sampleName = "P06270_19495_mp", whichP = "GenomePerspective")
+PspP06270_19495_mp=do.call(cbind, list(spP06270_19495_mp))
+
+#heatmap(spP06270_19493_mp)
+gplots::heatmap.2(t(PspP06270_19495_mp), trace = "n")
+```
+
+```{r}
+## GenomePerspective Bulk
+library(cloneid)
+
+#setupCLONEID(host='192.168.1.15', port='3307', user='root', password='xxxxx', database='CLONEID_MODULE1', schemaScript='CLONEID_schema.sql')
+setupCLONEID(host='cloneredesign.cswgogbb5ufg.us-east-1.rds.amazonaws.com', port='3306', user='daniel', password='fromQuantum2Cancer', database='CLONEID', schemaScript='CLONEID_schema.sql')
+
+out=findAllDescendandsOf("P06270", recursive = T)
+mydb = cloneid::connect2DB()
+stmt = paste0("select distinct origin from Perspective where whichPerspective='GenomePerspective' and origin IN ('",paste(unique(out$id), collapse="','"),"')")
+rs = suppressWarnings(dbSendQuery(mydb, stmt))
+origin=fetch(rs, n=-1)[,"origin"]
+
+p=sapply(origin, function(x) getSubProfiles(cloneID_or_sampleName = x, whichP = "GenomePerspective"))
+p1=do.call(cbind, p)
+gplots::heatmap.2(t(p1), trace = "n")
+
+spP06270_19492_mp = getSubProfiles(cloneID_or_sampleName = "P06270_19492_mp", whichP = "GenomePerspective")
+PspP06270_19492_mp=do.call(cbind, list(spP06270_19492_mp))
+#gplots::heatmap.2(t(PspP06270_19492_mp), trace = "n")
+
+spP06270_19493_mp = getSubProfiles(cloneID_or_sampleName = "P06270_19493_mp", whichP = "GenomePerspective")
+PspP06270_19493_mp=do.call(cbind, list(spP06270_19493_mp))
+gplots::heatmap.2(t(PspP06270_19493_mp), trace = "n")
+
+spP06270_19494_mp = getSubProfiles(cloneID_or_sampleName = "P06270_19494_mp", whichP = "GenomePerspective")
+PspP06270_19494_mp=do.call(cbind, list(spP06270_19494_mp))
+gplots::heatmap.2(t(PspP06270_19494_mp), trace = "n")
+
+spP06270_19495_mp = getSubProfiles(cloneID_or_sampleName = "P06270_19495_mp", whichP = "GenomePerspective")
+PspP06270_19495_mp=do.call(cbind, list(spP06270_19495_mp))
+gplots::heatmap.2(t(PspP06270_19495_mp), trace = "n")
+
+
+
+
+
+```
+
+```{r}
+library(cloneid)
+
+setupCLONEID(host='192.168.1.15', port='3307', user='root', password='xxxxx', database='CLONEID_MODULE1', schemaScript='CLONEID_schema.sql')
+
+out=findAllDescendandsOf("P06270_19492_mp", recursive = T)
+mydb = cloneid::connect2DB()
+stmt = paste0("select distinct origin from Perspective where whichPerspective='GenomePerspective' and origin IN ('",paste(unique(out$id), collapse="','"),"')")
+rs = suppressWarnings(dbSendQuery(mydb, stmt))
+origin=fetch(rs, n=-1)[,"origin"]
+#print(origin)
+p=sapply(origin, function(x){ print(x); getSubProfiles(cloneID_or_sampleName = x, whichP = "GenomePerspective");})
+p2=do.call(cbind, p)
+gplots::heatmap.2(t(p2), trace = "n")
+
+
+```
+
+`{findAllDescendandsOf(ids=cl, recursive = F)} ii=3 cl out$cellLine`
+
+```{r}
+## GenomePerspective
+mydb = cloneid::connect2DB()
+## Do we have Genome sequencing data for any lineage from this cell line?
+stmt = paste0("select distinct origin from Perspective where whichPerspective='GenomePerspective' and sampleSource = '",unique(out$cellLine),"'")
+stmt = paste0("select distinct origin from Perspective where whichPerspective='GenomePerspective' and sampleSource = '",unique(out$samplesource),"'")
+rs = suppressWarnings(dbSendQuery(mydb, stmt))
+origin=fetch(rs, n=-1)[,"origin"]
+origin
+```
+
+```{r}
+
+## Download genomic profile for one subpopulation:
+origin="P06270_19495_mp"
+sps=getSubclones(cloneID_or_sampleName = origin, whichP = "GenomePerspective")
+p=sapply(names(sps), function(x) getSubProfiles(cloneID_or_sampleName = as.numeric(extractID(x)), whichP = "GenomePerspective"))
+clonemembership=unlist(sapply(names(p), function(x) rep(x, ncol(p[[x]]))))
+clonesizes = sapply(p,ncol)
+pie(clonesizes)
+p=do.call(cbind, p)
+print(dim(p))
+print(head(p[,1:min(3,ncol(p))] ))
+
+```
+
+```{r}
+
+## Mimick bulk data:
+# p=p[,1:5]
+
+## UMAP visualization
+if(ncol(p)>20){
+  col=rainbow(length(unique(clonemembership)))
+  names(col)=unique(clonemembership)
+  la=umap::umap(t(p))
+  plot(la$layout,pch=20, col=col[clonemembership])
+}else{
+  gplots::heatmap.2(t(p))
+  ## @TODO: Not sure if this still works if p is a vector rather than a matrix -- would need to check to make sure there is no error
+}
+```
+
+```{r}
+## TranscriptomePerspective: same as for GenomePerspective
+```
+
+```{r}
+## MorphologyPerspective
+<!-- sps=getSubclones(cloneID_or_sampleName = out$id[ii],whichP = "MorphologyPerspective") -->
+sps=getSubclones(cloneID_or_sampleName = "P06269",whichP = "MorphologyPerspective")
+sps=extractID(names(sps))
+p=sapply(sps, function(x) getSubProfiles(cloneID_or_sampleName = as.numeric(x), whichP = "MorphologyPerspective"), simplify = F)
+p=do.call(cbind, p)
+print(dim(p))
+print(head(p[,1:min(3,ncol(p))] ))
+
+## UMAP visualization
+la=umap::umap(t(p))
+plot(la$layout,pch=20)
+```
+
+```{r}
+## Timeline for internal nodes (seedings)
+library(cloneid)
+
+setupCLONEID(host='192.168.1.15', port='3307', user='root', password='xxxxx', database='CLONEID', schemaScript='CLONEID_schema.sql')
+#setupCLONEID(host='cloneid.cswgogbb5ufg.us-east-1.rds.amazonaws.com', port='3306', user='daniel', password='fromQuantum2Cancer', database='CLONEID', schemaScript='CLONEID_schema.sql')
+
+#la=findAllDescendandsOf(id="SNU-668_A1_seed");
+la=findAllDescendandsOf(id="KATOIII_A5_seed");
+la=la[la$event=="seeding",]
+la=sapply(la$id, function(x) findAllDescendandsOf(id=x, recursive=F), simplify=F)
+la=sapply(la, function(x) quantile(as.POSIXct(x$date), c(0,1)),simplify=F)
+## This comes closer to what we want:
+barplot(sapply(la, function(x) x[2]-x[1]))
+## ... but is not actually there yet for two reasons:
+# 1) x[2]-x[1] returns the time difference in different units (hours or days depending on the magnitude of the difference). We would want everything to be the same unit of course.
+# 2) the bars are equally spaced, unfortunately "barplot" doesn't have a parameter "at", specifying the x-axis locations. We would need a barplot function that allows us to specify where the bars should be at along the x-axis (e.g. at = sapply(la,"[",1, simplify=F) ).
+```
+
+```{r}
+## Timeline for internal nodes (seedings)
+library(cloneid)
+
+setupCLONEID(host='192.168.1.15', port='3307', user='root', password='xxxxx', database='CLONEID', schemaScript='CLONEID_schema.sql')
+#setupCLONEID(host='cloneredesign.cswgogbb5ufg.us-east-1.rds.amazonaws.com', port='3306', user='daniel', password='fromQuantum2Cancer', database='CLONEID', schemaScript='CLONEID_schema.sql')
+
+#la=findAllDescendandsOf(id="SNU-668_A1_seed");
+la1=findAllDescendandsOf(id="KATOIII_A5_seed");
+la2=la1[la1$event=="seeding",]
+la3=sapply(la2$id, function(x) findAllDescendandsOf(id=x, recursive=F), simplify=F)
+la4=sapply(la3, function(x) quantile(as.POSIXct(x$date), c(0,1)),simplify=F)
+## This comes closer to what we want:
+#barplot(sapply(la, function(x) x[2]-x[1]))
+## ... but is not actually there yet for two reasons:
+# 1) x[2]-x[1] returns the time difference in different units (hours or days depending on the magnitude of the difference). We would want everything to be the same unit of course.
+# 2) the bars are equally spaced, unfortunately "barplot" doesn't have a parameter "at", specifying the x-axis locations. We would need a barplot function that allows us to specify where the bars should be at along the x-axis (e.g. at = sapply(la,"[",1, simplify=F) ).
+```
+
+```{r}
+dir.create("~/CellSegmentations")
+id="HGC-27_A1_seedTP48"
+f=list.files("path to code_examples4webportal", pattern=id, full.names = T)
+sapply(f, function(x) file.copy(x, paste0("~/CellSegmentations/",matlab::fileparts(x)$name)))
+## This will segment the images, and ask user if segmentation looks ok. User can check this by looking at the masks saved under "~/Downloads/tmp/vis/". CLONEID will use the approved images to extrapolate cell counts to entire flask and save result into the database:
+harvest(id,from="HGC-27_A1_seed", preprocessing = F)
+# Note that result will not be saved because the entry (id) already exists in the DB.
+```
+
+```{r}
+
+## GenomePerspective Bulk
+library(cloneid)
+
+setupCLONEID(host='192.168.1.15', port='3307', user='root', password='xxxxx', database='CLONEID', schemaScript='CLONEID_schema.sql')
+#setupCLONEID(host='cloneredesign.cswgogbb5ufg.us-east-1.rds.amazonaws.com', port='3306', user='daniel', password='fromQuantum2Cancer', database='CLONEID', schemaScript='CLONEID_schema.sql')
+library(cloneid)
+#out=findAllDescendandsOf("P06270", recursive = T)
+out=findAllDescendandsOf("P06270_19495_mp", recursive = T)
+
+mydb = cloneid::connect2DB()
+stmt = paste0("select distinct origin from Perspective where whichPerspective='GenomePerspective' and origin IN ('",paste(unique(out$id), collapse="','"),"')")
+rs = suppressWarnings(dbSendQuery(mydb, stmt))
+origin=fetch(rs, n=-1)[,"origin"]
+
+p=sapply(origin, function(x) getSubProfiles(cloneID_or_sampleName = x, whichP = "GenomePerspective"))
+#p=do.call(cbind, p)
+if (ncol(p)>1){
+gplots::heatmap.2(t(p), trace = "n")
+}else{
+                gplots::heatmap.2(t(cbind(p,p)),  Rowv = NA,labRow= "", trace = "n")
+}
+```
