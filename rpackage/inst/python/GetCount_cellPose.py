@@ -13,9 +13,17 @@ from PIL import Image
 from PIL.TiffTags import TAGS
 import tifffile as tifffile
 from get_pixel_size import get_pixel_size
-
+import logging
 import sys
 from subprocess import call 
+from datetime import datetime 
+
+# Setup logging
+log_dir = 'log'
+if not os.path.exists(log_dir):
+    os.makedirs(log_dir)
+log_filename = datetime.now().strftime("%Y%m%d_%H%M%S") + '.log'
+logging.basicConfig(filename=os.path.join(log_dir, log_filename), level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 def vis_overlay(path2Masks,path2Save,ext,line_point):
   #parentPath = os.path.dirname(path2Masks)
@@ -165,26 +173,47 @@ def iterate(path2Pred,path2Save,ext):
   print('Getting the cell count ... ')
   pixel_size_buffer = [] # this buffer is used to track the pixel sizes, 
                          #if pixel size of None is detected the last element in the buffer is used. 
-  for maskName in tqdm(os.listdir(path2Pred)):
+  List_of_masks = os.listdir(path2Pred)
+  for maskName in tqdm(List_of_masks):
       if maskName.startswith('.'):
-          continue
+        continue
       if not maskName.endswith('_cp_masks.png'):
-          continue 
+        continue 
       else:
           if not ext.startswith('.'):
             ext = '.'+ext
+          
           mask = cv2.imread(os.path.join(path2Pred,maskName),-1)
           image_name = maskName.split('_cp_masks.png')[0]+ext
           path2Image = os.path.join(path2Pred,image_name)
-          #objective_len = get_metadata(path2Image)
+          logging.info(f"Processing image: {image_name}")
           scale_pixels,scale_um,line_point,pixel_size = get_pixel_size(path2Image,path2Save)
-          pixel_size_buffer.append(pixel_size)
+          logging.info(f"Detecting scale bar and text: {image_name}")
+          logging.info(f"Text : {scale_um}")
+          logging.info(f"Pixel size : {pixel_size}")
           # Get pixel size from buffer. 
           if pixel_size is None:
             try:
+              logging.info(f"Since the confidence is low, pixel_size is set : {None}")
+              logging.info(f"Trying to get the last best confident text based pixel_size from buffer: {pixel_size_buffer}")
               pixel_size = pixel_size_buffer[-1]
             except Exception as e:
-              print('Error: Could Not Get Pixel Size From Buffer {}'.format(e))
+              logging.info(f"Error: Could Not Get Pixel Size From Buffer  : {e}")
+              logging.info(f"Pushing to the end of the queue  : {image_name}")
+              #print('Error: Could Not Get Pixel Size From Buffer {}'.format(e))
+              #print('Pushing {} to the end of the queue'.format(maskName))
+              if List_of_masks.count(maskName) > 2:
+                logging.info(f"****"*5)
+                logging.info(f"Tried to process the remaining images in the list, but could not read text from the images...")
+                logging.info(f"{maskName} has been processed three times, exiting...")
+                logging.info(f"{List_of_masks} also were not be able to be processed due to reading text from the images issue...")
+                logging.info(f"Exiting...")
+                logging.info(f"****"*5)
+                sys.exit()
+              List_of_masks.append(maskName)
+              continue
+          else:
+            pixel_size_buffer.append(pixel_size)
           #print('Pixel size is {}'.format(pixel_size))
           list_of_cells_props = []
           for i in range(mask.max()):
@@ -207,17 +236,24 @@ def run_cellPose(path2Images,path2Pretrained, diameter, flow, cellprob):
   call(['python', '-m' , 'cellpose' ,'--dir', path2Images ,'--pretrained_model', path2Pretrained,'--use_gpu','--save_png', '--verbose', '--diameter', diameter, '--flow_threshold', flow, '--cellprob_threshold', cellprob])
 
 def run(path2Images,path2Pretrained,path2Save,ext, diameter, flow, cellprob):
-  run_cellPose(path2Images,path2Pretrained, diameter, flow, cellprob)
+  logging.info(f"Getting Cellpose masks...")
+  #run_cellPose(path2Images,path2Pretrained, diameter, flow, cellprob)
+  logging.info(f"--------------"*10)
+  logging.info(f"Extracting stats from masks...")
   line_point = iterate(path2Images,path2Save,ext)
+  logging.info(f"--------------"*10)
+  logging.info(f"Applying visualization...")
   vis_overlay(path2Images,path2Save,ext,line_point)
-
+  logging.info(f"--------------"*10)
+  logging.info(f"Done...")
 
 if __name__ == "__main__":
     #execute only if run as a script
-    args = len(sys.argv)
-    print(args)
-    if args == 6:
-      run(sys.argv[1],sys.argv[2],sys.argv[3],sys.argv[4],sys.argv[5])
-    else:
-      print('Error in number of arguments')
-    #run('/Users/saeedalahmari/Downloads/stanford_images','../NCI-N87-Iter2_models_best/cellpose_residual_on_style_on_concatenation_off_train_iteration2_2022_10_03_02_31_01.132104','/Users/saeedalahmari/Downloads/stanford_images/results','.tif','30', '0.2', '0.8')
+    #args = len(sys.argv)
+    #print(args)
+    #if args == 8:
+    #  run(sys.argv[1],sys.argv[2],sys.argv[3],sys.argv[4],sys.argv[5],sys.argv[6],sys.argv[7])
+    #else:
+    #  print('Error in number of arguments')
+    run('/Users/saeedalahmari/Downloads/stanford_images/images','../NCI-N87-Iter2_models_best/cellpose_residual_on_style_on_concatenation_off_train_iteration2_2022_10_03_02_31_01.132104','/Users/saeedalahmari/Downloads/stanford_images/results2','.tif','30', '0.2', '0.8')
+    #run('/Users/saeedalahmari/Downloads/Figures','../NCI-N87-Iter2_models_best/cellpose_residual_on_style_on_concatenation_off_train_iteration2_2022_10_03_02_31_01.132104','/Users/saeedalahmari/Downloads/Figures', '.tif', '30', '0.2' ,'0.8')

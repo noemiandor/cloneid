@@ -15,7 +15,7 @@ reader = easyocr.Reader(['ch_sim','en']) # this needs to run only once to load t
 
 #path2Images = '/Users/saeedalahmari/Downloads/images_10x'
 
-def get_image_metadata(image_path):
+def get_image_metadata(image_path,image_name):
     with tifffile.TiffFile(os.path.join(image_path, image_name)) as tiff:
         # Check metadata for pixel size
         metadata = tiff.pages[0].tags
@@ -23,6 +23,7 @@ def get_image_metadata(image_path):
 
 def process_detected_text(path2Save):
     scale_output = reader.readtext(os.path.join(path2Save,'scalebar','text_roi.png'))
+    matches,confidence = [],0
     #print(scale_output[0][1])
     for item in scale_output:
         matches = re.findall(r'\d+\.\d+|\d+', item[1])
@@ -67,10 +68,10 @@ def get_pixel_size(image_path,path2Save):
                 if len_line > length_of_the_line:
                     length_of_the_line = len_line
                     #lx,ly,rx,ry = x1,y1,x2,y2
-                    x1_bb = max(x1 - 100,0)
-                    y1_bb = max(y1 - 100,0)
-                    x2_bb = min(x2 + 100,image.shape[1])
-                    y2_bb = min(y2 + 100,image.shape[0])
+                    x1_bb = max(x1 - 50,0)
+                    y1_bb = max(y1 - 50,0)
+                    x2_bb = min(x2 + 50,image.shape[1])
+                    y2_bb = min(y2 + 50,image.shape[0])
                     scale_bar_length_in_pixels = x2 - x1 
     else:
         print("No horizontal lines detected!")
@@ -78,24 +79,32 @@ def get_pixel_size(image_path,path2Save):
 
     # Crop the region around the scale bar to read text
     text_roi = gray[y1_bb:y2_bb, x1_bb:x2_bb] # Adjust ROI based on your image layout
-    text_roi_scaled = cv2.resize(text_roi, None, fx=2, fy=2, interpolation=cv2.INTER_CUBIC)
-    cv2.imwrite(os.path.join(path2Save,'scalebar','text_roi.png'), text_roi_scaled)
+    # Improve the contrast of the cropped image
+    text_roi_contrast = cv2.equalizeHist(text_roi)
+    cv2.imwrite(os.path.join(path2Save,'scalebar','text_roi.png'), text_roi_contrast)
 
     # Convert the matches to floats (if needed)
-    matches,confidence = process_detected_text(path2Save)
+    matches, confidence = process_detected_text(path2Save)
     scale_text_um = [float(num) for num in matches]
-    if len(scale_text_um) == 0:
-        cv2.imwrite(os.path.join(path2Save,'scalebar','text_roi.png'), text_roi)
-        matches,confidence = process_detected_text(path2Save)
+    confidence_threshold = 0.75
+    
+    if confidence < 0.50:
+        # Try resizing if confidence is low
+        text_roi_resize = cv2.resize(text_roi, None, fx=2, fy=2, interpolation=cv2.INTER_CUBIC)
+        cv2.imwrite(os.path.join(path2Save,'scalebar','text_roi.png'), text_roi_resize)
+        matches, confidence = process_detected_text(path2Save)
         scale_text_um = [float(num) for num in matches]
-    #print('scale_text_um: {0}'.format(matches))
-    if confidence > 0.15:
-        pixel_size = float(scale_text_um[0])/float(scale_bar_length_in_pixels)
+        confidence_threshold = 0.50
+
+    if len(scale_text_um) == 0:
+        return None, None, None, None
+
+    if confidence > confidence_threshold:
+        pixel_size = float(scale_text_um[0]) / float(scale_bar_length_in_pixels)
     else:
         pixel_size = None
-    #print('pixel size: {}'.format(pixel_size))
     
-    return scale_bar_length_in_pixels, scale_text_um,(x1_bb,y1_bb), pixel_size
+    return scale_bar_length_in_pixels, scale_text_um, (x1_bb, y1_bb), pixel_size
 
 ''' 
 for image_name in os.listdir(path2Images):
