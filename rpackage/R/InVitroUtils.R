@@ -436,17 +436,25 @@ plotLiquidNitrogenBox <- function (rack, row) {
   x$passage_id <- .unique_passage_id(x$id)
   probable_ancestor <- try(.assign_probable_ancestor(x$id,xi=passaging), silent = T)
   ancestorCheck = T;
-  if(class(probable_ancestor)!="try-error" && !isempty(probable_ancestor) ){
+  if (!inherits(probable_ancestor, "try-error") && !isempty(probable_ancestor)) {
     x$probable_ancestor = probable_ancestor
     if(x$passaged_from_id1!=x$probable_ancestor){
-      confirmAncestorCorrect = ""
-      while(!confirmAncestorCorrect %in% c("yes", "no")){
-        confirmAncestorCorrect <- readline(prompt=paste0("Warning encountered while updating database: Was ",x$id," really derived from ",x$passaged_from_id1,"? type yes/no: "))
-      }
-      if(confirmAncestorCorrect=="no"){
-        ancestorCheck=F;
-        .wait_for_confirmation("", prompt_template = "No changes are made to the database. Please modify passaged_from_id1, then rerun. Type yes to confirm: ", timeout = 10)
-      }
+      # confirmAncestorCorrect = ""
+      # while(!confirmAncestorCorrect %in% c("yes", "no")){
+        # confirmAncestorCorrect <- readline(prompt=paste0("Warning encountered while updating database: Was ",x$id," really derived from ",x$passaged_from_id1,"? type yes/no: "))
+      # }
+      # if(confirmAncestorCorrect=="no"){
+        # ancestorCheck=F;
+        # .wait_for_confirmation("", prompt_template = "No changes are made to the database. Please modify passaged_from_id1, then rerun. Type yes to confirm: ", timeout = 10)
+      # }
+      prompt= glue::glue(
+        "\n⚠️  {x$id} appears to either not follow the naming convention or  have the wrong parent.",
+        "\n❌  Aborting update: please correct  'id' or 'passaged_from_id1' ",
+        "to follow the naming convention and rerun the script."
+      )
+      print(prompt)
+      ancestorCheck=F;
+      .wait_for_confirmation("", prompt_template = "No changes are made to the database. Type yes to confirm: ", timeout = 10)
     }
   }
   
