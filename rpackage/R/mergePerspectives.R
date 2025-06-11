@@ -1,4 +1,4 @@
-merge<-function(perspectives, specimens, simM="euclidean",t=4){
+mergePerspectives<-function(perspectives, specimens, simM="euclidean",t=4){
   ##merges either 2 different perspectives on the same specimen OR
   ##the same perspective on 2 or more different specimens
   

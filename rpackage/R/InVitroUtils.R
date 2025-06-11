@@ -426,6 +426,7 @@ plotLiquidNitrogenBox <- function (rack, row) {
   passaging = fetch(rs, n=-1)
   rownames(passaging) <- passaging$id
   passaging$passage_id <- sapply(passaging$id, .unique_passage_id)
+  passaging = passaging[!is.na(passaging$passage_id),]
   # x=data.table::transpose(as.data.frame(c(id , event, from, dish$dishCount, passage)))
   # colnames(x) = c("id", "event", "passaged_from_id1", "correctedCount", "passage")
   x=data.table::transpose(as.data.frame(c(id ,parent$cellLine,from,event,as.character(tx),dish$dishCount,dish$dishCount,dish$cellSize, dish$dishAreaOccupied, passage,flask,parent$media,  user,  user)))
@@ -483,25 +484,82 @@ plotLiquidNitrogenBox <- function (rack, row) {
   return(x4DB)
 }
 
-##find the unique string that identifies a passage
-.unique_passage_id <- function(i){
-  paste(head(unlist(strsplit(i,split="_")),3),collapse="_")
+#' Find unique passage identifier in an event id string.
+#'
+#' @param i Event id.
+#' @param idx_only If 1, returns index in split; if 2, returns passage id string; else full id.
+#' @param to_numeric If TRUE and idx_only=2, returns passage number as numeric.
+.unique_passage_id <- function(i, idx_only=0, to_numeric=F){
+  vec=unlist(strsplit(i,split="_"))
+  idx=grep("A[0-9]{1,2}", vec, value=F)
+  if(length(idx)==1){
+    if(idx_only==1){
+      return(idx)
+    } else if(idx_only==2){
+      if(to_numeric){
+        return(as.numeric(.strip_non_digit_ends(vec[idx])))
+      }
+      return(vec[idx])
+    }
+    out=paste(head(vec,idx),collapse="_")
+    return(.strip_after_last_digit(out))
+  } else{
+    return(NA)
+  }
 }
 
-## Make suggestions to correct ancestor
-.assign_probable_ancestor <- function(i,xi){
+#' Suggests the probable ancestor for a given event id, based on passage structure.
+#'
+#' @param i Event id to check.
+#' @param xi Full data.frame of events.
+#' @return The suggested ancestor id.
+.assign_probable_ancestor <- function(i, xi){
+  assigned_ancestor = xi$passaged_from_id1[xi$id==i]
   if(xi$event[xi$id==i]=="harvest"){
-    return(xi$id[xi$passage_id==xi$passage_id[xi$id==i] & xi$event=="seeding"])
+    target_passage = xi$id[xi$passage_id==xi$passage_id[xi$id==i] & xi$event=="seeding"]
+    if(assigned_ancestor %in% target_passage){
+      return(assigned_ancestor)
+    }
+    target_passage = target_passage[xi[target_passage,'date'] < xi[i,'date']]
+    d = adist(i, target_passage)
+    if(sum(as.numeric(d==min(d))) > 1){
+      warning(paste0("Ambiguous probable_ancestor (seeding) for ",i), immediate. = T)
+    } else if(length(target_passage) == 0){
+      print(paste("No probable ancestor seed assignable for harvest", i))
+    }
+    return(target_passage[which.min(d)])
   }
   if(xi$event[xi$id==i]=="seeding"){
-    passage_split <- unlist(strsplit(i,split="_"))
-    passage_no <- paste0("A",as.numeric(gsub("A","",passage_split[3]))-1)
-    passage_id <- paste0(c(passage_split[1:2],passage_no),collapse="_")
-    target_passage <- xi[xi$passage_id==passage_id,]
+    passage_split <- unlist(strsplit(i, split="_"))
+    idx = .unique_passage_id(i, idx_only=1)
+    passage_id = .strip_after_last_digit(passage_split[idx])
+    passage_id = paste0("A", as.numeric(gsub("A", "", passage_id)) - 1)
+    passage_id <- paste0(c(passage_split[1:(idx-1)], passage_id), collapse="_")
+    target_passage <- xi[xi$passage_id==passage_id & xi$event=='harvest',]
+    if(assigned_ancestor %in% target_passage$id){
+      return(assigned_ancestor)
+    }
+    target_passage = target_passage[xi[target_passage$id,'date'] < xi[i,'date'],]
+    if(nrow(target_passage) > 1){
+      warning(paste0("Ambiguous probable_ancestor (harvest) for ", i), immediate. = T)
+    } else if(nrow(target_passage) == 0){
+      print(paste("No probable ancestor harvest assignable for seed", i))
+    }
     return(target_passage$id[which.max(as.Date(target_passage$date))])
   }
 }
 
+
+#' Retain everything up to and including the last digit in a string.
+.strip_after_last_digit <- function(x) {
+  sub("(.*\\d).*", "\\1", x)
+}
+
+#' Remove all characters before the first digit and after the last digit.
+.strip_non_digit_ends <- function(x) {
+  out <- regmatches(x, gregexpr("\\d+", x))
+  sapply(out, function(digits) if(length(digits)) paste0(digits, collapse="") else NA)
+}
 
 .readCellSegmentationsOutput <- function(id, from, cellLine, dishSurfaceArea_cm2, cellCount, excludeOption, preprocessing=T, param=NULL){
   ## Typical values for dishSurfaceArea_cm2 are: 
